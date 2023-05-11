@@ -1,0 +1,16 @@
+# virtual envs
+venv/
+
+# local config
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# ide 
+.idea/
+.vscode/
+
+# local db
+db.sqlite3

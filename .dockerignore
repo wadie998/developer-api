@@ -1,0 +1,14 @@
+.git
+.gitignore
+.dockerignore
+db.sqlite3
+Jenkinsfile
+venv
+*.pyc
+*.pyo
+.env
+__pycache__/
+Dockerfile
+dev_requirements.txt
+README.md
+sonar-project.properties

@@ -5,7 +5,7 @@ pip install pre-commit
 # install pre-commit git webhook
 pre-commit install
 ```
-Sometimes you need to invoke formating commands individually, examples:
+Sometimes you need to invoke formatting commands individually, examples:
 ```sh
 black .
 isort --profile=black .

@@ -11,3 +11,16 @@ black .
 isort --profile=black .
 flake8 --max-line-length=120 --exclude=venv --ignore=E203,W503
 ```
+
+
+
+### Create an API key  [optional]
+
+for more details check rest_framework_api_key documentation
+Save key in proper .env immediately as it cannot be retrieved
+
+```python
+from rest_framework_api_key.models import APIKey
+# Name should be one of the following: SERVICE1, SERVICE2, SERVICE3
+_, key = APIKey.objects.create_key(name="my-service")
+```

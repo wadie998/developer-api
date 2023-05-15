@@ -9,23 +9,32 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+import os
 from pathlib import Path
+from decouple import AutoConfig, config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+ENV = os.environ.get("ENV", None)
+
+
+if ENV:
+    config = AutoConfig("/run/secrets")  # noqa: F811
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-17v*gb(hl-pdo5oy7afzwulvi&c*v17^92&8o@^x-i)xcvnxsm'
+
+SECRET_KEY = config("SECRET_KEY")
+BACKEND_JWT_PUBLIC_KEY = config("BACKEND_JWT_PUBLIC_KEY", cast=lambda key: bytes(key.replace("\\n", "\n"), "utf-8"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -37,6 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_api_key',
 ]
 
 MIDDLEWARE = [
@@ -105,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Africa/Tunis"
 
 USE_I18N = True
 

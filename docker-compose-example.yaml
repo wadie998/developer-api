@@ -1,0 +1,17 @@
+version: '3.7'
+x-base: &base
+  build:
+    context: .
+    dockerfile: Devockerfile
+  image: django-app-base
+  volumes:
+    - .:/app
+  working_dir: /app
+
+services:
+  web:
+    <<: *base
+    command: python manage.py runserver 0.0.0.0
+    ports:
+      - 8000:8000
+      

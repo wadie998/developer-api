@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
-
+import sys
 from decouple import AutoConfig, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -48,6 +48,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_api_key",
+    "health_check",
+    "health_check.db",
+    "health_check.contrib.migrations",   
+
 ]
 
 MIDDLEWARE = [
@@ -132,3 +136,121 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+if config("POSTGRESQL_ENABLED", default=False, cast=bool):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME"),
+            "USER": config("DB_USER"),
+            "PASSWORD": config("DB_PASSWORD"),
+            "HOST": config("DB_ADDRESS"),
+            "PORT": config("DB_PORT"),
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+if ENV:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "filters": {
+            "health_check": {"()": "settings.logging.custom_gunicorn_logger.HealthCheckFilter"},
+        },
+        "formatters": {
+            "verbose": {"format": "%(levelname)s File %(pathname)s, line %(lineno)d, %(message)s"},
+        },
+        "handlers": {
+            "console": {
+                "level": "INFO",
+                "class": "logging.StreamHandler",
+                "formatter": "verbose",
+                "stream": sys.stdout,
+            },
+            "mail_admins": {
+                "level": "ERROR",
+                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
+                "include_html": False,
+                "filters": ["health_check"],
+            },
+            "critical_mail": {
+                "level": "CRITICAL",
+                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
+                "include_html": False,
+            },
+        },
+        "loggers": {
+            "": {
+                "handlers": ["console", "critical_mail"],
+                "level": "INFO",
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["mail_admins"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+        },
+    }
+else:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {"format": "%(levelname)s File %(pathname)s, line %(lineno)d, %(message)s"},
+        },
+        "handlers": {
+            "console": {
+                "level": "DEBUG",
+                "class": "logging.StreamHandler",
+                "formatter": "verbose",
+            },
+            "mail_admins": {
+                "level": "ERROR",
+                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
+            },
+        },
+        "loggers": {
+            "": {
+                "handlers": ["console"],
+                "level": "INFO",
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["mail_admins"],
+                "level": "ERROR",
+                "propagate": False,
+            },
+        },
+    }
+
+
+if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
+    ELASTIC_APM = {
+        "SERVICE_NAME": config("ELASTIC_APM_SERVICE_NAME", default="django-template-app"),
+        "SECRET_TOKEN": config("ELASTIC_APM_SECRET_TOKEN", default=None),
+        "API_KEY": config("ELASTIC_APM_API_KEY", default=None),
+        "SERVER_URL": config("ELASTIC_APM_ADDRESS"),
+        "ENVIRONMENT": ENV,
+        # show url instead of views
+        "DJANGO_TRANSACTION_NAME_FROM_ROUTE": True,
+        "TRANSACTIONS_IGNORE_PATTERNS": ["GET api/ht/?"],
+        "ENABLED": config("ELASTIC_APM_ENABLED", default=True, cast=bool),
+        "METRICS_INTERVAL": config("ELASTIC_APM_METRICS_INTERVAL", default="2m"),
+        "DISABLE_METRICS": config("ELASTIC_APM_DISABLE_METRICS", default=None),
+        "CENTRAL_CONFIG": config("ELASTIC_APM_CENTRAL_CONFIG", default=False, cast=bool),
+    }
+    LOGGING["handlers"]["elasticapm"] = {
+        "level": "ERROR",
+        "class": "elasticapm.contrib.django.handlers.LoggingHandler",
+    }
+    LOGGING["loggers"][""]["handlers"].append("elasticapm")
+    INSTALLED_APPS.append("elasticapm.contrib.django")
+    MIDDLEWARE.append("elasticapm.contrib.django.middleware.TracingMiddleware")

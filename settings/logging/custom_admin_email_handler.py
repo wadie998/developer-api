@@ -1,13 +1,11 @@
 import logging
 import logging.config  # needed when logging_config doesn't start with logging.config
-
-from django.views.debug import ExceptionReporter
-from django.utils.log import AdminEmailHandler
 from pathlib import Path
 
+from django.utils.log import AdminEmailHandler
+from django.views.debug import ExceptionReporter
 
 request_logger = logging.getLogger("django.request")
-
 
 
 class CustomExceptionReporter(ExceptionReporter):
@@ -15,12 +13,11 @@ class CustomExceptionReporter(ExceptionReporter):
 
     @property
     def html_template_path(self):
-        return Path(__file__).parent /  "technical_500.html"
+        return Path(__file__).parent / "technical_500.html"
 
     @property
     def text_template_path(self):
-        return Path(__file__).parent /  "technical_500.txt"
-
+        return Path(__file__).parent / "technical_500.txt"
 
 
 class CustomAdminEmailHandler(AdminEmailHandler):

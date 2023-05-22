@@ -12,12 +12,14 @@ class CustomGunicornLogger(glogging.Logger):
         # logger.addFilter(StaticFilesFilter())
         logger.addFilter(HealthCheckFilter())
 
-'''
+
+"""
 # Uncomment to disable /static logs
 class StaticFilesFilter(logging.Filter):
     def filter(self, record):
         return "GET /static" not in record.getMessage()
-'''
+"""
+
 
 class HealthCheckFilter(logging.Filter):
     def filter(self, record):

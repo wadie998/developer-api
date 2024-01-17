@@ -1,3 +1,22 @@
+# Flouci Base Migration Project
+
+## Introduction
+Welcome to the Flouci base migration project! This repository serves as the base template for various Flouci migration project.
+Below, you'll find an overview of the project structure and how to set up the environment and what to add for every specific cases.
+
+
+## Getting Started
+To get the project up and running on your local machine for development and testing purposes, follow the following instructions.
+And make sure to read the [migration guideline document](https://docs.google.com/document/d/1K5aq2MGh-S3DpgHduIY1gxI80KDuKvkTBBQSNFfhTns/edit#heading=h.ut7p67dzk6v0) and [project migration process](https://docs.google.com/document/d/1gr_2aI3jdRMnHRQI2405465-g4PZVRTkQ5J5pyG1MXE/edit#heading=h.m0wnyjd36j85)
+
+## Configuration
+As a step to make it consistent configuration enable/disable in the ENV file
+
+### Authentication
+#### JWT
+For Backend, we use the IsBackendAuthnticated internal we use the IsAuthenticated permission
+####
+
 ### Setup precommit hook
 This project uses precommit hooks for code formatting and enforcing pep8 best practices [more](https://pre-commit.com), it's mandatory setup:
 ```sh

@@ -42,9 +42,10 @@ class ApiResponseView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        from .models.models import Request
+        # Example queryset
+        from .models.models import JhiUser
 
-        return Request.objects.all()
+        return JhiUser.objects.all()
 
     def get_paginated_link(self, page_obj):
         base_url = PROJECT_DOMAIN + reverse("result")

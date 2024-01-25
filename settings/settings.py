@@ -10,10 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
-import sys
 from pathlib import Path
 
 from decouple import AutoConfig, config
+
+from settings.configs.elastic_apm import ELASTIC_APM_CONFIG
+from settings.configs.jwt_config import (
+    BACKEND_JWT_PUBLIC_KEY,
+    JWT_INTERNAL_KEY,
+    JWT_PROJECT_PUBLIC_KEY,
+)
+from settings.configs.logging_env import ENV_DISABLED_LOGGING, ENV_ENABLED_LOGGING
+from settings.configs.minio import (
+    MINIO_INTERNAL_STORAGE_ADDRESS,
+    MINIO_INTERNAL_STORAGE_USE_HTTPS,
+    MINIO_MIGRATED_BUCKETS,
+    MINIO_MIGRATION_ENABLED,
+    MINIO_STORAGE_ACCESS_KEY,
+    MINIO_STORAGE_ADDRESS,
+    MINIO_STORAGE_SECRET_KEY,
+    MINIO_STORAGE_USE_HTTPS,
+)
+from settings.configs.sqlite_config import SQLITE3_CONFIG
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,15 +48,11 @@ if ENV:
 # SECURITY WARNING: keep the secret key used in production secret!
 
 SECRET_KEY = config("SECRET_KEY")
-"""JWT"""
-BACKEND_JWT_PUBLIC_KEY = config("BACKEND_JWT_PUBLIC_KEY", cast=lambda key: bytes(key.replace("\\n", "\n"), "utf-8"))
-JWT_PROJECT_PRIVATE_KEY = config(
-    "JWT_PROJECT_PRIVATE_KEY", cast=lambda key: bytes(key.replace("\\n", "\n"), "utf-8"), default=""
-)
-JWT_PROJECT_PUBLIC_KEY = config(
-    "JWT_PROJECT_PUBLIC_KEY", cast=lambda key: bytes(key.replace("\\n", "\n"), "utf-8"), default=""
-)
-PROJECT_VERIFICATION_TOKEN = config("PROJECT_VERIFICATION_TOKEN", default="")
+PROJECT_DOMAIN = config("PROJECT_DOMAIN")
+
+BACKEND_JWT_PUBLIC_KEY
+JWT_INTERNAL_KEY
+JWT_PROJECT_PUBLIC_KEY
 
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
@@ -48,16 +62,22 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
 
+ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
 
 # Application definition
+INSTALLED_APPS = []
+if ADMIN_ENABLED:
+    INSTALLED_APPS = [
+        "django.contrib.admin",
+    ]
 
-INSTALLED_APPS = [
-    "django.contrib.admin",
+INSTALLED_APPS += [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "api",
     "rest_framework",
     "rest_framework_api_key",
     "health_check",
@@ -99,12 +119,7 @@ WSGI_APPLICATION = "settings.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+DATABASES = SQLITE3_CONFIG
 
 
 # Password validation
@@ -161,103 +176,16 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
         }
     }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+    DATABASES = SQLITE3_CONFIG
 
 if ENV:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "filters": {
-            "health_check": {"()": "settings.logging.custom_gunicorn_logger.HealthCheckFilter"},
-        },
-        "formatters": {
-            "verbose": {"format": "%(levelname)s File %(pathname)s, line %(lineno)d, %(message)s"},
-        },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-                "stream": sys.stdout,
-            },
-            "mail_admins": {
-                "level": "ERROR",
-                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
-                "include_html": False,
-                "filters": ["health_check"],
-            },
-            "critical_mail": {
-                "level": "CRITICAL",
-                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
-                "include_html": False,
-            },
-        },
-        "loggers": {
-            "": {
-                "handlers": ["console", "critical_mail"],
-                "level": "INFO",
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["mail_admins"],
-                "level": "ERROR",
-                "propagate": True,
-            },
-        },
-    }
+    LOGGING = ENV_ENABLED_LOGGING
 else:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "verbose": {"format": "%(levelname)s File %(pathname)s, line %(lineno)d, %(message)s"},
-        },
-        "handlers": {
-            "console": {
-                "level": "DEBUG",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-            },
-            "mail_admins": {
-                "level": "ERROR",
-                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
-            },
-        },
-        "loggers": {
-            "": {
-                "handlers": ["console"],
-                "level": "INFO",
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["mail_admins"],
-                "level": "ERROR",
-                "propagate": False,
-            },
-        },
-    }
+    LOGGING = ENV_DISABLED_LOGGING
 
 
-if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
-    ELASTIC_APM = {
-        "SERVICE_NAME": config("ELASTIC_APM_SERVICE_NAME", default="django-template-app"),
-        "SECRET_TOKEN": config("ELASTIC_APM_SECRET_TOKEN", default=None),
-        "API_KEY": config("ELASTIC_APM_API_KEY", default=None),
-        "SERVER_URL": config("ELASTIC_APM_ADDRESS"),
-        "ENVIRONMENT": ENV,
-        # show url instead of views
-        "DJANGO_TRANSACTION_NAME_FROM_ROUTE": True,
-        "TRANSACTIONS_IGNORE_PATTERNS": ["GET api/ht/?"],
-        "ENABLED": config("ELASTIC_APM_ENABLED", default=True, cast=bool),
-        "METRICS_INTERVAL": config("ELASTIC_APM_METRICS_INTERVAL", default="2m"),
-        "DISABLE_METRICS": config("ELASTIC_APM_DISABLE_METRICS", default=None),
-        "CENTRAL_CONFIG": config("ELASTIC_APM_CENTRAL_CONFIG", default=False, cast=bool),
-    }
+if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
+    ELASTIC_APM = ELASTIC_APM_CONFIG
     LOGGING["handlers"]["elasticapm"] = {
         "level": "ERROR",
         "class": "elasticapm.contrib.django.handlers.LoggingHandler",
@@ -338,3 +266,11 @@ else:
         }
     }
     # For running redis labs instances: https://app.redislabs.com/#/sign-up
+MINIO_MIGRATION_ENABLED
+MINIO_MIGRATED_BUCKETS
+MINIO_INTERNAL_STORAGE_ADDRESS
+MINIO_STORAGE_ADDRESS
+MINIO_STORAGE_ACCESS_KEY
+MINIO_STORAGE_SECRET_KEY
+MINIO_STORAGE_USE_HTTPS
+MINIO_INTERNAL_STORAGE_USE_HTTPS

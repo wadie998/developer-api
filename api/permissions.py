@@ -1,10 +1,8 @@
-import hmac
-from hashlib import sha256
-
 from rest_framework.permissions import BasePermission
 
-from settings.settings import PROJECT_VERIFICATION_TOKEN
+from settings.configs.jwt_config import PROJECT_VERIFICATION_TOKEN
 from utils.jwt_helpers import verify_backend_token, verify_token
+from utils.signature_manager import signed_request_is_valid
 
 
 class IsBackendAuthenticated(BasePermission):
@@ -47,23 +45,3 @@ class HasValidSignature(BasePermission):
         if signed_request_is_valid(request, PROJECT_VERIFICATION_TOKEN):
             return True
         return False
-
-
-def signed_request_is_valid(request, secret):
-    """Validate signed requests."""
-    api_signature = request.META.get("HTTP_SIGNATURE")
-    if api_signature:
-        request_check_field = request.data.get("id")
-        if request_check_field is None:
-            return False
-        signature = generate_request_signature(secret, request.method, request.path, request_check_field)
-        return signature == api_signature
-    else:
-        return False
-
-
-def generate_request_signature(secret, request_method, request_path, request_check_field):
-    params = [secret, request_method, request_path, request_check_field]
-    formatted_data = "-".join(params)
-    formatted_data = formatted_data.encode("utf-8")
-    return hmac.new(secret.encode("utf-8"), msg=formatted_data, digestmod=sha256).hexdigest()

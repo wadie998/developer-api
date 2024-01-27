@@ -11,7 +11,11 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY --from=0 $VIRTUAL_ENV $VIRTUAL_ENV
 WORKDIR /app
-RUN useradd -ms /bin/bash app &&\
+RUN apt update && apt install -y libpq-dev \
+    -o APT::Install-Recommends=false -o APT::Install-Suggests=false && \
+    apt-get autoremove -y && \
+    apt-get clean -y && \
+    useradd -ms /bin/bash app &&\
     chown app:app /app
 USER app
 COPY --chown=app . /app

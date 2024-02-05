@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -17,6 +19,8 @@ from .models.models import JhiUser
 from .pagination import ModelPagination
 from .permissions import IsAuthenticated, IsBackendAuthenticated
 from .serializer import ApiResponseViewSerializer, AuthenticateSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class Service1View(GenericAPIView):
@@ -45,7 +49,7 @@ class ApiResponseView(GenericAPIView):
         # Example queryset
         from .models.models import JhiUser
 
-        return JhiUser.objects.all()
+        return JhiUser.objects.all().order_by("id")
 
     def get_paginated_link(self, page_obj):
         base_url = PROJECT_DOMAIN + reverse("result")

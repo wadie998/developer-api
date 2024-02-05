@@ -2,27 +2,26 @@
 
 ## Introduction
 Welcome to the Flouci base migration project! This repository serves as the base template for various Flouci migration project.
-Below, you'll find an overview of the project structure and how to set up the environment and what to add for every specific cases.
-
+Below, you'll find an overview of the project structure and how to set up the environment, and specific guidelines for each migration case.
 
 ## Getting Started
 To get the project up and running on your local machine for development and testing purposes, follow the following instructions.
 And make sure to read the [migration guideline document](https://docs.google.com/document/d/1K5aq2MGh-S3DpgHduIY1gxI80KDuKvkTBBQSNFfhTns/edit#heading=h.ut7p67dzk6v0) and [project migration process](https://docs.google.com/document/d/1gr_2aI3jdRMnHRQI2405465-g4PZVRTkQ5J5pyG1MXE/edit#heading=h.m0wnyjd36j85)
 
 ## Configuration
-As a step to make it consistent configuration enable/disable in the ENV file,
-In settings we configure if the
+To ensure consistency in configuration enable/disable settings, refer to the ENV file.
+Under the 'settings' folder, find the 'configs' folder containing the necessary configurations.
 
 ### Authentication
-For each authentication we have their respective permission
+Different authentication methods have their respective permissions.
 
 #### JWT
-For Backend , we use the **IsBackendAuthnticated** use the same principe for any other project
-For our internal JWT authentication, we use the **IsAuthenticated**
+For backend authentication, use IsBackendAuthenticated. Apply the same principle for other projects.
+Internally, JWT authentication uses IsAuthenticated.
 
 #### API_KEY
-For API Key Authentication, we follow the rest_framework_api_key documentation
-Follow the same logic of **HasServiceApiKey**
+API Key Authentication follows the rest_framework_api_key documentation.
+Utilize HasServiceApiKey following the same logic.
 
 
 ### Setup precommit hook

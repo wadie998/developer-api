@@ -1,3 +1,4 @@
+bcrypt==4.1.2
 django==4.2.1
 djangorestframework==3.14.0
 djangorestframework-api-key==2.3.0
@@ -7,7 +8,7 @@ psycopg==3.1.9
 python-decouple==3.8
 PyJWT[crypto]==2.6.0
 requests==2.31.0
-bcrypt==4.1.2
+
 
 
 # local dev requirements

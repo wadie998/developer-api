@@ -4,7 +4,7 @@ import jwt
 
 from settings.settings import (
     BACKEND_JWT_PUBLIC_KEY,
-    JWT_INTERNAL_KEY,
+    JWT_PROJECT_PRIVATE_KEY,
     JWT_PROJECT_PUBLIC_KEY,
 )
 
@@ -51,4 +51,4 @@ def verify_token(token, token_type="access", public_key=JWT_PROJECT_PUBLIC_KEY):
 
 def generate_token(user, password, id):
     payload = {"id": id, "username": user, "password": password, "type": "access"}
-    return jwt.encode(payload, JWT_INTERNAL_KEY, algorithm="HS256")
+    return jwt.encode(payload, JWT_PROJECT_PRIVATE_KEY, algorithm="HS256")

@@ -1,3 +1,4 @@
+bcrypt==4.1.2
 django==4.2.8
 djangorestframework==3.14.0
 djangorestframework-api-key==3.0.0
@@ -7,4 +8,3 @@ gunicorn==21.2.0
 psycopg==3.1.14
 python-decouple==3.8
 PyJWT[crypto]==2.8.0
-bcrypt==4.1.2

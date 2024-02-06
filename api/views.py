@@ -37,9 +37,7 @@ class Service2View(GenericAPIView):
         return Response(data={"result": {"name": "service2"}, "code": 0, "name": "projectmanager"})
 
 
-IsValidGenericApi(get=True, post=False)
-
-
+@IsValidGenericApi(get=True, post=False)
 class ApiResponseView(GenericAPIView):
     pagination_class = ModelPagination
     serializer_class = ApiResponseViewSerializer
@@ -107,9 +105,7 @@ class JWTView(GenericAPIView):
         return Response(data={"name": "jwt"})
 
 
-IsValidGenericApi()
-
-
+@IsValidGenericApi()
 class AuthenticateView(GenericAPIView):
     serializer_class = AuthenticateSerializer
 

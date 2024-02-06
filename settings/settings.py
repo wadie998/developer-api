@@ -14,14 +14,14 @@ from pathlib import Path
 
 from decouple import AutoConfig, config
 
-from settings.configs.elastic_apm import ELASTIC_APM_CONFIG
+from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
 from settings.configs.jwt_config import (
     BACKEND_JWT_PUBLIC_KEY,
-    JWT_INTERNAL_KEY,
+    JWT_PROJECT_PRIVATE_KEY,
     JWT_PROJECT_PUBLIC_KEY,
 )
-from settings.configs.logging_env import ENV_DISABLED_LOGGING, ENV_ENABLED_LOGGING
-from settings.configs.minio import (
+from settings.configs.logging_config import ENV_DISABLED_LOGGING, ENV_ENABLED_LOGGING
+from settings.configs.minio_config import (
     MINIO_INTERNAL_STORAGE_ADDRESS,
     MINIO_INTERNAL_STORAGE_USE_HTTPS,
     MINIO_MIGRATED_BUCKETS,
@@ -41,6 +41,7 @@ ENV = os.environ.get("ENV", None)
 
 if ENV:
     config = AutoConfig("/run/secrets")  # noqa: F811
+    GCLOUD_SERVICE_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -51,7 +52,7 @@ SECRET_KEY = config("SECRET_KEY")
 PROJECT_DOMAIN = config("PROJECT_DOMAIN")
 
 BACKEND_JWT_PUBLIC_KEY
-JWT_INTERNAL_KEY
+JWT_PROJECT_PRIVATE_KEY
 JWT_PROJECT_PUBLIC_KEY
 
 # Logs Notification
@@ -118,8 +119,6 @@ WSGI_APPLICATION = "settings.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = SQLITE3_CONFIG
 
 
 # Password validation
@@ -194,78 +193,7 @@ if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
     INSTALLED_APPS.append("elasticapm.contrib.django")
     MIDDLEWARE.append("elasticapm.contrib.django.middleware.TracingMiddleware")
 
-"""
-Redis database parameters
-"""
-REDIS_ENABLED = config("REDIS_ENABLED", default=False, cast=bool)
-if REDIS_ENABLED:
-    INSTALLED_APPS += ["health_check.contrib.redis"]
-    REDIS_PORT = str(config("REDIS_PORT", cast=int, default=6379))
-    REDIS_ADDRESS = config("REDIS_ADDRESS")
-    REDIS_DB = config("REDIS_DB", cast=int, default=0)
-    if config("REDIS_SENTINEL_ENABLED", default=False, cast=bool):
-        REDIS_SENTINEL_ADDRESS = config(
-            "REDIS_SENTINEL_ADDRESS",
-            cast=lambda v: [(i[0], int(i[1])) for i in [(s.strip().split(":")) for s in v.split(",")]],
-        )
-        DJANGO_REDIS_CONNECTION_FACTORY = "django_redis.pool.SentinelConnectionFactory"
-        CACHES = {
-            "default": {
-                "BACKEND": "django_redis.cache.RedisCache",
-                "LOCATION": [
-                    f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/{REDIS_DB}",
-                ],
-                "OPTIONS": {
-                    "CLIENT_CLASS": "django_redis.client.SentinelClient",
-                    "PASSWORD": config("REDIS_PASSWORD", default=None),
-                    "PARSER_CLASS": "redis.connection.HiredisParser",
-                    "CONNECTION_POOL_CLASS": "redis.sentinel.SentinelConnectionPool",
-                    "SENTINELS": REDIS_SENTINEL_ADDRESS,
-                    "SENTINEL_KWARGS": {"password": config("REDIS_SENTINEL_PASSWORD", default=None)},
-                    "CONNECTION_POOL_CLASS_KWARGS": {
-                        "max_connections": 300,
-                        "timeout": 20,
-                    },
-                    "MAX_CONNECTIONS": 2000,
-                    "PICKLE_VERSION": -1,
-                },
-                "KEY_PREFIX": "backend",
-            },
-        }
-        # healtcheck doesn't support redis sentinel
-        if "health_check.contrib.redis" in INSTALLED_APPS:
-            INSTALLED_APPS.remove("health_check.contrib.redis")
-    else:
-        CACHES = {
-            "default": {
-                "BACKEND": "django_redis.cache.RedisCache",
-                "LOCATION": [
-                    f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/{REDIS_DB}",
-                ],
-                "OPTIONS": {
-                    "DB": REDIS_DB,
-                    "PASSWORD": config("REDIS_PASSWORD", default=None),
-                    "PARSER_CLASS": "redis.connection.HiredisParser",
-                    "CONNECTION_POOL_CLASS": "redis.BlockingConnectionPool",
-                    "CONNECTION_POOL_CLASS_KWARGS": {
-                        "max_connections": 100,
-                        "timeout": 30,
-                    },
-                    "MAX_CONNECTIONS": 2000,
-                    "PICKLE_VERSION": -1,  # Use the latest protocol version
-                },
-                "KEY_PREFIX": "backend",
-            },
-        }
-        REDIS_URL = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}"
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-            "LOCATION": config("CACHE_FILE_LOCATION", default="/tmp/django_cache"),
-        }
-    }
-    # For running redis labs instances: https://app.redislabs.com/#/sign-up
+
 MINIO_MIGRATION_ENABLED
 MINIO_MIGRATED_BUCKETS
 MINIO_INTERNAL_STORAGE_ADDRESS

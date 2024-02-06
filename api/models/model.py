@@ -41,31 +41,6 @@ class Databasechangeloglock(Model):
         db_table = "databasechangeloglock"
 
 
-class Delivery(Model):
-    id = models.BigIntegerField(primary_key=True)
-    delivery_id = models.UUIDField(blank=True, null=True)
-    delivery_status = models.CharField(max_length=255, blank=True, null=True)
-    delivery_date = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = "delivery"
-
-
-class Document(Model):
-    id = models.BigIntegerField(primary_key=True)
-    document_id = models.UUIDField(blank=True, null=True)
-    document_type = models.CharField(max_length=255, blank=True, null=True)
-    cloud_storage_identifier = models.CharField(max_length=255, blank=True, null=True)
-    status = models.CharField(max_length=255, blank=True, null=True)
-    request = models.ForeignKey("Request", models.DO_NOTHING, blank=True, null=True)
-    file_type = models.CharField(max_length=10, blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = "document"
-
-
 class JhiAuthority(Model):
     name = models.CharField(primary_key=True, max_length=50)
 
@@ -107,19 +82,3 @@ class JhiUserAuthority(Model):
         managed = True
         db_table = "jhi_user_authority"
         unique_together = (("user", "authority_name"),)
-
-
-class Request(Model):
-    id = models.BigIntegerField(primary_key=True)
-    request_id = models.UUIDField(blank=True, null=True)
-    user_tracking_id = models.UUIDField(blank=True, null=True)
-    request_type = models.CharField(max_length=255, blank=True, null=True)
-    payment_status = models.CharField(max_length=255, blank=True, null=True)
-    request_status = models.CharField(max_length=255, blank=True, null=True)
-    delivery = models.OneToOneField(Delivery, models.DO_NOTHING, blank=True, null=True)
-    creation_date = models.DateTimeField(blank=True, null=True)
-    last_update_date = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = "request"

@@ -21,16 +21,6 @@ from settings.configs.jwt_config import (
     JWT_PROJECT_PUBLIC_KEY,
 )
 from settings.configs.logging_config import ENV_DISABLED_LOGGING, ENV_ENABLED_LOGGING
-from settings.configs.minio_config import (
-    MINIO_INTERNAL_STORAGE_ADDRESS,
-    MINIO_INTERNAL_STORAGE_USE_HTTPS,
-    MINIO_MIGRATED_BUCKETS,
-    MINIO_MIGRATION_ENABLED,
-    MINIO_STORAGE_ACCESS_KEY,
-    MINIO_STORAGE_ADDRESS,
-    MINIO_STORAGE_SECRET_KEY,
-    MINIO_STORAGE_USE_HTTPS,
-)
 from settings.configs.sqlite_config import SQLITE3_CONFIG
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -177,6 +167,7 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
 else:
     DATABASES = SQLITE3_CONFIG
 
+# Adjustments for environment-enabled logging
 if ENV:
     LOGGING = ENV_ENABLED_LOGGING
 else:
@@ -192,13 +183,3 @@ if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
     LOGGING["loggers"][""]["handlers"].append("elasticapm")
     INSTALLED_APPS.append("elasticapm.contrib.django")
     MIDDLEWARE.append("elasticapm.contrib.django.middleware.TracingMiddleware")
-
-
-MINIO_MIGRATION_ENABLED
-MINIO_MIGRATED_BUCKETS
-MINIO_INTERNAL_STORAGE_ADDRESS
-MINIO_STORAGE_ADDRESS
-MINIO_STORAGE_ACCESS_KEY
-MINIO_STORAGE_SECRET_KEY
-MINIO_STORAGE_USE_HTTPS
-MINIO_INTERNAL_STORAGE_USE_HTTPS

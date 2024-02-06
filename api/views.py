@@ -15,7 +15,7 @@ from utils.google_chat_logs import generate_gc_card_body
 from utils.jwt_helpers import generate_token
 from utils.signature_manager import verify_password_with_hash
 
-from .models.models import JhiUser
+from .models.model import JhiUser
 from .pagination import ModelPagination
 from .permissions import IsAuthenticated, IsBackendAuthenticated
 from .serializer import ApiResponseViewSerializer, AuthenticateSerializer
@@ -45,8 +45,6 @@ class ApiResponseView(GenericAPIView):
 
     def get_queryset(self):
         # Example queryset
-        from .models.models import JhiUser
-
         return JhiUser.objects.all().order_by("id")
 
     def get_paginated_link(self, page_obj):

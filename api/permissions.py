@@ -12,6 +12,9 @@ class IsBackendAuthenticated(BasePermission):
 
     def has_permission(self, request, view):
         token = request.META.get("HTTP_AUTHORIZATION")
+        if not token or not token.startswith("Bearer "):
+            return False
+        token = token.split(" ")[1]  # Extract the token part after "Bearer "
         verified, data = verify_backend_token(token)
         if not verified:
             return False
@@ -27,6 +30,9 @@ class IsAuthenticated(BasePermission):
 
     def has_permission(self, request, view):
         token = request.META.get("HTTP_AUTHORIZATION")
+        if not token or not token.startswith("Bearer "):
+            return False
+        token = token.split(" ")[1]  # Extract the token part after "Bearer "
         verified, data = verify_token(token)
         if not verified:
             return False
@@ -45,3 +51,15 @@ class HasValidSignature(BasePermission):
         if signed_request_is_valid(request, PROJECT_VERIFICATION_TOKEN):
             return True
         return False
+
+
+class HasJhipsterKey(BasePermission):
+    """
+    Has a valid Jhipster Key
+    """
+
+    def has_permission(self, request, view):
+        token = request.META.get("HTTP_API_KEY")
+        if not token:
+            return False
+        return token == "JHIPSTER_API_KEY"

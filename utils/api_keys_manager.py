@@ -5,6 +5,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 class ApiKeyServicesNames:
     SERVICE1 = "SERVICE1"
     SERVICE2 = "SERVICE2"
+    BACKEND = "BACKEND"
 
 
 class HasCustomApiKey(HasAPIKey):
@@ -39,3 +40,8 @@ class HasService1ApiKey(HasCustomApiKey):
 
 class HasService2ApiKey(HasCustomApiKey):
     name_starts_with = ApiKeyServicesNames.SERVICE2
+
+
+class HasBackendApiKey(HasCustomApiKey):
+    name = ApiKeyServicesNames.BACKEND
+    name_starts_with = ApiKeyServicesNames.BACKEND

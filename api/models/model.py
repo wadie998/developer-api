@@ -9,38 +9,6 @@ from django.db import models
 from django.db.models import Model
 
 
-class Databasechangelog(Model):
-    id = models.CharField(primary_key=True, max_length=255)
-    author = models.CharField(max_length=255)
-    filename = models.CharField(max_length=255)
-    dateexecuted = models.DateTimeField()
-    orderexecuted = models.IntegerField()
-    exectype = models.CharField(max_length=10)
-    md5sum = models.CharField(max_length=35, blank=True, null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    comments = models.CharField(max_length=255, blank=True, null=True)
-    tag = models.CharField(max_length=255, blank=True, null=True)
-    liquibase = models.CharField(max_length=20, blank=True, null=True)
-    contexts = models.CharField(max_length=255, blank=True, null=True)
-    labels = models.CharField(max_length=255, blank=True, null=True)
-    deployment_id = models.CharField(max_length=10, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = "databasechangelog"
-
-
-class Databasechangeloglock(Model):
-    id = models.IntegerField(primary_key=True)
-    locked = models.BooleanField()
-    lockgranted = models.DateTimeField(blank=True, null=True)
-    lockedby = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = "databasechangeloglock"
-
-
 class JhiAuthority(Model):
     name = models.CharField(primary_key=True, max_length=50)
 
@@ -50,7 +18,7 @@ class JhiAuthority(Model):
 
 
 class JhiUser(Model):
-    id = models.BigIntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     login = models.CharField(unique=True, max_length=50)
     password_hash = models.CharField(max_length=60)
     first_name = models.CharField(max_length=50, blank=True, null=True)

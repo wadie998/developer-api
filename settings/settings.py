@@ -10,28 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
-from pathlib import Path
-
-from decouple import AutoConfig, config
 
 from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
-from settings.configs.jwt_config import (
-    BACKEND_JWT_PUBLIC_KEY,
-    JWT_PROJECT_PRIVATE_KEY,
-    JWT_PROJECT_PUBLIC_KEY,
-)
-from settings.configs.logging_config import ENV_DISABLED_LOGGING, ENV_ENABLED_LOGGING
+from settings.configs.env import BASE_DIR, config
+from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY, JWT_SECRET_KEY
+from settings.configs.logging_config import LOGGING
 from settings.configs.sqlite_config import SQLITE3_CONFIG
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-ENV = os.environ.get("ENV", None)
-
-
-if ENV:
-    config = AutoConfig("/run/secrets")  # noqa: F811
-    GCLOUD_SERVICE_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -42,8 +26,7 @@ SECRET_KEY = config("SECRET_KEY")
 PROJECT_DOMAIN = config("PROJECT_DOMAIN")
 
 BACKEND_JWT_PUBLIC_KEY
-JWT_PROJECT_PRIVATE_KEY
-JWT_PROJECT_PUBLIC_KEY
+JWT_SECRET_KEY
 
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
@@ -52,6 +35,7 @@ GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", de
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="https://*.flouci.com").split(",")
 
 ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
 
@@ -129,6 +113,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_METADATA_CLASS": None,
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "EXCEPTION_HANDLER": "utils.custom_exception_handlers.drf_custom_exception_handler",
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -146,12 +138,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+if DEBUG is False:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 if config("POSTGRESQL_ENABLED", default=False, cast=bool):
     DATABASES = {
@@ -168,10 +166,8 @@ else:
     DATABASES = SQLITE3_CONFIG
 
 # Adjustments for environment-enabled logging
-if ENV:
-    LOGGING = ENV_ENABLED_LOGGING
-else:
-    LOGGING = ENV_DISABLED_LOGGING
+# Check configs in log config
+LOGGING
 
 
 if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
@@ -183,3 +179,6 @@ if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
     LOGGING["loggers"][""]["handlers"].append("elasticapm")
     INSTALLED_APPS.append("elasticapm.contrib.django")
     MIDDLEWARE.append("elasticapm.contrib.django.middleware.TracingMiddleware")
+
+BACKEND_API_ADDRESS = config("BACKEND_API_ADDRESS", default="https://dev.flouci.com")
+BACKEND_API_KEY = config("BACKEND_API_KEY", default="s4IDXIJh.52C03pSXAu8wzBaL54rGFFgP9zioliIv")

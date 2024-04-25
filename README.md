@@ -12,6 +12,73 @@ And make sure to read the [migration guideline document](https://docs.google.com
 To ensure consistency in configuration enable/disable settings, refer to the ENV file.
 Under the 'settings' folder, find the 'configs' folder containing the necessary configurations.
 
+copy .env.example to .env, some info might be requested from dev-team/devops-team, make your custom changes if you needed
+
+```sh
+cp .env.example .env
+```
+
+### Migration Steps
+
+1. **Generate Initial Django Models:**
+
+   Run the following command to extract the current database schema into Django models:
+
+   ```sh
+   python manage.py inspectdb > models.py
+   ```
+
+2. **Organize Model Files:**
+
+   For a cleaner structure, move `models.py` into a folder named `models` under `api`.
+
+3. **Prepare for Migrations:**
+
+   - Remove `managed = False` lines from `models.py`.
+   - Verify the database structure matches the Django models.
+
+4. **Initialize Migrations:**
+
+   Create a folder named `migrations` and make it a Python package (`__init__.py` inside).
+
+   run the following commands in the shell:
+
+   ```sh
+   python manage.py makemigrations
+   ```
+
+5. **Create Superuser (Optional):**
+
+   If needed, run the following commands in the shell:
+
+   ```sh
+   python manage.py makemigrations
+   python manage.py createsuperuser
+   ```
+
+6. **Adjust Primary Keys:**
+
+   In `models.py`, replace `models.BigIntegerField` with `models.BigAutoField` for primary keys where necessary.
+
+7. **Generate Migrations Again:**
+
+   Run the following commands to generate migrations with the updated model changes:
+
+   ```sh
+   python manage.py makemigrations
+   ```
+
+8. **Apply Migrations:**
+
+   Migrate the changes into the database, skipping initial creation:
+
+   ```sh
+   python manage.py migrate --fake-initial
+   ```
+
+#### Important Note
+Always use `--fake-initial` when migrating to skip the initial creation of the database, ensuring a smooth migration process.
+
 ### Authentication
 Different authentication methods have their respective permissions.
 
@@ -22,7 +89,6 @@ Internally, JWT authentication uses IsAuthenticated.
 #### API_KEY
 API Key Authentication follows the rest_framework_api_key documentation.
 Utilize HasServiceApiKey following the same logic.
-
 
 ### Setup precommit hook
 This project uses precommit hooks for code formatting and enforcing pep8 best practices [more](https://pre-commit.com), it's mandatory setup:

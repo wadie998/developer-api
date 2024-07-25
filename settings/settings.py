@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_api_key",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
     "health_check",
     "health_check.db",
     "health_check.contrib.migrations",
@@ -62,6 +64,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_otp.middleware.OTPMiddleware",
 ]
 
 ROOT_URLCONF = "settings.urls"
@@ -254,3 +257,7 @@ if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
     LOGGING["loggers"][""]["handlers"].append("elasticapm")
     INSTALLED_APPS.append("elasticapm.contrib.django")
     MIDDLEWARE.append("elasticapm.contrib.django.middleware.TracingMiddleware")
+
+
+ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
+ADMIN_TWO_FA_ENABLED = config("ADMIN_TWO_FA_ENABLED", default=False, cast=bool)

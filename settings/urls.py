@@ -14,9 +14,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.conf.urls import include
 from django.urls import path
 from django_otp.admin import OTPAdminSite
+
 from settings.settings import ADMIN_ENABLED, ADMIN_TWO_FA_ENABLED
 
 urlpatterns = [
@@ -26,6 +28,7 @@ urlpatterns = [
 
 if ADMIN_ENABLED:
     from django.contrib import admin
+
     if ADMIN_TWO_FA_ENABLED:
         admin.site.__class__ = OTPAdminSite
     urlpatterns += [path("admin/", admin.site.urls)]

@@ -17,15 +17,22 @@ Including another URLconf
 from django.conf.urls import include
 from django.urls import path
 from django_otp.admin import OTPAdminSite
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
+
 from settings.settings import ADMIN_ENABLED, ADMIN_TWO_FA_ENABLED
 
 urlpatterns = [
     path("api/ht", include("health_check.urls")),
     path("api/", include("api.urls"), name="api"),
+    # SCHEMA PUBLIC
+    path("api/schema/public", SpectacularAPIView.as_view(), name="schema"),
+    path("docs/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
+
 
 if ADMIN_ENABLED:
     from django.contrib import admin
+
     if ADMIN_TWO_FA_ENABLED:
         admin.site.__class__ = OTPAdminSite
     urlpatterns += [path("admin/", admin.site.urls)]

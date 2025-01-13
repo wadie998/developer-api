@@ -27,8 +27,9 @@ if ENV:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+DJANGO_SERVICE_VERSION = "5.0.0"
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 BACKEND_JWT_PUBLIC_KEY = config("BACKEND_JWT_PUBLIC_KEY", cast=lambda key: bytes(key.replace("\\n", "\n"), "utf-8"))
 
@@ -54,6 +55,8 @@ INSTALLED_APPS = [
     "health_check",
     "health_check.db",
     "health_check.contrib.migrations",
+    "drf_spectacular",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -87,17 +90,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "settings.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+# REST FRAMEWORK
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_METADATA_CLASS": None,
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "EXCEPTION_HANDLER": "utils.custom_exception_handlers.drf_custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Flouci Developers API",
+    "DESCRIPTION": "Flouci App APIs",
+    "VERSION": "2.0.0",
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -150,6 +161,8 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
             "PASSWORD": config("DB_PASSWORD"),
             "HOST": config("DB_ADDRESS"),
             "PORT": config("DB_PORT"),
+            # to be removed and consulted again by abdou.. hopefully one day..
+            "ATOMIC_REQUESTS": True,
         }
     }
 else:
@@ -261,3 +274,8 @@ if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
 
 ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
 ADMIN_TWO_FA_ENABLED = config("ADMIN_TWO_FA_ENABLED", default=False, cast=bool)
+
+
+# FLOUCI BACKEND
+FLOUCI_BACKEND_API_ADDRESS = config("FLOUCI_BACKEND_API_ADDRESS", default="")
+FLOUCI_BACKEND_API_KEY = config("FLOUCI_BACKEND_API_KEY", default="")

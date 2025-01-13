@@ -3,8 +3,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 
 
 class ApiKeyServicesNames:
-    SERVICE1 = "SERVICE1"
-    SERVICE2 = "SERVICE2"
+    BACKEND = "BACKEND"
 
 
 class HasCustomApiKey(HasAPIKey):
@@ -14,6 +13,7 @@ class HasCustomApiKey(HasAPIKey):
     def get_api_key_name(self, request):
         api_key = APIKey.objects.get(prefix=self.get_key(request).partition(".")[0])
         request.api_key = api_key
+        request.tracking_id = None
         return api_key.name
 
     def check_api_key_name(self, request):
@@ -28,14 +28,5 @@ class HasCustomApiKey(HasAPIKey):
         return super(HasAPIKey, self).has_permission(request, view) and self.check_api_key_name(request)
 
 
-# To add a new service api keys permission class:
-# Add a class that inherits from HasCustomApiKey
-# your class must override the attribute 'name' or 'name_starts_with' with any string representing the service name
-
-
-class HasService1ApiKey(HasCustomApiKey):
-    name = ApiKeyServicesNames.SERVICE1
-
-
-class HasService2ApiKey(HasCustomApiKey):
-    name_starts_with = ApiKeyServicesNames.SERVICE2
+class HasBackendApiKey(HasCustomApiKey):
+    name = ApiKeyServicesNames.BACKEND

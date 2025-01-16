@@ -73,12 +73,12 @@ class DailyMetrics(models.Model):
     class Meta:
         db_table = "daily_metrics"
 
+
 class JhiAuthority(models.Model):
     name = models.CharField(primary_key=True, max_length=50)
 
     class Meta:
         db_table = "jhi_authority"
-
 
 
 class JhiUser(models.Model):

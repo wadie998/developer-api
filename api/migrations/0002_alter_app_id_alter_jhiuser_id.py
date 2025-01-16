@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('api', '0001_initial'),
+        ("api", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='app',
-            name='id',
+            model_name="app",
+            name="id",
             field=models.BigAutoField(primary_key=True, serialize=False),
         ),
         migrations.AlterField(
-            model_name='jhiuser',
-            name='id',
+            model_name="jhiuser",
+            name="id",
             field=models.BigAutoField(primary_key=True, serialize=False),
         ),
     ]

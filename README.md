@@ -1,3 +1,15 @@
+# Flouci Developer API
+
+## Introduction
+Welcome to the Flouci Developer Api  project!
+This documentation provides an overview of the Flouci developer api project, explaining its purpose, architecture, and functionalities.
+
+## Purpose
+The primary reason for implementing
+
+## Flow
+A
+
 ### Setup precommit hook
 This project uses precommit hooks for code formatting and enforcing pep8 best practices [more](https://pre-commit.com), it's mandatory setup:
 ```sh

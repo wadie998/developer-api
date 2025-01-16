@@ -24,7 +24,7 @@ class App(models.Model):
     test = models.BooleanField()
     description = models.CharField(max_length=255, blank=True, null=True)
     private_token = models.CharField(unique=True, max_length=36, blank=True, null=True)
-    image_url = models.CharField(blank=True, null=True)
+    image_url = models.CharField(max_length=1000, blank=True, null=True)
     deleted = models.BooleanField()
     gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
     transaction_number = models.BigIntegerField(blank=True, null=True)
@@ -71,72 +71,14 @@ class DailyMetrics(models.Model):
     transaction_type = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "daily_metrics"
-
-
-class Databasechangelog(models.Model):
-    id = models.CharField(max_length=255, primary_key=True)
-    author = models.CharField(max_length=255)
-    filename = models.CharField(max_length=255)
-    dateexecuted = models.DateTimeField()
-    orderexecuted = models.IntegerField()
-    exectype = models.CharField(max_length=10)
-    md5sum = models.CharField(max_length=35, blank=True, null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    comments = models.CharField(max_length=255, blank=True, null=True)
-    tag = models.CharField(max_length=255, blank=True, null=True)
-    liquibase = models.CharField(max_length=20, blank=True, null=True)
-    contexts = models.CharField(max_length=255, blank=True, null=True)
-    labels = models.CharField(max_length=255, blank=True, null=True)
-    deployment_id = models.CharField(max_length=10, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = "databasechangelog"
-
-
-class Databasechangeloglock(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    locked = models.BooleanField()
-    lockgranted = models.DateTimeField(blank=True, null=True)
-    lockedby = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = "databasechangeloglock"
-
 
 class JhiAuthority(models.Model):
     name = models.CharField(primary_key=True, max_length=50)
 
     class Meta:
-        managed = False
         db_table = "jhi_authority"
 
-
-class JhiPersistentAuditEvent(models.Model):
-    event_id = models.BigIntegerField(primary_key=True)
-    principal = models.CharField(max_length=50)
-    event_date = models.DateTimeField(blank=True, null=True)
-    event_type = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = "jhi_persistent_audit_event"
-
-
-class JhiPersistentAuditEvtData(models.Model):
-    event = models.OneToOneField(
-        JhiPersistentAuditEvent, models.DO_NOTHING, primary_key=True
-    )  # The composite primary key (event_id, name) found, that is not supported. The first column is selected.
-    name = models.CharField(max_length=150)
-    value = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = "jhi_persistent_audit_evt_data"
-        unique_together = (("event", "name"),)
 
 
 class JhiUser(models.Model):
@@ -177,7 +119,6 @@ class JhiUserAuthority(models.Model):
     authority_name = models.ForeignKey(JhiAuthority, models.DO_NOTHING, db_column="authority_name")
 
     class Meta:
-        managed = False
         db_table = "jhi_user_authority"
         unique_together = (("user", "authority_name"),)
 
@@ -187,5 +128,4 @@ class MetricsLastUpdate(models.Model):
     last_update_date = models.DateField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "metrics_last_update"

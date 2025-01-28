@@ -99,9 +99,7 @@ class CreateDeveloperAccountView(GenericAPIView):
                     status=status.HTTP_412_PRECONDITION_FAILED,
                 )
             except ObjectDoesNotExist:
-                print("tjeehre")
                 user, _ = JhiUser.objects.get_or_create(
-                    id=1237,  # add auto to db and remove this field
                     login=request.tracking_id,
                     password_hash=request.tracking_id,  # TODO create random generate password function
                     activated=True,
@@ -110,10 +108,8 @@ class CreateDeveloperAccountView(GenericAPIView):
                     created_by="system",
                     created_date=timezone.now(),
                 )
-                print("user ")
                 if user:
                     App.objects.create(
-                        id=123445,
                         user=user,
                         name="TEST APP",
                         description="This is your test app",

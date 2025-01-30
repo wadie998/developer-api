@@ -154,18 +154,29 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 if config("POSTGRESQL_ENABLED", default=False, cast=bool):
+    # Changed the name of the database to be more explicit and to avoid migration issues
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("DB_NAME"),
-            "USER": config("DB_USER"),
-            "PASSWORD": config("DB_PASSWORD"),
-            "HOST": config("DB_ADDRESS"),
-            "PORT": config("DB_PORT"),
+            "NAME": config("NEW_DB_NAME"),
+            "USER": config("NEW_DB_USER"),
+            "PASSWORD": config("NEW_DB_PASSWORD"),
+            "HOST": config("NEW_DB_ADDRESS"),
+            "PORT": config("NEW_DB_PORT"),
             # to be removed and consulted again by abdou.. hopefully one day..
             "ATOMIC_REQUESTS": True,
         }
     }
+    if config("OLD_DATABASE_ENABLED", default=False, cast=bool):
+        DATABASES["old_db"] = {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("OLD_DB_NAME"),
+            "USER": config("OLD_DB_USER"),
+            "PASSWORD": config("OLD_DB_PASSWORD"),
+            "HOST": config("OLD_DB_ADDRESS"),
+            "PORT": config("OLD_DB_PORT"),
+            "ATOMIC_REQUESTS": True,
+        }
 else:
     DATABASES = {
         "default": {

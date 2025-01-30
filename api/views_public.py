@@ -160,7 +160,7 @@ class VerifyPaymentView(GenericAPIView):
     permission_classes = (HasValidAppCredentials,)
 
     def get(self, request, serializer):
-        payment_id = serializer.validated_data.get("payment_id")
+        payment_id = serializer.validated_data["payment_id"]
         application = request.application
         # TODO change in backend and depricate the wallet field
         response = FlouciBackendClient.check_payment(

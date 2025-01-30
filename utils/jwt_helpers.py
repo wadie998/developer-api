@@ -35,10 +35,7 @@ def verify_jhipster_token(token, token_type="developer", public_key=BACKEND_JWT_
         - False, None : expired token or wrong format
     """
     try:
-        print("jhipster")
         decoded = jwt.decode(token, public_key, options={"verify_exp": True, "require": ["exp"]}, algorithms=["ES256"])
-        print(decoded)
-        # auth
         assert decoded["type"] == token_type
         return True, {key: val for key, val in decoded.items() if key not in ["exp", "iat", "type"]}
     except jwt.ExpiredSignatureError:

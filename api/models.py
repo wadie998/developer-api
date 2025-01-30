@@ -9,23 +9,25 @@ import uuid
 
 from django.db import models
 
+from api.enum import AppStatus
+
 
 class App(models.Model):
     id = models.BigAutoField(primary_key=True, serialize=False)
     name = models.CharField(max_length=100)
-    public_token = models.CharField(unique=True, max_length=60)
+    public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     wallet = models.CharField(max_length=35)
-    status = models.CharField(max_length=20)
-    active = models.BooleanField()
+    status = models.CharField(choices=AppStatus.get_choices(), default=AppStatus.VERIFIED, max_length=20)
+    active = models.BooleanField(default=True)
     date_created = models.DateTimeField()
     user = models.ForeignKey("JhiUser", models.PROTECT, blank=True, null=True)
     webhook = models.CharField(max_length=255, blank=True, null=True)
     sms_key = models.CharField(max_length=6, blank=True, null=True)
-    test = models.BooleanField()
+    test = models.BooleanField(default=False)
     description = models.CharField(max_length=255, blank=True, null=True)
-    private_token = models.CharField(unique=True, max_length=36, blank=True, null=True)
-    image_url = models.CharField(max_length=1000, blank=True, null=True)
-    deleted = models.BooleanField()
+    private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
+    image_url = models.URLField(max_length=1000, blank=True, null=True)
+    deleted = models.BooleanField(default=False)
     gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
     transaction_number = models.BigIntegerField(blank=True, null=True)
     revoke_number = models.IntegerField(blank=True, null=True)
@@ -42,8 +44,8 @@ class App(models.Model):
         return {
             "id": str(self.app_id),
             "name": self.name,
-            "token": self.public_token,
-            "secret": self.private_token,
+            "token": str(self.public_token),
+            "secret": str(self.private_token),
             "status": self.status,
             "active": self.active,
             "test": self.test,
@@ -58,74 +60,30 @@ class App(models.Model):
         self.save(update_fields=["private_token"])
 
 
-class DailyMetrics(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    day = models.DateField(blank=True, null=True)
-    transactions = models.BigIntegerField(blank=True, null=True)
-    app = models.ForeignKey(App, models.DO_NOTHING, blank=True, null=True)
-    daily_metrics_id = models.UUIDField(blank=True, null=True)
-    amount_sum = models.BigIntegerField(blank=True, null=True)
-    fee_sum = models.BigIntegerField(blank=True, null=True)
-    amount_average = models.FloatField(blank=True, null=True)
-    fee_average = models.FloatField(blank=True, null=True)
-    transaction_type = models.CharField(max_length=50, blank=True, null=True)
-
-    class Meta:
-        db_table = "daily_metrics"
-
-
-class JhiAuthority(models.Model):
-    name = models.CharField(primary_key=True, max_length=50)
-
-    class Meta:
-        db_table = "jhi_authority"
-
-
 class JhiUser(models.Model):
-    # CREATE SEQUENCE jhi_user_id_seq;
-    # ALTER TABLE jhi_user ALTER COLUMN id SET DEFAULT nextval('jhi_user_id_seq');
     id = models.BigAutoField(primary_key=True, serialize=False)
     login = models.CharField(unique=True, max_length=50)
     password_hash = models.CharField(max_length=60)
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
-    email = models.CharField(unique=True, max_length=191, blank=True, null=True)
+    email = models.CharField(max_length=191, blank=True, null=True, unique=False)
     image_url = models.CharField(max_length=1000, blank=True, null=True)
-    activated = models.BooleanField()
+    activated = models.BooleanField(default=True)
     lang_key = models.CharField(max_length=10, blank=True, null=True)
     activation_key = models.CharField(max_length=20, blank=True, null=True)
     reset_key = models.CharField(max_length=20, blank=True, null=True)
-    created_by = models.CharField(max_length=50)
-    created_date = models.DateTimeField(blank=True, null=True)
+    created_by = models.CharField(max_length=50, default="system")
+    created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     reset_date = models.DateTimeField(blank=True, null=True)
-    last_modified_by = models.CharField(max_length=50, blank=True, null=True)
-    last_modified_date = models.DateTimeField(blank=True, null=True)
+    last_modified_by = models.CharField(max_length=50, default="system")
+    last_modified_date = models.DateTimeField(auto_now=True, blank=True, null=True)
     tmp_email = models.CharField(max_length=191, blank=True, null=True)
     phone_number = models.CharField(max_length=12, blank=True, null=True)
     sms_key = models.CharField(max_length=6, blank=True, null=True)
-    email_validated = models.BooleanField()
-    deleted = models.BooleanField()
+    email_validated = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
     user_id = models.UUIDField(blank=True, null=True)
 
     class Meta:
         # managed = False
         db_table = "jhi_user"
-
-
-class JhiUserAuthority(models.Model):
-    user = models.OneToOneField(
-        JhiUser, models.DO_NOTHING, primary_key=True
-    )  # The composite primary key (user_id, authority_name) found, that is not supported. The first column is selected.
-    authority_name = models.ForeignKey(JhiAuthority, models.DO_NOTHING, db_column="authority_name")
-
-    class Meta:
-        db_table = "jhi_user_authority"
-        unique_together = (("user", "authority_name"),)
-
-
-class MetricsLastUpdate(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    last_update_date = models.DateField(blank=True, null=True)
-
-    class Meta:
-        db_table = "metrics_last_update"

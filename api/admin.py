@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import Permission
 
-from .models import App, DailyMetrics, JhiUser
+from .models import App, JhiUser
 
 
 # @admin.register(App)
@@ -28,23 +28,7 @@ class JhiUserAdmin(admin.ModelAdmin):
     readonly_fields = ("created_date", "last_modified_date")
 
 
-class DailyMetricsAdmin(admin.ModelAdmin):
-    list_display = (
-        "day",
-        "transactions",
-        "app",
-        "amount_sum",
-        "fee_sum",
-        "amount_average",
-        "fee_average",
-        "transaction_type",
-    )
-    search_fields = ("day", "app__name", "transaction_type")
-    list_filter = ("day", "transaction_type")
-
-
 admin.site.register(Permission)
 
 admin.site.register(App, AppAdmin)
-admin.site.register(DailyMetrics, DailyMetricsAdmin)
 admin.site.register(JhiUser, JhiUserAdmin)

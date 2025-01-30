@@ -72,22 +72,7 @@ class CreateDeveloperAppView(GenericAPIView):
         end = start + size
         apps = apps[start:end]
 
-        app_list = [
-            {
-                "id": str(app.app_id),
-                "name": app.name,
-                "token": app.public_token,
-                "secret": app.private_token,
-                "status": app.status,
-                "active": app.active,
-                "test": app.test,
-                "date_created": app.date_created.isoformat(),
-                "description": app.description,
-                "transaction_number": app.transaction_number,
-                "gross": app.gross,
-            }
-            for app in apps
-        ]
+        app_list = [app.get_app_details() for app in apps]
         return Response(
             {
                 "result": app_list,
@@ -102,59 +87,28 @@ class CreateDeveloperAppView(GenericAPIView):
         )
 
     def post(self, request, serializer):
-        try:
-            print("hii")
-            # TODO
-            if not request.tracking_id:
-                request.tracking_id = serializer.validated_data.get("username")
-            print(request.tracking_id)
-            if request.tracking_id != serializer.validated_data.get("username"):
-                return Response(
-                    {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
-                )
-            app_public = uuid.uuid4()
-            app_secret = uuid.uuid4()
-            try:
-                user = JhiUser.objects.get(login=request.tracking_id)
-            except JhiUser.DoesNotExist:
-                return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-            app = App.objects.create(
-                user=user,
-                id=12345,  # TODO Change to db
-                app_id=uuid.uuid4(),
-                public_token=app_public,
-                private_token=app_secret,
-                name=serializer.validated_data.get("name"),
-                description=serializer.validated_data.get("description"),
-                wallet=serializer.validated_data.get("wallet"),
-                status="VERIFIED",  # TODO Turn into enum
-                active=True,
-                test=False,
-                deleted=False,
-                date_created=timezone.now(),
-                merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
-            )
+        if not request.tracking_id:
+            request.tracking_id = serializer.validated_data.get("username")
+        if request.tracking_id != serializer.validated_data.get("username"):
             return Response(
-                {
-                    "success": True,
-                    "app": {
-                        "id": str(app.app_id),
-                        "name": app.name,
-                        "token": str(app.public_token),
-                        "secret": str(app.private_token),
-                        "status": app.status,
-                        "active": app.active,
-                        "test": app.test,
-                        "date_created": app.date_created.isoformat(),
-                        "description": app.description,
-                        "transaction_number": app.transaction_number,
-                        "gross": app.gross,
-                    },
-                },
-                status=status.HTTP_201_CREATED,
+                {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
-        except Exception as e:
-            print(e)
+        try:
+            user = JhiUser.objects.get(login=request.tracking_id)
+        except JhiUser.DoesNotExist:
+            return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        app = App.objects.create(
+            user=user,
+            app_id=uuid.uuid4(),
+            name=serializer.validated_data.get("name"),
+            description=serializer.validated_data.get("description"),
+            wallet=serializer.validated_data.get("wallet"),
+            date_created=timezone.now(),
+            merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
+        )
+        data = app.get_app_details()
+        data["success"] = True
+        return Response({data}, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(exclude=True)
@@ -185,6 +139,9 @@ class RevokeDeveloperAppView(GenericAPIView):
     def post(self, request, app_id):
         try:
             app = App.objects.get(app_id=app_id)
+        except App.DoesNotExist:
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
             app.revoke_keys()
             response_data = {
                 "result": app.get_app_details(),
@@ -194,8 +151,6 @@ class RevokeDeveloperAppView(GenericAPIView):
                 "version": DJANGO_SERVICE_VERSION,
             }
             return Response(response_data, status=status.HTTP_200_OK)
-        except App.DoesNotExist:
-            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

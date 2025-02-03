@@ -10,19 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
-import sys
-from pathlib import Path
 
-from decouple import AutoConfig, config
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-ENV = os.environ.get("ENV", None)
-
-
-if ENV:
-    config = AutoConfig("/run/secrets")  # noqa: F811
+from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
+from settings.configs.env import BASE_DIR, config
+from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY, JWT_SECRET_KEY
+from settings.configs.logging_config import LOGGING
+from settings.configs.sqlite_config import SQLITE3_CONFIG
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -31,23 +24,36 @@ DJANGO_SERVICE_VERSION = "4.0.0"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
-BACKEND_JWT_PUBLIC_KEY = config("BACKEND_JWT_PUBLIC_KEY", cast=lambda key: bytes(key.replace("\\n", "\n"), "utf-8"))
+PROJECT_DOMAIN = config("PROJECT_DOMAIN")
+
+BACKEND_JWT_PUBLIC_KEY
+JWT_SECRET_KEY
+
+# Logs Notification
+GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="https://*.flouci.com").split(",")
 
+ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
 
 # Application definition
+INSTALLED_APPS = []
+if ADMIN_ENABLED:
+    INSTALLED_APPS = [
+        "django.contrib.admin",
+    ]
 
-INSTALLED_APPS = [
-    "django.contrib.admin",
+INSTALLED_APPS += [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "api",
     "rest_framework",
     "rest_framework_api_key",
     "django_otp",
@@ -128,6 +134,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_METADATA_CLASS": None,
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "EXCEPTION_HANDLER": "utils.custom_exception_handlers.drf_custom_exception_handler",
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -151,7 +165,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 if config("POSTGRESQL_ENABLED", default=False, cast=bool):
     DATABASES = {
@@ -177,103 +190,16 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
             "ATOMIC_REQUESTS": True,
         }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-
-if ENV:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "filters": {
-            "health_check": {"()": "settings.logging.custom_gunicorn_logger.HealthCheckFilter"},
-        },
-        "formatters": {
-            "verbose": {"format": "%(levelname)s File %(pathname)s, line %(lineno)d, %(message)s"},
-        },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-                "stream": sys.stdout,
-            },
-            "mail_admins": {
-                "level": "ERROR",
-                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
-                "include_html": False,
-                "filters": ["health_check"],
-            },
-            "critical_mail": {
-                "level": "CRITICAL",
-                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
-                "include_html": False,
-            },
-        },
-        "loggers": {
-            "": {
-                "handlers": ["console", "critical_mail"],
-                "level": "INFO",
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["mail_admins"],
-                "level": "ERROR",
-                "propagate": True,
-            },
-        },
-    }
-else:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "verbose": {"format": "%(levelname)s File %(pathname)s, line %(lineno)d, %(message)s"},
-        },
-        "handlers": {
-            "console": {
-                "level": "DEBUG",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-            },
-            "mail_admins": {
-                "level": "ERROR",
-                "class": "settings.logging.custom_admin_email_handler.CustomAdminEmailHandler",
-            },
-        },
-        "loggers": {
-            "": {
-                "handlers": ["console"],
-                "level": "INFO",
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["mail_admins"],
-                "level": "ERROR",
-                "propagate": False,
-            },
-        },
-    }
+    DATABASES = SQLITE3_CONFIG
 
 
-if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
-    ELASTIC_APM = {
-        "SERVICE_NAME": config("ELASTIC_APM_SERVICE_NAME", default="django-template-app"),
-        "SECRET_TOKEN": config("ELASTIC_APM_SECRET_TOKEN", default=None),
-        "API_KEY": config("ELASTIC_APM_API_KEY", default=None),
-        "SERVER_URL": config("ELASTIC_APM_ADDRESS"),
-        "ENVIRONMENT": ENV,
-        # show url instead of views
-        "DJANGO_TRANSACTION_NAME_FROM_ROUTE": True,
-        "TRANSACTIONS_IGNORE_PATTERNS": ["GET api/ht/?"],
-        "ENABLED": config("ELASTIC_APM_ENABLED", default=True, cast=bool),
-        "METRICS_INTERVAL": config("ELASTIC_APM_METRICS_INTERVAL", default="2m"),
-        "DISABLE_METRICS": config("ELASTIC_APM_DISABLE_METRICS", default=None),
-        "CENTRAL_CONFIG": config("ELASTIC_APM_CENTRAL_CONFIG", default=False, cast=bool),
-    }
+# Adjustments for environment-enabled logging
+# Check configs in log config
+LOGGING
+
+
+if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
+    ELASTIC_APM = ELASTIC_APM_CONFIG
     LOGGING["handlers"]["elasticapm"] = {
         "level": "ERROR",
         "class": "elasticapm.contrib.django.handlers.LoggingHandler",

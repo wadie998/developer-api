@@ -1,5 +1,7 @@
 # virtual envs
 venv/
+myenv/
+myvenv/
 
 # local config
 .env

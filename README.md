@@ -68,9 +68,7 @@ isort --profile=black .
 flake8 --max-line-length=120 --exclude=venv --ignore=E203,W503
 ```
 
-
-
-### Create an API key  [optional]
+#### Create an API key  [optional]
 
 for more details check rest_framework_api_key documentation
 Save key in proper .env immediately as it cannot be retrieved

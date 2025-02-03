@@ -4,11 +4,8 @@
 Welcome to the Flouci Developer Api  project!
 This documentation provides an overview of the Flouci developer api project, explaining its purpose, architecture, and functionalities.
 
-## Purpose
-The primary reason for implementing
-
 ## Flow
-A
+
 
 ## Configuration
 To ensure consistency in configuration enable/disable settings, refer to the ENV file.

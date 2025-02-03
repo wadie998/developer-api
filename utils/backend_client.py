@@ -12,11 +12,6 @@ from settings.settings import (
 
 logger = logging.getLogger(__name__)
 
-"""
-This class is a Backend Client.
-Use: result = FlouciBackendClient.get_accepted_users()
-"""
-
 
 class FlouciBackendClient:
     HEADERS = {"Content-Type": "application/json", "Authorization": "Api-Key " + FLOUCI_BACKEND_API_KEY}

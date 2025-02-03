@@ -8,3 +8,12 @@ class AppStatus(Enum):
     @staticmethod
     def get_choices():
         return ((tag.value, tag.name) for tag in AppStatus)
+
+
+class UserType(Enum):
+    Individual = "Individual"
+    Merchant = "Merchant"
+
+    @staticmethod
+    def get_choices():
+        return ((tag.value, tag.name) for tag in UserType)

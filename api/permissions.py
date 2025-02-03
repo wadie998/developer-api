@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -5,6 +6,8 @@ from rest_framework.permissions import BasePermission
 
 from api.models import App
 from utils.jwt_helpers import verify_backend_token, verify_jhipster_token
+
+logger = logging.getLogger(__name__)
 
 
 class IsFlouciAuthenticated(BasePermission):
@@ -17,6 +20,8 @@ class IsFlouciAuthenticated(BasePermission):
         if not token or not token.startswith("Bearer "):
             return False
         token = token.split(" ")[1]  # Extract the token part after "Bearer "
+        if token == "":
+            return False
         verified, data = verify_backend_token(token)
         if not verified:
             return False
@@ -59,7 +64,11 @@ class HasValidAppCredentials(BasePermission):
             uuid.UUID(app_secret)
             # TODO check if we want to use deleted or other metrics
             application = App.objects.get(public_token=app_token, private_token=app_secret, active=True)
+            if application.deleted:
+                logger.warning("Application with public token %s is deleted", app_token)
+                return False
             request.application = application
+            request.tracking_id = application.user.login
             return True
         except (ObjectDoesNotExist, ValueError):
             return False

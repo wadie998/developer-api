@@ -4,7 +4,11 @@ from datetime import timedelta
 import requests
 from django.utils import timezone
 
-from settings.settings import FLOUCI_BACKEND_API_ADDRESS, FLOUCI_BACKEND_API_KEY
+from settings.settings import (
+    FLOUCI_BACKEND_API_ADDRESS,
+    FLOUCI_BACKEND_API_KEY,
+    FLOUCI_BACKEND_INTERNAL_API_KEY,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +24,7 @@ class FlouciBackendClient:
     CHECK_PAYMENT_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_payment"
     SEND_MONEY_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/send_money"
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
+    FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
 
     @staticmethod
     def generate_payment_page(
@@ -149,3 +154,28 @@ class FlouciBackendClient:
                 f"An error has occurred developer_send_money client with operation_id {operation_id} and sender_id {sender_id} exception: {e}"  # noqa: E501
             )
             return {"success": False, "error": "Problem while sending money", "code": -1, "status_code": 500}
+
+    @staticmethod
+    def fetch_tracking_id(wallet):
+        params = {"wallet": wallet}
+        header = FlouciBackendClient.HEADERS
+        header["Authorization"] = "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY
+        try:
+            result = requests.get(
+                FlouciBackendClient.FETCH_TRACKING_ID_URL,
+                headers=FlouciBackendClient.HEADERS,
+                verify=False,
+                params=params,
+            )
+            if result.status_code == 200 and result.json().get("success"):
+                return result.json()
+            else:
+                logger.error(
+                    f"An error has occurred fetch_tracking_id from wallet {wallet}, status code: {result.status_code}, error details {result.text}",  # noqa: E501
+                )
+                return {"success": False, "status_code": result.status_code}
+        except Exception as e:
+            logger.exception("An error has occurred fetch_tracking_id %s", e)
+            return {"success": False, "code": 6, "message": "Serveur non disponible", "status_code": 500}
+
+        pass

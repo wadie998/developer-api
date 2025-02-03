@@ -1,16 +1,20 @@
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
+from api.models import App
 from api.permissions import HasValidAppCredentials
 from api.serializers import (
     CheckSendMoneyStatusSerializer,
     GeneratePaymentSerializer,
+    SecureAcceptPaymentSerializer,
     SendMoneySerializer,
     VerifyPaymentSerializer,
 )
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.backend_client import FlouciBackendClient
+from utils.dataapi_client import DataApiClient
 from utils.decorators import IsValidGenericApi
 
 
@@ -66,6 +70,7 @@ class GeneratePaymentView(GenericAPIView):
         accept_edinar = serializer.validated_data.get("accept_edinar")
         currency = serializer.validated_data.get("currency")
         session_timeout_secs = serializer.validated_data.get("session_timeout_secs")
+        session_timeout = serializer.validated_data.get("session_timeout")
         success_link = serializer.validated_data.get("success_link")
         fail_link = serializer.validated_data.get("fail_link")
         webhook = serializer.validated_data.get("webhook")
@@ -86,7 +91,7 @@ class GeneratePaymentView(GenericAPIView):
             success_link=success_link,
             fail_link=fail_link,
             developer_tracking_id=developer_tracking_id,
-            expires_at=session_timeout_secs,
+            expires_at=session_timeout_secs or session_timeout,
             webhook_url=webhook,
             destination=destination,
         )
@@ -113,7 +118,6 @@ class GeneratePaymentView(GenericAPIView):
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
             }
-        print(data)
         return Response(data=data, status=response.get("status_code"))
 
 
@@ -233,12 +237,10 @@ class SendMoneyView(GenericAPIView):
     serializer_class = SendMoneySerializer
     permission_classes = (HasValidAppCredentials,)
 
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def post(self, request, serializer):
         validated_data = serializer.validated_data
 
-        response = FlouciBackendClient.send_money(
+        response = FlouciBackendClient.developer_send_money_status(
             amount_in_millimes=validated_data.get("amount_in_millimes"),
             destination=validated_data.get("destination"),
             webhook=validated_data.get("webhook"),
@@ -312,11 +314,9 @@ class CheckSendMoneyStatusView(GenericAPIView):
     permission_classes = (HasValidAppCredentials,)
 
     def get(self, request, serializer):
-        serializer = self.serializer_class(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        # validated_data = serializer.validated_data
-
-        response = FlouciBackendClient.developer_check_send_money_status(operation_id="", sender_id="")
+        sender_id = request.application.merchant_id
+        operation_id = serializer.validated_data["operation_id"]
+        response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
 
         if response.get("success"):
             data = {
@@ -341,3 +341,24 @@ class CheckSendMoneyStatusView(GenericAPIView):
                 "version": DJANGO_SERVICE_VERSION,
             }
         return Response(data=data, status=response.get("status_code"))
+
+
+@IsValidGenericApi()
+class AcceptPayment(GenericAPIView):
+    permission_classes = (HasValidAppCredentials,)
+    serializer_class = SecureAcceptPaymentSerializer
+
+    def post(self, request, serializer):
+        accept_payment_data = serializer.validated_data
+        app = App.objects.get(private_token=serializer.validated_data["app_secret"])
+        if app.test:
+            flouci_otp = serializer.validated_data["flouci_otp"]
+            if flouci_otp == "F-111111":
+                return Response({"result": {"status": "SUCCESS"}, "code": 0}, status=status.HTTP_200_OK)
+            if flouci_otp == "F-000000":
+                return Response({"result": {"status": "FAILED"}, "code": 0}, status=status.HTTP_200_OK)
+        accept_payment_data["app_id"] = app.app_id
+        accept_payment_data["destination"] = app.wallet
+
+        response = DataApiClient.accept_payment(accept_payment_data)
+        return Response(response, status=status.HTTP_200_OK)

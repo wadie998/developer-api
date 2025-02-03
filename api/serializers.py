@@ -20,13 +20,14 @@ class GeneratePaymentSerializer(DefaultSerializer):
     app_secret = serializers.UUIDField()
     amount = serializers.IntegerField(min_value=100, max_value=5000000)
     accept_card = serializers.BooleanField()
-    accept_edinar = serializers.BooleanField(required=False)
-    currency = serializers.CharField(required=False)
     session_timeout_secs = serializers.IntegerField(min_value=300, default=1200)
+    session_timeout = serializers.IntegerField(min_value=300, default=1200)
     success_link = serializers.URLField()
     fail_link = serializers.URLField()
-    webhook = serializers.URLField(required=False)
     developer_tracking_id = serializers.CharField(max_length=100)
+    accept_edinar = serializers.BooleanField(required=False)
+    currency = serializers.CharField(required=False)
+    webhook = serializers.URLField(required=False)
     destination = serializers.ListField(child=serializers.JSONField(), required=False)
 
     def validate(self, validate_data):
@@ -82,24 +83,12 @@ class GetDeveloperAppSerializer(DefaultSerializer):
 
 
 class CreateDeveloperAppSerializer(DefaultSerializer):
-    name = serializers.CharField(max_length=100)  # app name
-    description = serializers.CharField(max_length=500)  # app description
-    merchant_id = serializers.CharField()
-    wallet = serializers.CharField()
+    name = serializers.CharField(min_length=3, max_length=100)
+    description = serializers.CharField(min_length=3, max_length=255)
+    merchant_id = serializers.CharField(max_length=255)
+    wallet = serializers.CharField(max_length=255)
     username = serializers.CharField()
     imageBase64 = serializers.CharField(required=False)
-
-    # phone_number = serializers.CharField(max_length=15, required=True)
-    # tracking_id = serializers.UUIDField(required=True)
-
-    # "merchant_id": business.id,
-    # "wallet": business.get_public_key(),
-    # "username": username,
-    # "name": app_name,
-    # "description": app_description,
-    # "imageBase64": app_image,
-
-    # app_image = serializers.CharField(required=False)
 
     def validate(self, data):
         app_image = data.get("imageBase64")
@@ -123,7 +112,9 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
 
 
 class SendMoneySerializer(DefaultSerializer):
-    amount = serializers.IntegerField(min_value=100, max_value=5000000)
+    amount = serializers.IntegerField(
+        min_value=100, max_value=5000000
+    )  # To verify with Anis, Should we consider packs/limits
     destination = serializers.CharField(max_length=15)
     app_secret = serializers.UUIDField()
     app_token = serializers.UUIDField()
@@ -138,3 +129,18 @@ class SendMoneySerializer(DefaultSerializer):
 class CheckSendMoneyStatusSerializer(DefaultSerializer):
     app_secret = serializers.UUIDField()
     app_token = serializers.UUIDField()
+    operation_id = serializers.UUIDField()
+
+
+class AcceptPaymentSerializer(serializers.Serializer):
+    flouci_otp = serializers.CharField(required=True)
+    app_token = serializers.CharField(required=True)
+    payment_id = serializers.CharField(required=True)
+    app_id = serializers.UUIDField(required=False, default=None)
+    amount = serializers.IntegerField(required=True)
+    destination = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    developer_tracking_id = serializers.CharField(required=False, allow_null=True, max_length=255)
+
+
+class SecureAcceptPaymentSerializer(AcceptPaymentSerializer):
+    app_secret = serializers.CharField(required=True)

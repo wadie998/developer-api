@@ -18,38 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi()
-class GetDeveloperAppDetailsView(GenericAPIView):
-    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
-    """
-    returns:
-    {
-        "id": "eed87ffc-de9b-4c1d-b64f-9de6fa3c6d14",
-        "name": "Test APP",
-        "token": "38330adc-9891-40bc-8fb0-ef4b55060fdd",
-        "secret": "cc983d84-1a11-4d20-b6fc-7b44e1867a38",
-        "status": "VERIFIED",
-        "active": true,
-        "test": true,
-        "date_created": "2023-08-08T17:46:42.224138+01:00",
-        "description": "This is your test app",
-        "transaction_number": 0,
-        "gross": 0
-    }
-    """
-
-    # TODO check is FlouciAuthenticated, that the app is owned with the token holder
-    def post(self, request, app_id):
-        try:
-            app = App.objects.get(app_id=app_id)
-            return Response(data=app.get_app_details(), status=status.HTTP_200_OK)
-        except App.DoesNotExist:
-            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@extend_schema(exclude=True)
 @IsValidGenericApi(post=True, get=True)
 class CreateDeveloperAppView(GenericAPIView):
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
@@ -113,6 +81,37 @@ class CreateDeveloperAppView(GenericAPIView):
 
 @extend_schema(exclude=True)
 @IsValidGenericApi()
+class GetDeveloperAppDetailsView(GenericAPIView):
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
+    """
+    returns:
+    {
+        "id": "eed87ffc-de9b-4c1d-b64f-9de6fa3c6d14",
+        "name": "Test APP",
+        "token": "38330adc-9891-40bc-8fb0-ef4b55060fdd",
+        "secret": "cc983d84-1a11-4d20-b6fc-7b44e1867a38",
+        "status": "VERIFIED",
+        "active": true,
+        "test": true,
+        "date_created": "2023-08-08T17:46:42.224138+01:00",
+        "description": "This is your test app",
+        "transaction_number": 0,
+        "gross": 0
+    }
+    """
+
+    def post(self, request, wallet):
+        apps = App.objects.filter(wallet=wallet)
+        if not apps.exists():
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        matching_apps = [app.get_app_details() for app in apps if app.user.login == request.tracking_id]
+        if not matching_apps:
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(matching_apps, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
 class RevokeDeveloperAppView(GenericAPIView):
     """
     "result": {
@@ -136,9 +135,9 @@ class RevokeDeveloperAppView(GenericAPIView):
 
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
 
-    def post(self, request, app_id):
+    def post(self, request, wallet):
         try:
-            app = App.objects.get(app_id=app_id)
+            app = App.objects.get(wallet=wallet)
         except App.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         try:

@@ -27,7 +27,7 @@ if ENV:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-DJANGO_SERVICE_VERSION = "5.0.0"
+DJANGO_SERVICE_VERSION = "4.0.0"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
@@ -105,7 +105,7 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Flouci Developers API",
-    "DESCRIPTION": "Flouci App APIs",
+    "DESCRIPTION": "Flouci Developers APIs",
     "VERSION": "2.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
 }
@@ -154,15 +154,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 if config("POSTGRESQL_ENABLED", default=False, cast=bool):
-    # Changed the name of the database to be more explicit and to avoid migration issues
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("NEW_DB_NAME"),
-            "USER": config("NEW_DB_USER"),
-            "PASSWORD": config("NEW_DB_PASSWORD"),
-            "HOST": config("NEW_DB_ADDRESS"),
-            "PORT": config("NEW_DB_PORT"),
+            "NAME": config("DB_NAME"),
+            "USER": config("DB_USER"),
+            "PASSWORD": config("DB_PASSWORD"),
+            "HOST": config("DB_ADDRESS"),
+            "PORT": config("DB_PORT"),
             # to be removed and consulted again by abdou.. hopefully one day..
             "ATOMIC_REQUESTS": True,
         }
@@ -291,3 +290,9 @@ ADMIN_TWO_FA_ENABLED = config("ADMIN_TWO_FA_ENABLED", default=False, cast=bool)
 # FLOUCI BACKEND
 FLOUCI_BACKEND_API_ADDRESS = config("FLOUCI_BACKEND_API_ADDRESS", default="")
 FLOUCI_BACKEND_API_KEY = config("FLOUCI_BACKEND_API_KEY", default="")
+FLOUCI_BACKEND_INTERNAL_API_KEY = config("FLOUCI_BACKEND_INTERNAL_API_KEY", default="")
+
+# Data API:
+DATA_API_ADDRESS = config("DATA_API_ADDRESS", default="")
+DATA_API_PASSWORD = config("DATA_API_PASSWORD", default="")
+DATA_API_USERNAME = config("DATA_API_USERNAME", default="")

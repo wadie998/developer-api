@@ -1,17 +1,26 @@
+from uuid import UUID
+
 from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
 from api.models import App, JhiUser
+from utils.backend_client import FlouciBackendClient
 
 
 class Command(BaseCommand):
     help = "Migrate users and their apps from the old database to the new database"
 
-    def fetch_tracking_id(self, user_id):
-        """Fetch tracking_id for a user from an external service (mocked for now)."""
-        if user_id:
-            return str(user_id) + "-tracking"
-        return None
+    def fetch_tracking_id(self, user_id, wallet):
+        """Fetch tracking_id for a user from an external service."""
+        try:
+            UUID(user_id)  # If user_id is already a valid UUID, return it
+            return user_id
+        except Exception:
+            if wallet and wallet != "Test wallet":
+                result = FlouciBackendClient.fetch_tracking_id(wallet)
+                tracking_id = result.get("tracking_id")
+                user_type = result.get("type")
+            return tracking_id, user_type
 
     def migrate_users(self):
         """Migrate users from old_db to the new database."""
@@ -32,9 +41,6 @@ class Command(BaseCommand):
         for user in users:
             id, login, password_hash, first_name, last_name, email, phone_number, user_id = user
 
-            tracking_id = self.fetch_tracking_id(login)
-            self.stdout.write(f"User {login} has tracking_id: {tracking_id}")
-
             # Check if user already exists
             if JhiUser.objects.using("default").filter(id=id).exists():
                 self.stdout.write(self.style.WARNING(f"Skipping existing user: {login}"))
@@ -44,7 +50,7 @@ class Command(BaseCommand):
             # Create and save new user
             new_user = JhiUser(
                 id=id,
-                login=tracking_id,  # New login
+                login=login,
                 password_hash=password_hash,
                 first_name=first_name or "",
                 last_name=last_name or "",
@@ -78,6 +84,7 @@ class Command(BaseCommand):
 
         migrated_count = 0
         skipped_count = 0
+        users_wallets = {}
 
         for app in apps:
             (
@@ -142,10 +149,38 @@ class Command(BaseCommand):
             new_app.save(using="default")
             migrated_count += 1
 
+            if wallet != "Test wallet":
+                users_wallets[user_id] = wallet
+
             self.stdout.write(self.style.SUCCESS(f"Migrated app {name}"))
 
         self.stdout.write(
             self.style.SUCCESS(f"App migration complete: {migrated_count} apps migrated, {skipped_count} skipped.")
+        )
+        return users_wallets
+
+    def update_to_tracking_id(self, users_wallets):
+        """Update the user_id field to tracking_id using the wallet from the App model."""
+
+        migrated_count = 0
+        skipped_count = 0
+
+        for user_id, wallet in users_wallets.items():
+            tracking_id, user_type = self.fetch_tracking_id(user_id, wallet)
+
+            if tracking_id:
+                # Update the user's user_id field to tracking_id
+                JhiUser.objects.using("default").filter(id=user_id).update(login=tracking_id, user_type=user_type)
+                migrated_count += 1
+                self.stdout.write(self.style.SUCCESS(f"Updated user {user_id} to tracking_id {tracking_id}"))
+            else:
+                skipped_count += 1
+                self.stdout.write(self.style.WARNING(f"Skipping user {user_id}: No tracking_id found"))
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"User update to tracking_id complete: {migrated_count} updated, {skipped_count} skipped."
+            )
         )
 
     @transaction.atomic
@@ -155,6 +190,9 @@ class Command(BaseCommand):
         self.migrate_users()
 
         self.stdout.write(self.style.WARNING("Starting app migration..."))
-        self.migrate_apps()
+        users_wallets = self.migrate_apps()
+
+        self.stdout.write(self.style.WARNING("Starting app migration..."))
+        self.update_to_tracking_id(users_wallets)
 
         self.stdout.write(self.style.SUCCESS("Migration completed successfully!"))

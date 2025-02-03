@@ -9,6 +9,7 @@ from api.views_developer_auth import (
 )
 from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
 from api.views_public import (
+    AcceptPayment,
     CheckSendMoneyStatusView,
     GeneratePaymentView,
     SendMoneyView,
@@ -17,23 +18,21 @@ from api.views_public import (
 
 urlpatterns = [
     # urls with developer app authentication (public)
+    path("accept", AcceptPayment.as_view(), name="accept"),
     path("generate_payment", GeneratePaymentView.as_view(), name="generate_payment"),
+    path("generate_payment/wordpress", GeneratePaymentView.as_view(), name="generate_payment_wordpress"),
     path("verify_payment/<str:payment_id>", VerifyPaymentView.as_view(), name="verify_payment"),
     path("send_money", SendMoneyView.as_view(), name="send_money"),
-    path("check_send_money_status", CheckSendMoneyStatusView.as_view(), name="check_send_money_status"),
-    # urls with jhipster authentication
-    # path("authenticate", AuthenticateView.as_view(), name="authenticate"), # TO depricate
+    path("check_payment_status/<uuid:operation_id>", CheckSendMoneyStatusView.as_view(), name="check_payment_status"),
     # urls with backend authentication
-    path(
-        "internal/checkuserexists/<str:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"
-    ),  # Tested
+    path("internal/checkuserexists/<str:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
     path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),  # Tested
     # urls with either jhipster or backend authentication
-    path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),  # to depricate
+    path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),
-    path("internal/apps/<uuid:app_id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),
-    path("internal/apps/<uuid:app_id>/revoke", RevokeDeveloperAppView.as_view(), name="get_developer_app_details"),
-    # TODO depricate these views, and return empty fields
+    path("internal/apps/<str:wallet>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),
+    path("internal/apps/<str:wallet>/revoke", RevokeDeveloperAppView.as_view(), name="get_developer_app_details"),
+    # Depricated views
     path("internal/metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_developer_app_details"),
     path("internal/orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_developer_app_details"),
 ]

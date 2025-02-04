@@ -3,7 +3,7 @@ from uuid import UUID
 from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
-from api.models import App, JhiUser
+from api.models import FlouciApp, Peer
 from utils.backend_client import FlouciBackendClient
 
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
         old_cursor = connections["old_db"].cursor()
         old_cursor.execute(
             """
-            SELECT id, login, password_hash, first_name, last_name, email, phone_number, user_id
+            SELECT id, login, first_name, last_name, email, phone_number, user_id
             FROM jhi_user
         """
         )
@@ -39,23 +39,21 @@ class Command(BaseCommand):
         skipped_count = 0
 
         for user in users:
-            id, login, password_hash, first_name, last_name, email, phone_number, user_id = user
+            id, login, first_name, last_name, email, user_id = user
 
             # Check if user already exists
-            if JhiUser.objects.using("default").filter(id=id).exists():
+            if Peer.objects.using("default").filter(id=id).exists():
                 self.stdout.write(self.style.WARNING(f"Skipping existing user: {login}"))
                 skipped_count += 1
                 continue
 
             # Create and save new user
-            new_user = JhiUser(
+            new_user = Peer(
                 id=id,
-                login=login,
-                password_hash=password_hash,
                 first_name=first_name or "",
                 last_name=last_name or "",
                 email=email or "",
-                phone_number=phone_number or "",
+                phone_number=login,
                 user_id=user_id,
             )
             new_user.save(using="default")
@@ -73,7 +71,7 @@ class Command(BaseCommand):
         old_cursor.execute(
             """
             SELECT id, name, public_token, wallet, status, active, date_created, user_id, webhook,
-                   sms_key, test, description, private_token, image_url, deleted, gross,
+                   test, description, private_token, image_url, deleted, gross,
                    transaction_number, revoke_number, last_revoke_date, app_id, merchant_id
             FROM app
         """
@@ -97,7 +95,6 @@ class Command(BaseCommand):
                 date_created,
                 user_id,
                 webhook,
-                sms_key,
                 test,
                 description,
                 private_token,
@@ -114,16 +111,16 @@ class Command(BaseCommand):
             # Find the corresponding user in the new database
             user = None
             if user_id:
-                user = JhiUser.objects.using("default").filter(id=user_id).first()
+                user = Peer.objects.using("default").filter(id=user_id).first()
 
             # Check if app already exists
-            if App.objects.using("default").filter(id=id).exists():
+            if FlouciApp.objects.using("default").filter(id=id).exists():
                 self.stdout.write(self.style.WARNING(f"Skipping existing app: {name}"))
                 skipped_count += 1
                 continue
 
             # Create and save new app
-            new_app = App(
+            new_app = FlouciApp(
                 id=id,
                 name=name,
                 public_token=public_token,
@@ -133,7 +130,6 @@ class Command(BaseCommand):
                 date_created=date_created,
                 user=user,  # Preserve the ForeignKey relationship
                 webhook=webhook or "",
-                sms_key=sms_key or "",
                 test=test,
                 description=description or "",
                 private_token=private_token,
@@ -170,7 +166,7 @@ class Command(BaseCommand):
 
             if tracking_id:
                 # Update the user's user_id field to tracking_id
-                JhiUser.objects.using("default").filter(id=user_id).update(login=tracking_id, user_type=user_type)
+                Peer.objects.using("default").filter(id=user_id).update(tracking_id=tracking_id, user_type=user_type)
                 migrated_count += 1
                 self.stdout.write(self.style.SUCCESS(f"Updated user {user_id} to tracking_id {tracking_id}"))
             else:

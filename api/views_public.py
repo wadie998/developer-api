@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
-from api.models import App
+from api.models import FlouciApp
 from api.permissions import HasValidAppCredentials
 from api.serializers import (
     CheckSendMoneyStatusSerializer,
@@ -350,7 +350,7 @@ class AcceptPayment(GenericAPIView):
 
     def post(self, request, serializer):
         accept_payment_data = serializer.validated_data
-        app = App.objects.get(private_token=serializer.validated_data["app_secret"])
+        app = FlouciApp.objects.get(private_token=serializer.validated_data["app_secret"])
         if app.test:
             flouci_otp = serializer.validated_data["flouci_otp"]
             if flouci_otp == "F-111111":

@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from api.models import App
+from api.models import FlouciApp
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -32,7 +32,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
 
     def validate(self, validate_data):
         try:
-            application = App.objects.get(
+            application = FlouciApp.objects.get(
                 public_token=validate_data.get("app_token"), private_token=validate_data.get("app_secret")
             )
         except ObjectDoesNotExist:
@@ -53,17 +53,6 @@ class GeneratePaymentSerializer(DefaultSerializer):
 
 class VerifyPaymentSerializer(DefaultSerializer):
     payment_id = serializers.CharField(max_length=100)
-
-
-class AuthenticateSerializer(DefaultSerializer):
-    username = serializers.CharField(max_length=50)
-    password = serializers.CharField(max_length=50)
-    rememberMe = serializers.BooleanField(default=False)
-
-    def validate(self, data):
-        if not data.get("username") or not data.get("password"):
-            raise serializers.ValidationError("Both 'username' and 'password' are required.")
-        return data
 
 
 class CheckUserExistsSerializer(DefaultSerializer):

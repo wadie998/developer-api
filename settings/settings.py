@@ -13,7 +13,7 @@ import os
 
 from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
 from settings.configs.env import BASE_DIR, config
-from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY, JWT_SECRET_KEY
+from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY
 from settings.configs.logging_config import LOGGING
 from settings.configs.sqlite_config import SQLITE3_CONFIG
 
@@ -27,7 +27,6 @@ SECRET_KEY = config("SECRET_KEY")
 PROJECT_DOMAIN = config("PROJECT_DOMAIN")
 
 BACKEND_JWT_PUBLIC_KEY
-JWT_SECRET_KEY
 
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")

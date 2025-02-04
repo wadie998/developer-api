@@ -1,14 +1,13 @@
 import logging
 import uuid
 
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
-from api.models import App, JhiUser
-from api.permissions import IsFlouciAuthenticated  # , IsJHipsterAuthenticated
+from api.models import FlouciApp, Peer
+from api.permissions import IsFlouciAuthenticated
 from api.serializers import CreateDeveloperAppSerializer, GetDeveloperAppSerializer
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 @extend_schema(exclude=True)
 @IsValidGenericApi(post=True, get=True)
 class CreateDeveloperAppView(GenericAPIView):
-    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -34,7 +33,7 @@ class CreateDeveloperAppView(GenericAPIView):
         page = int(request.query_params.get("page", 0))
         size = int(request.query_params.get("size", 20))
 
-        apps = App.objects.filter(user__login=request.tracking_id)
+        apps = FlouciApp.objects.filter(user__login=request.tracking_id)
         total_apps = apps.count()
         start = page * size
         end = start + size
@@ -62,16 +61,15 @@ class CreateDeveloperAppView(GenericAPIView):
                 {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
         try:
-            user = JhiUser.objects.get(login=request.tracking_id)
-        except JhiUser.DoesNotExist:
+            user = Peer.objects.get(tracking_id=request.tracking_id)
+        except Peer.DoesNotExist:
             return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        app = App.objects.create(
+        app = FlouciApp.objects.create(
             user=user,
             app_id=uuid.uuid4(),
             name=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
             wallet=serializer.validated_data.get("wallet"),
-            date_created=timezone.now(),
             merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
         )
         data = app.get_app_details()
@@ -82,7 +80,7 @@ class CreateDeveloperAppView(GenericAPIView):
 @extend_schema(exclude=True)
 @IsValidGenericApi()
 class GetDeveloperAppDetailsView(GenericAPIView):
-    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
     """
     returns:
     {
@@ -100,11 +98,11 @@ class GetDeveloperAppDetailsView(GenericAPIView):
     }
     """
 
-    def post(self, request, wallet):
-        apps = App.objects.filter(wallet=wallet)
+    def post(self, request, app_id):
+        apps = FlouciApp.objects.filter(app_id=app_id)
         if not apps.exists():
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
-        matching_apps = [app.get_app_details() for app in apps if app.user.login == request.tracking_id]
+        matching_apps = [app.get_app_details() for app in apps if app.user.tracking_id == request.tracking_id]
         if not matching_apps:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(matching_apps, status=status.HTTP_200_OK)
@@ -133,12 +131,12 @@ class RevokeDeveloperAppView(GenericAPIView):
     "version": "4.4.91"
     """
 
-    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
-    def post(self, request, wallet):
+    def post(self, request, app_id):
         try:
-            app = App.objects.get(wallet=wallet)
-        except App.DoesNotExist:
+            app = FlouciApp.objects.get(app_id=app_id)
+        except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         try:
             app.revoke_keys()
@@ -189,7 +187,7 @@ class GetDeveloperAppMetricsView(GenericAPIView):
     }
     """
 
-    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def get(self, request, app_id):
         response_data = {
@@ -210,7 +208,7 @@ class GetDeveloperAppOrdersView(GenericAPIView):
     {result: [], code: 0, name: "data", version: "4.4.91"}
     """
 
-    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)  # IsJHipsterAuthenticated
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def get(self, request, app_id):
         response_data = {

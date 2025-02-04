@@ -125,7 +125,7 @@ class JhiUser(models.Model):
     email_validated = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     user_id = models.UUIDField(blank=True, null=True)
-    user_type = models.CharField(max_length=15, choices=UserType.get_choices(), default=UserType.Merchant)
+    user_type = models.CharField(max_length=20, choices=UserType.get_choices(), default=UserType.Merchant)
 
     class Meta:
         db_table = "jhi_user"
@@ -144,7 +144,8 @@ class Peer(models.Model):
     last_modified_date = models.DateTimeField(auto_now=True, blank=True, null=True)
     phone_number = models.CharField(max_length=12, blank=True, null=True)
     deleted = models.BooleanField(default=False)
-    user_type = models.CharField(max_length=15, choices=UserType.get_choices(), default=UserType.Merchant)
+    user_id = models.UUIDField(blank=True, null=True)
+    user_type = models.CharField(max_length=20, choices=UserType.get_choices(), default=UserType.Merchant)
 
     class Meta:
         db_table = "Peer"

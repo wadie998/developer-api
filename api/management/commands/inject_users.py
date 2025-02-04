@@ -27,7 +27,7 @@ class Command(BaseCommand):
         old_cursor = connections["old_db"].cursor()
         old_cursor.execute(
             """
-            SELECT id, login, first_name, last_name, email, phone_number, user_id
+            SELECT id, first_name, last_name, email, phone_number, user_id
             FROM jhi_user
         """
         )
@@ -39,11 +39,11 @@ class Command(BaseCommand):
         skipped_count = 0
 
         for user in users:
-            id, login, first_name, last_name, email, user_id = user
+            id, first_name, last_name, email, phone_number, user_id = user
 
             # Check if user already exists
             if Peer.objects.using("default").filter(id=id).exists():
-                self.stdout.write(self.style.WARNING(f"Skipping existing user: {login}"))
+                self.stdout.write(self.style.WARNING(f"Skipping existing user: {phone_number}"))
                 skipped_count += 1
                 continue
 
@@ -53,13 +53,13 @@ class Command(BaseCommand):
                 first_name=first_name or "",
                 last_name=last_name or "",
                 email=email or "",
-                phone_number=login,
+                phone_number=phone_number,
                 user_id=user_id,
             )
             new_user.save(using="default")
             migrated_count += 1
 
-            self.stdout.write(self.style.SUCCESS(f"Migrated user {login}"))
+            self.stdout.write(self.style.SUCCESS(f"Migrated user {phone_number}"))
 
         self.stdout.write(
             self.style.SUCCESS(f"User migration complete: {migrated_count} users migrated, {skipped_count} skipped.")

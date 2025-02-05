@@ -49,8 +49,5 @@ class HasValidAppCredentials(BasePermission):
             application = FlouciApp.objects.get(public_token=app_token, private_token=app_secret, active=True)
         except ObjectDoesNotExist:
             return False
-        if application.deleted:
-            logger.warning("Application with public token %s is deleted", app_token)
-            return False
         request.application = application
         return True

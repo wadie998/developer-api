@@ -30,9 +30,11 @@ urlpatterns = [
     # urls with either jhipster or backend authentication
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),
-    path("internal/apps/<uuid:app_id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),
-    path("internal/apps/<uuid:app_id>/revoke", RevokeDeveloperAppView.as_view(), name="get_developer_app_details"),
+    path(
+        "internal/apps/<uuid:app_id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_internal_details"
+    ),
+    path("internal/apps/<uuid:app_id>/revoke", RevokeDeveloperAppView.as_view(), name="revoke_developer_app"),
     # Depricated views
-    path("internal/metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_developer_app_details"),
-    path("internal/orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_developer_app_details"),
+    path("internal/metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_internal_metrics"),
+    path("internal/orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_internal_orders"),
 ]

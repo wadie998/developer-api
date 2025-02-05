@@ -31,75 +31,6 @@ class App(models.Model):
 
     class Meta:
         db_table = "app"
-        unique_together = (("user", "name"),)
-
-    def get_app_details(self):
-        return {
-            "id": str(self.app_id),
-            "name": self.name,
-            "token": str(self.public_token),
-            "secret": str(self.private_token),
-            "status": self.status,
-            "active": self.active,
-            "test": self.test,
-            "date_created": self.date_created.isoformat(),
-            "description": self.description,
-            "transaction_number": self.transaction_number,
-            "gross": self.gross,
-        }
-
-    def revoke_keys(self):
-        self.private_token = uuid.uuid4()
-        self.save(update_fields=["private_token"])
-
-
-class FlouciApp(models.Model):
-    id = models.BigAutoField(primary_key=True, serialize=False)
-    name = models.CharField(max_length=100)
-    app_id = models.UUIDField(blank=True, null=True)
-    public_token = models.UUIDField(default=uuid.uuid4, unique=True)
-    private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
-    wallet = models.CharField(max_length=35)
-    status = models.CharField(choices=AppStatus.get_choices(), default=AppStatus.VERIFIED, max_length=20)
-    active = models.BooleanField(default=True)
-    date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    user = models.ForeignKey("Peer", models.PROTECT, blank=True, null=True)
-    webhook = models.URLField(max_length=1000, blank=True, null=True)
-    test = models.BooleanField(default=False)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    image_url = models.URLField(max_length=1000, blank=True, null=True)
-    deleted = models.BooleanField(default=False)
-    gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
-    # Keeping this, but it's not used to be removed once front makes changes
-    transaction_number = models.BigIntegerField(blank=True, null=True)
-    revoke_number = models.IntegerField(blank=True, null=True)
-    last_revoke_date = models.DateField(blank=True, null=True)
-    merchant_id = models.BigIntegerField()
-
-    class Meta:
-        db_table = "flouciapp"
-        unique_together = (("public_token", "private_token"),)
-
-    def get_app_details(self):
-        return {
-            "id": str(self.app_id),
-            "name": self.name,
-            "token": str(self.public_token),
-            "secret": str(self.private_token),
-            "status": self.status,
-            "active": self.active,
-            "test": self.test,
-            "date_created": self.date_created.isoformat(),
-            "description": self.description,
-            "transaction_number": self.transaction_number,
-            "gross": self.gross,
-        }
-
-    def revoke_keys(self):
-        self.private_token = uuid.uuid4()
-        self.revoke_number += 1
-        self.last_revoke_date = datetime.now()
-        self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
 
 
 class JhiUser(models.Model):
@@ -125,18 +56,65 @@ class JhiUser(models.Model):
     email_validated = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     user_id = models.UUIDField(blank=True, null=True)
-    user_type = models.CharField(max_length=20, choices=UserType.get_choices(), default=UserType.Merchant)
 
     class Meta:
         db_table = "jhi_user"
 
 
+class FlouciApp(models.Model):
+    id = models.BigAutoField(primary_key=True, serialize=False)
+    name = models.CharField(max_length=100)
+    app_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    public_token = models.UUIDField(default=uuid.uuid4, unique=True)
+    private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
+    wallet = models.CharField(max_length=35)
+    status = models.CharField(choices=AppStatus.get_choices(), default=AppStatus.VERIFIED, max_length=20)
+    active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    user = models.ForeignKey("Peer", models.PROTECT, blank=True, null=True)
+    webhook = models.URLField(max_length=1000, blank=True, null=True)
+    test = models.BooleanField(default=False)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    image_url = models.URLField(max_length=1000, blank=True, null=True)
+    deleted = models.BooleanField(default=False)
+    gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
+    # Keeping this, but it's not used to be removed once front makes changes
+    transaction_number = models.BigIntegerField(blank=True, null=True)
+    revoke_number = models.IntegerField(blank=True, null=True)
+    last_revoke_date = models.DateField(blank=True, null=True)
+    merchant_id = models.BigIntegerField()
+
+    class Meta:
+        db_table = "flouciapp"
+
+    def get_app_details(self):
+        return {
+            "id": str(self.app_id),
+            "name": self.name,
+            "token": str(self.public_token),
+            "secret": str(self.private_token),
+            "status": self.status,
+            "active": self.active,
+            "test": self.test,
+            "date_created": self.date_created.isoformat(),
+            "description": self.description,
+            "transaction_number": self.transaction_number,
+            "gross": self.gross,
+        }
+
+    def revoke_keys(self):
+        self.private_token = uuid.uuid4()
+        self.revoke_number += 1
+        self.last_revoke_date = datetime.now()
+        self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
+
+
 class Peer(models.Model):
     id = models.BigAutoField(primary_key=True, serialize=False)
-    tracking_id = models.UUIDField(unique=True, default=uuid.uuid4)
+    tracking_id = models.UUIDField(blank=True, null=True)
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
-    email = models.CharField(max_length=191, blank=True, null=True, unique=False)
+    email = models.EmailField(blank=True, null=True)
     image_url = models.URLField(max_length=1000, blank=True, null=True)
     activated = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)

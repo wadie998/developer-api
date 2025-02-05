@@ -17,3 +17,14 @@ class UserType(Enum):
     @staticmethod
     def get_choices():
         return ((tag.value, tag.name) for tag in UserType)
+
+
+class CurrencyEnum(Enum):
+    TND = "TND"
+    USD = "USD"
+    EUR = "EUR"
+    GBP = "GBP"
+
+    @staticmethod
+    def get_choices():
+        return ((tag.value, tag.name) for tag in CurrencyEnum)

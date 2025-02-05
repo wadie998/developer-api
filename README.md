@@ -75,3 +75,15 @@ from rest_framework_api_key.models import APIKey
 # Name should be one of the following: SERVICE1, SERVICE2, SERVICE3
 _, key = APIKey.objects.create_key(name="my-service")
 ```
+
+
+```python
+
+def update_sequences(self):
+    """Update the ID sequences to ensure they start after the highest existing ID."""
+    with connections["default"].cursor() as cursor:
+        cursor.execute("SELECT setval('api_peer_id_seq', (SELECT COALESCE(MAX(id), 1) FROM api_peer) + 1)")
+        cursor.execute("SELECT setval('api_flouciapp_id_seq', (SELECT COALESCE(MAX(id), 1) FROM api_flouciapp) + 1)")
+
+    self.stdout.write(self.style.SUCCESS("ID sequences updated successfully!"))
+```

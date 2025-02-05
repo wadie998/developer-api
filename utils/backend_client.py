@@ -13,6 +13,19 @@ from settings.settings import (
 logger = logging.getLogger(__name__)
 
 
+def handle_exceptions(func):
+    """Decorator to handle exceptions and log them."""
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.critical(f"Exception in {func.__name__}: {e}")
+            return {"success": False, "error": "Problem processing request", "code": -1, "status_code": 500}
+
+    return wrapper
+
+
 class FlouciBackendClient:
     HEADERS = {"Content-Type": "application/json", "Authorization": "Api-Key " + FLOUCI_BACKEND_API_KEY}
     GENERATE_PAYMENT_PAGE_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_payment_page"
@@ -22,6 +35,26 @@ class FlouciBackendClient:
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
 
     @staticmethod
+    def _process_response(response, success_code=[200, 201]):
+        """Process the HTTP response and standardize error handling."""
+        if response.status_code >= 500:
+            logger.critical(f"Request failed with status code {response.status_code}. Response: {response.text}")
+            return {"success": False, "code": 5, "message": "Service indisponible", "status_code": response.status_code}
+        else:
+            response_json = response.json()
+            if response.status_code in success_code and response_json.get("success"):
+                return response_json
+            else:
+                logger.error(f"Request failed with response: {response.text}")
+                return {
+                    "success": False,
+                    "code": 1,
+                    "message": "Error processing request",
+                    "status_code": response.status_code,
+                }
+
+    @staticmethod
+    @handle_exceptions
     def generate_payment_page(
         test_account,
         accept_card,
@@ -38,9 +71,6 @@ class FlouciBackendClient:
         webhook_url,
         destination,
     ):
-        """
-        format date %Y-%m-%d
-        """
         data = {
             "test_account": test_account,
             "accept_card": accept_card,
@@ -54,123 +84,79 @@ class FlouciBackendClient:
             "developer_tracking_id": developer_tracking_id,
             "expires_at": (timezone.now() + timedelta(seconds=expires_at)).isoformat(),
         }
-        if webhook_url is not None:
+        if webhook_url:
             data["webhook_url"] = webhook_url
-        if accept_edinar is not None:
+        if accept_edinar:
             data["accept_edinar"] = accept_edinar
-        if destination is not None:
+        if destination:
             data["destination"] = destination
-        if currency is not None:
+        if currency:
             data["currency"] = currency
-        try:
-            result = requests.post(
-                FlouciBackendClient.GENERATE_PAYMENT_PAGE_URL,
-                headers=FlouciBackendClient.HEADERS,
-                verify=False,
-                json=data,
-            )
-            return result.json()
-        except Exception as e:
-            logger.exception(f"An error has occurred generate_payment_page client {app_token} exception: {e}")
-            return {"success": False, "error": "Problem while  getting user info", "code": -1, "status_code": 500}
+
+        response = requests.post(
+            FlouciBackendClient.GENERATE_PAYMENT_PAGE_URL,
+            headers=FlouciBackendClient.HEADERS,
+            verify=False,
+            json=data,
+        )
+        return response.json()
 
     @staticmethod
+    @handle_exceptions
     def check_payment(payment_id, wallet, merchant_id):
         params = {"slug": payment_id, "wallet": wallet, "merchant_id": merchant_id}
-        try:
-            result = requests.get(
-                FlouciBackendClient.CHECK_PAYMENT_URL,
-                headers=FlouciBackendClient.HEADERS,
-                verify=False,
-                params=params,
-            )
-        except Exception as e:
-            logger.exception("An error has occurred fetch_wallet_balance %s", e)
-            return {"success": False, "code": 6, "message": "Serveur non disponible", "status_code": 500}
-        if result.status_code == 200 and result.json()["success"]:
-            return result.json()
-        else:
-            logger.error(
-                f"An error has occurred check_payment from wallet {wallet}, status code: {result.status_code}, error details {result.text}",  # noqa: E501
-            )
-            return {"success": False, "code": 5, "message": "Erreur serveur", "status_code": result.status_code}
+        response = requests.get(
+            FlouciBackendClient.CHECK_PAYMENT_URL,
+            headers=FlouciBackendClient.HEADERS,
+            verify=False,
+            params=params,
+        )
+        return FlouciBackendClient._process_response(response)
 
     @staticmethod
+    @handle_exceptions
     def developer_send_money_status(amount_in_millimes, receiver, sender_id, webhook_url=None):
         data = {
             "amount_in_millimes": amount_in_millimes,
             "receiver": receiver,
             "sender_id": sender_id,
         }
-        if webhook_url is not None:
+        if webhook_url:
             data["webhook_url"] = webhook_url
-        try:
-            result = requests.post(
-                FlouciBackendClient.SEND_MONEY_URL,
-                headers=FlouciBackendClient.HEADERS,
-                verify=False,
-                json=data,
-            )
-            if result.status_code == 200 and result.json().get("success"):
-                return result.json()
-            else:
-                logger.error(
-                    f"An error has occurred developer_send_money_status with amount_in_millimes {amount_in_millimes}, receiver {receiver}, and sender_id {sender_id}, status code: {result.status_code}, error details {result.text}",  # noqa: E501
-                )
-                return {"success": False, "code": 5, "message": "Erreur serveur", "status_code": result.status_code}
-        except Exception as e:
-            logger.exception(
-                f"An error has occurred developer_send_money_status client with amount_in_millimes {amount_in_millimes}, receiver {receiver}, and sender_id {sender_id} exception: {e}"  # noqa: E501
-            )
-            return {"success": False, "error": "Problem while sending money", "code": -1, "status_code": 500}
+
+        response = requests.post(
+            FlouciBackendClient.SEND_MONEY_URL,
+            headers=FlouciBackendClient.HEADERS,
+            verify=False,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
 
     @staticmethod
+    @handle_exceptions
     def developer_check_send_money_status(operation_id, sender_id):
         data = {
             "operation_id": operation_id,
             "sender_id": sender_id,
         }
-        try:
-            result = requests.post(
-                FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
-                headers=FlouciBackendClient.HEADERS,
-                verify=False,
-                json=data,
-            )
-            if result.status_code == 200 and result.json().get("success"):
-                return result.json()
-            else:
-                logger.error(
-                    f"An error has occurred developer_send_money with operation_id {operation_id} and sender_id {sender_id}, status code: {result.status_code}, error details {result.text}",  # noqa: E501
-                )
-                return {"success": False, "code": 5, "message": "Erreur serveur", "status_code": result.status_code}
-        except Exception as e:
-            logger.exception(
-                f"An error has occurred developer_send_money client with operation_id {operation_id} and sender_id {sender_id} exception: {e}"  # noqa: E501
-            )
-            return {"success": False, "error": "Problem while sending money", "code": -1, "status_code": 500}
+        response = requests.post(
+            FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
+            headers=FlouciBackendClient.HEADERS,
+            verify=False,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
 
     @staticmethod
+    @handle_exceptions
     def fetch_tracking_id(wallet):
         params = {"wallet": wallet}
-        header = FlouciBackendClient.HEADERS
-        header["Authorization"] = "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY
-        try:
-            result = requests.get(
-                FlouciBackendClient.FETCH_TRACKING_ID_URL,
-                headers=FlouciBackendClient.HEADERS,
-                verify=False,
-                params=params,
-            )
-            if result.status_code == 200 and result.json().get("success"):
-                return result.json()
-            else:
-                logger.error(
-                    f"An error has occurred fetch_tracking_id from wallet {wallet}, status code: {result.status_code}, error details {result.text}",  # noqa: E501
-                )
-                return {"success": False, "status_code": result.status_code}
-        except Exception as e:
-            logger.exception("An error has occurred fetch_tracking_id %s", e)
-            return {"success": False, "code": 6, "message": "Serveur non disponible", "status_code": 500}
-
-        pass
+        headers = FlouciBackendClient.HEADERS.copy()
+        headers["Authorization"] = "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY
+        response = requests.get(
+            FlouciBackendClient.FETCH_TRACKING_ID_URL,
+            headers=headers,
+            verify=False,
+            params=params,
+        )
+        return FlouciBackendClient._process_response(response)

@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -66,7 +65,6 @@ class CreateDeveloperAppView(GenericAPIView):
             return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         app = FlouciApp.objects.create(
             user=user,
-            app_id=uuid.uuid4(),
             name=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
             wallet=serializer.validated_data.get("wallet"),
@@ -99,13 +97,11 @@ class GetDeveloperAppDetailsView(GenericAPIView):
     """
 
     def post(self, request, app_id):
-        apps = FlouciApp.objects.filter(app_id=app_id)
-        if not apps.exists():
+        try:
+            apps = FlouciApp.objects.get(app_id=app_id)
+        except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
-        matching_apps = [app.get_app_details() for app in apps if app.user.tracking_id == request.tracking_id]
-        if not matching_apps:
-            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(matching_apps, status=status.HTTP_200_OK)
+        return Response(data=apps.get_app_details(), status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)
@@ -138,18 +134,15 @@ class RevokeDeveloperAppView(GenericAPIView):
             app = FlouciApp.objects.get(app_id=app_id)
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
-        try:
-            app.revoke_keys()
-            response_data = {
-                "result": app.get_app_details(),
-                "code": 0,
-                "message": "App revoked successfully.",
-                "name": "developers",
-                "version": DJANGO_SERVICE_VERSION,
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        app.revoke_keys()
+        response_data = {
+            "result": app.get_app_details(),
+            "code": 0,
+            "message": "App revoked successfully.",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)

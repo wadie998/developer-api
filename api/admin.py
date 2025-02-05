@@ -6,15 +6,22 @@ from django.contrib.auth.models import Permission
 from .models import FlouciApp, Peer
 
 
-# @admin.register(App)
-class AppAdmin(admin.ModelAdmin):
+class FlouciAppAdmin(admin.ModelAdmin):
     list_display = ("name", "public_token", "wallet", "status", "active", "date_created")
-    search_fields = ("name", "public_token", "wallet", "user__tracking_id", "user__email", "user__phone_number")
+    search_fields = (
+        "app_id",
+        "name",
+        "public_token",
+        "wallet",
+        "user__tracking_id",
+        "user__email",
+        "user__phone_number",
+    )
     list_filter = ("status", "active", "date_created")
     raw_id_fields = ("user",)
 
 
-class JhiUserAdmin(admin.ModelAdmin):
+class PeerAdmin(admin.ModelAdmin):
     list_display = (
         "tracking_id",
         "email",
@@ -57,5 +64,5 @@ admin.site.register(Permission)
 admin.site.site_header = "Django Developer Api"
 admin.site.register(LogEntry, LogEntryAdmin)
 
-admin.site.register(FlouciApp, AppAdmin)
-admin.site.register(Peer, JhiUserAdmin)
+admin.site.register(FlouciApp, FlouciAppAdmin)
+admin.site.register(Peer, PeerAdmin)

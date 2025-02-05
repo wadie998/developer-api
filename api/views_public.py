@@ -246,7 +246,7 @@ class SendMoneyView(GenericAPIView):
             webhook=validated_data.get("webhook"),
             wallet=request.application.wallet,
         )
-        if response.get("success"):
+        if response["success"]:
             data = {
                 "result": {
                     "transaction_status": response.get("status"),
@@ -318,7 +318,7 @@ class CheckSendMoneyStatusView(GenericAPIView):
         operation_id = serializer.validated_data["operation_id"]
         response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
 
-        if response.get("success"):
+        if response["success"]:
             data = {
                 "result": {
                     "transaction_status": response.get("status"),

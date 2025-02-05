@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
+from api.enum import CurrencyEnum
 from api.models import FlouciApp
 
 
@@ -15,6 +16,11 @@ class DefaultSerializer(serializers.Serializer):
         pass
 
 
+class DestinationSerializer(serializers.Serializer):
+    amount = serializers.IntegerField(min_value=1)
+    destination = serializers.CharField(max_length=255)
+
+
 class GeneratePaymentSerializer(DefaultSerializer):
     app_token = serializers.UUIDField()
     app_secret = serializers.UUIDField()
@@ -24,11 +30,11 @@ class GeneratePaymentSerializer(DefaultSerializer):
     session_timeout = serializers.IntegerField(min_value=300, default=1200)
     success_link = serializers.URLField()
     fail_link = serializers.URLField()
-    developer_tracking_id = serializers.CharField(max_length=100)
+    developer_tracking_id = serializers.CharField(max_length=40)
     accept_edinar = serializers.BooleanField(required=False)
-    currency = serializers.CharField(required=False)
+    currency = serializers.ChoiceField(choices=CurrencyEnum.get_choices(), default=CurrencyEnum.TND.value)
     webhook = serializers.URLField(required=False)
-    destination = serializers.ListField(child=serializers.JSONField(), required=False)
+    destination = DestinationSerializer(many=True, required=False)
 
     def validate(self, validate_data):
         try:
@@ -37,16 +43,9 @@ class GeneratePaymentSerializer(DefaultSerializer):
             )
         except ObjectDoesNotExist:
             raise serializers.ValidationError("App not found.")
-        if "destination" in validate_data:
-            for item in validate_data["destination"]:
-                if not isinstance(item, dict) or "amount" not in item or "destination" not in item:
-                    raise serializers.ValidationError(
-                        "Each item in the destination field must be a JSON object with 'amount' and 'destination' keys."
-                    )
         validate_data["merchant_id"] = application.merchant_id
         validate_data["test"] = application.test
         validate_data["webhook"] = validate_data.get("webhook", None)
-        validate_data["currency"] = validate_data.get("currency", "TND")
         validate_data["amount_in_millimes"] = validate_data.get("amount")
         return validate_data
 
@@ -75,43 +74,45 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
     name = serializers.CharField(min_length=3, max_length=100)
     description = serializers.CharField(min_length=3, max_length=255)
     merchant_id = serializers.CharField(max_length=255)
-    wallet = serializers.CharField(max_length=255)
     username = serializers.CharField()
+    wallet = serializers.CharField(max_length=255)
     imageBase64 = serializers.CharField(required=False)
 
     def validate(self, data):
-        app_image = data.get("imageBase64")
-        if app_image:
-            try:
-                # Decode the base64 string
-                format, imgstr = app_image.split(";base64,")
-                ext = format.split("/")[-1]  # Extract the file extension
-                img_data = base64.b64decode(imgstr)
+        data["tracking_id"] = data["username"]
+        image_b64 = data.get("imageBase64")
+        if image_b64:
+            data["app_image"] = self._decode_base64_image(image_b64)
 
-                # Check the size of the image
-                if len(img_data) > 3 * 1024 * 1024:  # 3 MB
-                    raise serializers.ValidationError("Image size must be less than 3 MB.")
-
-                # Optionally, you can save the image to a file or perform further validation
-                data["app_image"] = ContentFile(img_data, name=f"temp.{ext}")
-            except (ValueError, TypeError, base64.binascii.Error):
-                raise serializers.ValidationError("Invalid base64 image string.")
-        data["tracking_id"] = data.get("username")
         return data
+
+    def _decode_base64_image(self, image_b64):
+        MAX_IMAGE_SIZE = 3 * 1024 * 1024  # 3 MB
+        """Helper function to decode base64 image."""
+        try:
+            header, encoded = image_b64.split(";base64,")
+            ext = header.rsplit("/", 1)[-1]  # Extract file extension
+            img_data = base64.b64decode(encoded)
+        except (ValueError, TypeError, base64.binascii.Error):
+            raise serializers.ValidationError("Invalid base64 image string.")
+
+        if len(img_data) > MAX_IMAGE_SIZE:
+            raise serializers.ValidationError("Image size must be less than 3 MB.")
+
+        return ContentFile(img_data, name=f"temp.{ext}")
 
 
 class SendMoneySerializer(DefaultSerializer):
     amount = serializers.IntegerField(
         min_value=100, max_value=5000000
     )  # To verify with Anis, Should we consider packs/limits
-    destination = serializers.CharField(max_length=15)
+    destination = serializers.CharField(max_length=35)
     app_secret = serializers.UUIDField()
     app_token = serializers.UUIDField()
     webhook = serializers.URLField(required=False)
 
     def validate(self, data):
-        if data["amount_in_millimes"] <= 0:
-            raise serializers.ValidationError("Amount must be greater than zero.")
+        data["amount_in_millimes"] = data["amount"]
         return data
 
 
@@ -122,14 +123,14 @@ class CheckSendMoneyStatusSerializer(DefaultSerializer):
 
 
 class AcceptPaymentSerializer(serializers.Serializer):
-    flouci_otp = serializers.CharField(required=True)
-    app_token = serializers.CharField(required=True)
-    payment_id = serializers.CharField(required=True)
+    flouci_otp = serializers.CharField()
+    app_token = serializers.UUIDField()
+    payment_id = serializers.CharField()
     app_id = serializers.UUIDField(required=False, default=None)
-    amount = serializers.IntegerField(required=True)
-    destination = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    developer_tracking_id = serializers.CharField(required=False, allow_null=True, max_length=255)
+    amount = serializers.IntegerField()
+    destination = serializers.CharField(required=False, max_length=40, allow_null=True, allow_blank=True)
+    developer_tracking_id = serializers.CharField(required=False, allow_null=True, max_length=40)
 
 
 class SecureAcceptPaymentSerializer(AcceptPaymentSerializer):
-    app_secret = serializers.CharField(required=True)
+    app_secret = serializers.UUIDField()

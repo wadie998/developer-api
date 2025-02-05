@@ -188,7 +188,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.WARNING("Starting app migration..."))
         users_wallets = self.migrate_apps()
 
-        self.stdout.write(self.style.WARNING("Starting app migration..."))
+        self.stdout.write(self.style.WARNING("Starting tracking id migration..."))
         self.update_to_tracking_id(users_wallets)
 
         self.stdout.write(self.style.SUCCESS("Migration completed successfully!"))

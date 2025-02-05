@@ -26,7 +26,7 @@ class DataApiClient:
             "appToken": data["app_token"],
             "id": data["payment_id"],
             "amount": convert_millimes_to_drops(data["amount"]),
-            "destination": data["destination"],
+            "destination": data.get("destination"),
             "developerTrackingId": data.get("developer_tracking_id"),
             "appId": data.get("app_id"),
         }

@@ -20,7 +20,7 @@ from settings.configs.sqlite_config import SQLITE3_CONFIG
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-DJANGO_SERVICE_VERSION = "4.0.0"
+DJANGO_SERVICE_VERSION = "Flouci v1.0.0"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
@@ -170,8 +170,6 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
             "PASSWORD": config("DB_PASSWORD"),
             "HOST": config("DB_ADDRESS"),
             "PORT": config("DB_PORT"),
-            # to be removed and consulted again by abdou.. hopefully one day..
-            "ATOMIC_REQUESTS": True,
         }
     }
     if config("OLD_DATABASE_ENABLED", default=False, cast=bool):
@@ -182,7 +180,6 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
             "PASSWORD": config("OLD_DB_PASSWORD"),
             "HOST": config("OLD_DB_ADDRESS"),
             "PORT": config("OLD_DB_PORT"),
-            "ATOMIC_REQUESTS": True,
         }
 else:
     DATABASES = SQLITE3_CONFIG

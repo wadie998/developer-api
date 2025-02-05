@@ -118,7 +118,6 @@ class Peer(models.Model):
     image_url = models.URLField(max_length=1000, blank=True, null=True)
     activated = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    reset_date = models.DateTimeField(blank=True, null=True)
     last_modified_date = models.DateTimeField(auto_now=True, blank=True, null=True)
     phone_number = models.CharField(max_length=12, blank=True, null=True)
     deleted = models.BooleanField(default=False)

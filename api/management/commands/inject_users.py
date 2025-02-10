@@ -1,33 +1,18 @@
-from uuid import UUID
-
 from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
 from api.models import FlouciApp, Peer
-from utils.backend_client import FlouciBackendClient
 
 
 class Command(BaseCommand):
     help = "Migrate users and their apps from the old database to the new database"
-
-    def fetch_tracking_id(self, user_id, wallet):
-        """Fetch tracking_id for a user from an external service."""
-        try:
-            UUID(user_id)  # If user_id is already a valid UUID, return it
-            return user_id
-        except Exception:
-            if wallet and wallet != "Test wallet":
-                result = FlouciBackendClient.fetch_tracking_id(wallet)
-                tracking_id = result.get("tracking_id")
-                user_type = result.get("type")
-            return tracking_id, user_type
 
     def migrate_users(self):
         """Migrate users from old_db to the new database."""
         old_cursor = connections["old_db"].cursor()
         old_cursor.execute(
             """
-            SELECT id, first_name, last_name, email, phone_number, user_id
+            SELECT id, phone_number, user_id
             FROM jhi_user
         """
         )
@@ -39,7 +24,7 @@ class Command(BaseCommand):
         skipped_count = 0
 
         for user in users:
-            id, first_name, last_name, email, phone_number, user_id = user
+            id, phone_number, user_id = user
 
             # Check if user already exists
             if Peer.objects.using("default").filter(id=id).exists():
@@ -50,11 +35,8 @@ class Command(BaseCommand):
             # Create and save new user
             new_user = Peer(
                 id=id,
-                first_name=first_name or "",
-                last_name=last_name or "",
-                email=email or "",
+                tracking_id=user_id,
                 phone_number=phone_number,
-                user_id=user_id,
             )
             new_user.save(using="default")
             migrated_count += 1
@@ -155,30 +137,6 @@ class Command(BaseCommand):
         )
         return users_wallets
 
-    def update_to_tracking_id(self, users_wallets):
-        """Update the user_id field to tracking_id using the wallet from the App model."""
-
-        migrated_count = 0
-        skipped_count = 0
-
-        for user_id, wallet in users_wallets.items():
-            tracking_id, user_type = self.fetch_tracking_id(user_id, wallet)
-
-            if tracking_id:
-                # Update the user's user_id field to tracking_id
-                Peer.objects.using("default").filter(id=user_id).update(tracking_id=tracking_id, user_type=user_type)
-                migrated_count += 1
-                self.stdout.write(self.style.SUCCESS(f"Updated user {user_id} to tracking_id {tracking_id}"))
-            else:
-                skipped_count += 1
-                self.stdout.write(self.style.WARNING(f"Skipping user {user_id}: No tracking_id found"))
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"User update to tracking_id complete: {migrated_count} updated, {skipped_count} skipped."
-            )
-        )
-
     @transaction.atomic
     def handle(self, *args, **kwargs):
         """Run the migration in a single transaction."""
@@ -186,9 +144,6 @@ class Command(BaseCommand):
         self.migrate_users()
 
         self.stdout.write(self.style.WARNING("Starting app migration..."))
-        users_wallets = self.migrate_apps()
-
-        self.stdout.write(self.style.WARNING("Starting tracking id migration..."))
-        self.update_to_tracking_id(users_wallets)
+        self.migrate_apps()
 
         self.stdout.write(self.style.SUCCESS("Migration completed successfully!"))

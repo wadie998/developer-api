@@ -4,11 +4,7 @@ from datetime import timedelta
 import requests
 from django.utils import timezone
 
-from settings.settings import (
-    FLOUCI_BACKEND_API_ADDRESS,
-    FLOUCI_BACKEND_API_KEY,
-    FLOUCI_BACKEND_INTERNAL_API_KEY,
-)
+from settings.settings import FLOUCI_BACKEND_API_ADDRESS, FLOUCI_BACKEND_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +95,7 @@ class FlouciBackendClient:
             verify=False,
             json=data,
         )
-        return response.json()
+        return FlouciBackendClient._process_response(response)
 
     @staticmethod
     @handle_exceptions
@@ -144,19 +140,5 @@ class FlouciBackendClient:
             headers=FlouciBackendClient.HEADERS,
             verify=False,
             json=data,
-        )
-        return FlouciBackendClient._process_response(response)
-
-    @staticmethod
-    @handle_exceptions
-    def fetch_tracking_id(wallet):
-        params = {"wallet": wallet}
-        headers = FlouciBackendClient.HEADERS.copy()
-        headers["Authorization"] = "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY
-        response = requests.get(
-            FlouciBackendClient.FETCH_TRACKING_ID_URL,
-            headers=headers,
-            verify=False,
-            params=params,
         )
         return FlouciBackendClient._process_response(response)

@@ -24,10 +24,7 @@ class FlouciAppAdmin(admin.ModelAdmin):
 class PeerAdmin(admin.ModelAdmin):
     list_display = (
         "tracking_id",
-        "email",
         "phone_number",
-        "first_name",
-        "last_name",
         "activated",
         "created_date",
         "last_modified_date",

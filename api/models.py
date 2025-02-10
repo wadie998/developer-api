@@ -112,16 +112,11 @@ class FlouciApp(models.Model):
 class Peer(models.Model):
     id = models.BigAutoField(primary_key=True, serialize=False)
     tracking_id = models.UUIDField(blank=True, null=True)
-    first_name = models.CharField(max_length=50, blank=True, null=True)
-    last_name = models.CharField(max_length=50, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    image_url = models.URLField(max_length=1000, blank=True, null=True)
     activated = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     last_modified_date = models.DateTimeField(auto_now=True, blank=True, null=True)
     phone_number = models.CharField(max_length=12, blank=True, null=True)
     deleted = models.BooleanField(default=False)
-    user_id = models.UUIDField(blank=True, null=True)
     user_type = models.CharField(max_length=20, choices=UserType.get_choices(), default=UserType.Merchant)
 
     class Meta:

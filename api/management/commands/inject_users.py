@@ -43,6 +43,10 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS(f"Migrated user {phone_number}"))
 
+        # Update the sequence to avoid conflicts
+        self.stdout.write(self.style.WARNING("Updating Peer ID sequence..."))
+        update_peer_sequence()
+
         self.stdout.write(
             self.style.SUCCESS(f"User migration complete: {migrated_count} users migrated, {skipped_count} skipped.")
         )
@@ -132,6 +136,10 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS(f"Migrated app {name}"))
 
+        # Update FlouciApp sequence to avoid conflicts
+        self.stdout.write(self.style.WARNING("Updating FlouciApp ID sequence..."))
+        update_flouciapp_sequence()
+
         self.stdout.write(
             self.style.SUCCESS(f"App migration complete: {migrated_count} apps migrated, {skipped_count} skipped.")
         )
@@ -147,3 +155,19 @@ class Command(BaseCommand):
         self.migrate_apps()
 
         self.stdout.write(self.style.SUCCESS("Migration completed successfully!"))
+
+
+def update_flouciapp_sequence():
+    from django.db import connection
+
+    """Updates the sequence of FlouciApp.id to avoid conflicts."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT setval('flouciapp_id_seq', COALESCE((SELECT MAX(id) FROM FlouciApp), 1));")
+
+
+def update_peer_sequence():
+    from django.db import connection
+
+    """Updates the sequence of Peer.id to avoid conflicts."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT setval('peer_id_seq', COALESCE((SELECT MAX(id) FROM Peer), 1));")

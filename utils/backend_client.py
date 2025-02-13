@@ -92,7 +92,6 @@ class FlouciBackendClient:
         response = requests.post(
             FlouciBackendClient.GENERATE_PAYMENT_PAGE_URL,
             headers=FlouciBackendClient.HEADERS,
-            verify=False,
             json=data,
         )
         return FlouciBackendClient._process_response(response)
@@ -104,7 +103,6 @@ class FlouciBackendClient:
         response = requests.get(
             FlouciBackendClient.CHECK_PAYMENT_URL,
             headers=FlouciBackendClient.HEADERS,
-            verify=False,
             params=params,
         )
         return FlouciBackendClient._process_response(response)
@@ -123,7 +121,6 @@ class FlouciBackendClient:
         response = requests.post(
             FlouciBackendClient.SEND_MONEY_URL,
             headers=FlouciBackendClient.HEADERS,
-            verify=False,
             json=data,
         )
         return FlouciBackendClient._process_response(response)
@@ -138,7 +135,6 @@ class FlouciBackendClient:
         response = requests.post(
             FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
             headers=FlouciBackendClient.HEADERS,
-            verify=False,
             json=data,
         )
         return FlouciBackendClient._process_response(response)

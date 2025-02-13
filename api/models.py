@@ -3,15 +3,17 @@ from datetime import datetime
 
 from django.db import models
 
-from api.enum import AppStatus, UserType
-
 
 class App(models.Model):
+    class AppStatus(models.TextChoices):
+        VERIFIED = "VERIFIED", "Verified"
+        UNVERIFIED = "UNVERIFIED", "Unverified"
+
     id = models.BigAutoField(primary_key=True, serialize=False)
     name = models.CharField(max_length=100)
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     wallet = models.CharField(max_length=35)
-    status = models.CharField(choices=AppStatus.get_choices(), default=AppStatus.VERIFIED, max_length=20)
+    status = models.CharField(choices=AppStatus.choices, default=AppStatus.VERIFIED, max_length=20)
     active = models.BooleanField(default=True)
     date_created = models.DateTimeField()
     user = models.ForeignKey("JhiUser", models.PROTECT, blank=True, null=True)
@@ -62,13 +64,17 @@ class JhiUser(models.Model):
 
 
 class FlouciApp(models.Model):
+    class AppStatus(models.TextChoices):
+        VERIFIED = "VERIFIED", "Verified"
+        UNVERIFIED = "UNVERIFIED", "Unverified"
+
     id = models.BigAutoField(primary_key=True, serialize=False)
     name = models.CharField(max_length=100)
     app_id = models.UUIDField(default=uuid.uuid4, unique=True)
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
     wallet = models.CharField(max_length=35)
-    status = models.CharField(choices=AppStatus.get_choices(), default=AppStatus.VERIFIED, max_length=20)
+    status = models.CharField(choices=AppStatus.choices, default=AppStatus.VERIFIED, max_length=20)
     active = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     user = models.ForeignKey("Peer", models.PROTECT, blank=True, null=True)
@@ -82,7 +88,7 @@ class FlouciApp(models.Model):
     transaction_number = models.BigIntegerField(blank=True, null=True)
     revoke_number = models.IntegerField(blank=True, null=True)
     last_revoke_date = models.DateField(blank=True, null=True)
-    merchant_id = models.BigIntegerField()
+    merchant_id = models.BigIntegerField(blank=True, null=True)
 
     class Meta:
         db_table = "flouciapp"
@@ -110,6 +116,10 @@ class FlouciApp(models.Model):
 
 
 class Peer(models.Model):
+    class UserType(models.TextChoices):
+        Individual = "Individual", "Individual"
+        Merchant = "Merchant", "Merchant"
+
     id = models.BigAutoField(primary_key=True, serialize=False)
     tracking_id = models.UUIDField(blank=True, null=True)
     activated = models.BooleanField(default=True)
@@ -117,7 +127,7 @@ class Peer(models.Model):
     last_modified_date = models.DateTimeField(auto_now=True, blank=True, null=True)
     phone_number = models.CharField(max_length=12, blank=True, null=True)
     deleted = models.BooleanField(default=False)
-    user_type = models.CharField(max_length=20, choices=UserType.get_choices(), default=UserType.Merchant)
+    user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.Merchant)
 
     class Meta:
         db_table = "Peer"

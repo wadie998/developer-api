@@ -70,7 +70,7 @@ class FlouciApp(models.Model):
 
     id = models.BigAutoField(primary_key=True, serialize=False)
     name = models.CharField(max_length=100)
-    app_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    app_id = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
     wallet = models.CharField(max_length=35)

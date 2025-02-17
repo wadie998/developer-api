@@ -162,7 +162,7 @@ else:
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-if config("POSTGRESQL_ENABLED", default=False, cast=bool):
+if config("POSTGRESQL_ENABLED", default=True, cast=bool):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -191,7 +191,7 @@ else:
 LOGGING
 
 
-if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
+if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
     ELASTIC_APM = ELASTIC_APM_CONFIG
     LOGGING["handlers"]["elasticapm"] = {
         "level": "ERROR",

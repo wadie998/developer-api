@@ -130,4 +130,4 @@ class Peer(models.Model):
     user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.Merchant)
 
     class Meta:
-        db_table = "Peer"
+        db_table = "peer"

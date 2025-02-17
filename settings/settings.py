@@ -13,20 +13,20 @@ import os
 
 from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
 from settings.configs.env import BASE_DIR, config
-from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY, JWT_SECRET_KEY
+from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY
 from settings.configs.logging_config import LOGGING
 from settings.configs.sqlite_config import SQLITE3_CONFIG
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+DJANGO_SERVICE_VERSION = "Flouci v1.0.0"
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 PROJECT_DOMAIN = config("PROJECT_DOMAIN")
 
 BACKEND_JWT_PUBLIC_KEY
-JWT_SECRET_KEY
 
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
@@ -52,22 +52,27 @@ INSTALLED_APPS += [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "api",
     "rest_framework",
     "rest_framework_api_key",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
     "health_check",
     "health_check.db",
     "health_check.contrib.migrations",
+    "drf_spectacular",
+    "api",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_otp.middleware.OTPMiddleware",
 ]
 
 ROOT_URLCONF = "settings.urls"
@@ -90,10 +95,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "settings.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# REST FRAMEWORK
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_METADATA_CLASS": None,
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "EXCEPTION_HANDLER": "utils.custom_exception_handlers.drf_custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Flouci Developers API",
+    "DESCRIPTION": "Flouci Developers APIs",
+    "VERSION": "2.0.0",
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -113,14 +133,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
-    "DEFAULT_METADATA_CLASS": None,
-    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
-    "TEST_REQUEST_DEFAULT_FORMAT": "json",
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-    "EXCEPTION_HANDLER": "utils.custom_exception_handlers.drf_custom_exception_handler",
-}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -145,7 +157,6 @@ if DEBUG is False:
 else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -162,8 +173,18 @@ if config("POSTGRESQL_ENABLED", default=False, cast=bool):
             "PORT": config("DB_PORT"),
         }
     }
+    if config("OLD_DATABASE_ENABLED", default=False, cast=bool):
+        DATABASES["old_db"] = {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("OLD_DB_NAME"),
+            "USER": config("OLD_DB_USER"),
+            "PASSWORD": config("OLD_DB_PASSWORD"),
+            "HOST": config("OLD_DB_ADDRESS"),
+            "PORT": config("OLD_DB_PORT"),
+        }
 else:
     DATABASES = SQLITE3_CONFIG
+
 
 # Adjustments for environment-enabled logging
 # Check configs in log config
@@ -180,5 +201,17 @@ if config("ELASTIC_APM_ENABLED", default=False, cast=bool):
     INSTALLED_APPS.append("elasticapm.contrib.django")
     MIDDLEWARE.append("elasticapm.contrib.django.middleware.TracingMiddleware")
 
-BACKEND_API_ADDRESS = config("BACKEND_API_ADDRESS", default="https://dev.flouci.com")
-BACKEND_API_KEY = config("BACKEND_API_KEY", default="s4IDXIJh.52C03pSXAu8wzBaL54rGFFgP9zioliIv")
+
+ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
+ADMIN_TWO_FA_ENABLED = config("ADMIN_TWO_FA_ENABLED", default=False, cast=bool)
+
+
+# FLOUCI BACKEND
+FLOUCI_BACKEND_API_ADDRESS = config("FLOUCI_BACKEND_API_ADDRESS", default="")
+FLOUCI_BACKEND_API_KEY = config("FLOUCI_BACKEND_API_KEY", default="")
+FLOUCI_BACKEND_INTERNAL_API_KEY = config("FLOUCI_BACKEND_INTERNAL_API_KEY", default="")
+
+# Data API:
+DATA_API_ADDRESS = config("DATA_API_ADDRESS", default="")
+DATA_API_PASSWORD = config("DATA_API_PASSWORD", default="")
+DATA_API_USERNAME = config("DATA_API_USERNAME", default="")

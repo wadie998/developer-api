@@ -1,0 +1,136 @@
+import base64
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile
+from rest_framework import serializers
+
+from api.enum import CurrencyEnum
+from api.models import FlouciApp
+
+
+class DefaultSerializer(serializers.Serializer):
+    def create(self, *args, **kwargs):
+        pass
+
+    def update(self, *args, **kwargs):
+        pass
+
+
+class DestinationSerializer(serializers.Serializer):
+    amount = serializers.IntegerField(min_value=1)
+    destination = serializers.CharField(max_length=255)
+
+
+class GeneratePaymentSerializer(DefaultSerializer):
+    app_token = serializers.UUIDField()
+    app_secret = serializers.UUIDField()
+    amount = serializers.IntegerField(min_value=100, max_value=5000000)
+    accept_card = serializers.BooleanField()
+    session_timeout_secs = serializers.IntegerField(min_value=300, default=1200)
+    session_timeout = serializers.IntegerField(min_value=300, default=1200)
+    success_link = serializers.URLField()
+    fail_link = serializers.URLField()
+    developer_tracking_id = serializers.CharField(max_length=40)
+    accept_edinar = serializers.BooleanField(required=False)
+    currency = serializers.ChoiceField(choices=CurrencyEnum.get_choices(), default=CurrencyEnum.TND.value)
+    webhook = serializers.URLField(required=False)
+    destination = DestinationSerializer(many=True, required=False)
+
+    def validate(self, validate_data):
+        try:
+            application = FlouciApp.objects.get(
+                public_token=validate_data.get("app_token"), private_token=validate_data.get("app_secret")
+            )
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError("App not found.")
+        validate_data["merchant_id"] = application.merchant_id
+        validate_data["test"] = application.test
+        validate_data["webhook"] = validate_data.get("webhook", None)
+        validate_data["amount_in_millimes"] = validate_data.get("amount")
+        return validate_data
+
+
+class VerifyPaymentSerializer(DefaultSerializer):
+    payment_id = serializers.CharField(max_length=100)
+
+
+class CheckUserExistsSerializer(DefaultSerializer):
+    tracking_id = serializers.CharField()
+
+
+class CreateDeveloperAccountSerializer(DefaultSerializer):
+    login = serializers.CharField(max_length=100)
+    password = serializers.CharField(max_length=50)
+    firstName = serializers.CharField(max_length=50)
+    lastName = serializers.CharField(max_length=50, required=False)
+    email = serializers.EmailField(required=False)
+
+
+class GetDeveloperAppSerializer(DefaultSerializer):
+    pass
+
+
+class CreateDeveloperAppSerializer(DefaultSerializer):
+    name = serializers.CharField(min_length=3, max_length=100)
+    description = serializers.CharField(min_length=3, max_length=255)
+    merchant_id = serializers.CharField(max_length=255)
+    username = serializers.CharField()
+    wallet = serializers.CharField(max_length=255)
+    imageBase64 = serializers.CharField(required=False)
+
+    def validate(self, data):
+        data["tracking_id"] = data["username"]
+        image_b64 = data.get("imageBase64")
+        if image_b64:
+            data["app_image"] = self._decode_base64_image(image_b64)
+
+        return data
+
+    def _decode_base64_image(self, image_b64):
+        MAX_IMAGE_SIZE = 3 * 1024 * 1024  # 3 MB
+        """Helper function to decode base64 image."""
+        try:
+            header, encoded = image_b64.split(";base64,")
+            ext = header.rsplit("/", 1)[-1]  # Extract file extension
+            img_data = base64.b64decode(encoded)
+        except (ValueError, TypeError, base64.binascii.Error):
+            raise serializers.ValidationError("Invalid base64 image string.")
+
+        if len(img_data) > MAX_IMAGE_SIZE:
+            raise serializers.ValidationError("Image size must be less than 3 MB.")
+
+        return ContentFile(img_data, name=f"temp.{ext}")
+
+
+class SendMoneySerializer(DefaultSerializer):
+    amount = serializers.IntegerField(
+        min_value=100, max_value=5000000
+    )  # To verify with Anis, Should we consider packs/limits
+    destination = serializers.CharField(max_length=35)
+    app_secret = serializers.UUIDField()
+    app_token = serializers.UUIDField()
+    webhook = serializers.URLField(required=False)
+
+    def validate(self, data):
+        data["amount_in_millimes"] = data["amount"]
+        return data
+
+
+class CheckSendMoneyStatusSerializer(DefaultSerializer):
+    app_secret = serializers.UUIDField()
+    app_token = serializers.UUIDField()
+    operation_id = serializers.UUIDField()
+
+
+class AcceptPaymentSerializer(serializers.Serializer):
+    flouci_otp = serializers.CharField()
+    app_token = serializers.UUIDField()
+    payment_id = serializers.CharField()
+    app_id = serializers.UUIDField(required=False, default=None)
+    amount = serializers.IntegerField()
+    destination = serializers.CharField(required=False, max_length=40, allow_null=True, allow_blank=True)
+    developer_tracking_id = serializers.CharField(required=False, allow_null=True, max_length=40)
+
+
+class SecureAcceptPaymentSerializer(AcceptPaymentSerializer):
+    app_secret = serializers.UUIDField()

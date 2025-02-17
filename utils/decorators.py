@@ -7,11 +7,12 @@ logger = logging.getLogger(__name__)
 
 
 class BaseGenericApiViewDecorator(object):
-    def __init__(self, post=True, get=False, delete=False, put=False):
+    def __init__(self, post=True, get=False, delete=False, put=False, patch=False):
         self.get = get
         self.post = post
         self.delete = delete
         self.put = put
+        self.patch = patch
 
     def __call__(self, klass):
         if self.get:
@@ -22,6 +23,8 @@ class BaseGenericApiViewDecorator(object):
             self.decorate_method(klass, "delete")
         if self.put:
             self.decorate_method(klass, "put")
+        if self.patch:
+            self.decorate_method(klass, "patch")
         return klass
 
     def decorate_method(self, klass, method):
@@ -42,7 +45,6 @@ class IsValidGenericApi(BaseGenericApiViewDecorator):
                 data.update(**kwargs)
             context_kwargs = self.get_serializer_context()
             serializer = self.get_serializer_class()(data=data, context=context_kwargs)
-            # serializer = self.get_serializer_class()(data=data)
             try:
                 serializer.is_valid(raise_exception=True)
             except ValidationError as e:

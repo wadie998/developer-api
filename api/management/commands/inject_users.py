@@ -170,4 +170,4 @@ def update_peer_sequence():
 
     """Updates the sequence of Peer.id to avoid conflicts."""
     with connection.cursor() as cursor:
-        cursor.execute("SELECT setval('peer_id_seq', COALESCE((SELECT MAX(id) FROM Peer), 1));")
+        cursor.execute("SELECT setval('peer_id_seq', COALESCE((SELECT MAX(id) FROM peer), 1));")

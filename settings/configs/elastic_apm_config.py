@@ -1,7 +1,7 @@
 from settings.configs.env import ENV, config
 
 ELASTIC_APM_CONFIG = {
-    "SERVICE_NAME": config("ELASTIC_APM_SERVICE_NAME", default="django-requests-manager"),
+    "SERVICE_NAME": config("ELASTIC_APM_SERVICE_NAME", default="django-developers-api"),
     "SECRET_TOKEN": config("ELASTIC_APM_SECRET_TOKEN", default=None),
     "API_KEY": config("ELASTIC_APM_API_KEY", default=None),
     "SERVER_URL": config("ELASTIC_APM_ADDRESS", default=None),

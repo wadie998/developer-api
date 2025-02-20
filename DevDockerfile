@@ -1,9 +1,8 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bookworm
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install virtualenv &&\
-    python -m virtualenv --python=/usr/local/bin/python $VIRTUAL_ENV &&\
-    apt update && apt install -y libpq-dev gcc git
-COPY requirements.txt  /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt &&\
+    python -m virtualenv --python=/usr/local/bin/python $VIRTUAL_ENV
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt &&\
     find $VIRTUAL_ENV | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf

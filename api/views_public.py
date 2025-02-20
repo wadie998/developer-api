@@ -6,7 +6,9 @@ from rest_framework.response import Response
 from api.models import FlouciApp
 from api.permissions import HasValidAppCredentials
 from api.serializers import (
+    CancelSMTPreAuthorizationSerializer,
     CheckSendMoneyStatusSerializer,
+    ConfirmSMTPreAuthorizationSerializer,
     GeneratePaymentSerializer,
     SecureAcceptPaymentSerializer,
     SendMoneySerializer,
@@ -78,6 +80,7 @@ class GeneratePaymentView(GenericAPIView):
         destination = serializer.validated_data.get("destination")
         test_account = serializer.validated_data.get("test")
         merchant_id = serializer.validated_data.get("merchant_id")
+        is_reservation_payment = serializer.validated_data["is_reservation_payment"]
 
         response = FlouciBackendClient.generate_payment_page(
             test_account=test_account,
@@ -94,6 +97,7 @@ class GeneratePaymentView(GenericAPIView):
             expires_at=session_timeout_secs or session_timeout,
             webhook_url=webhook,
             destination=destination,
+            is_reservation_payment=is_reservation_payment
         )
         if response.get("success"):
             data = {
@@ -361,4 +365,25 @@ class AcceptPayment(GenericAPIView):
         accept_payment_data["destination"] = app.wallet
 
         response = DataApiClient.accept_payment(accept_payment_data)
+        return Response(response, status=status.HTTP_200_OK)
+
+@IsValidGenericApi()
+class ConfirmSMTPreAuthorization(GenericAPIView):
+    permission_classes = (HasValidAppCredentials,)
+    serializer_class = ConfirmSMTPreAuthorizationSerializer
+
+    def post(self, request, serializer):
+        payment_id = serializer.validated_data["payment_id"]
+        amount = serializer.validated_data["amount"]
+        response = FlouciBackendClient.confirm_payment(payment_id, amount)
+        return Response(response, status=status.HTTP_200_OK)
+    
+@IsValidGenericApi()
+class CancelSMTPreAuthorization(GenericAPIView):
+    permission_classes = (HasValidAppCredentials,)
+    serializer_class = CancelSMTPreAuthorizationSerializer
+
+    def post(self, request, serializer):
+        payment_id = serializer.validated_data["payment_id"]
+        response = FlouciBackendClient.cancel_payment(payment_id)
         return Response(response, status=status.HTTP_200_OK)

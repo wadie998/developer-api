@@ -29,6 +29,8 @@ class FlouciBackendClient:
     SEND_MONEY_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/send_money"
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
+    CONFIRM_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_transaction"
+    CANCEL_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_transaction"
 
     @staticmethod
     def _process_response(response, success_code=[200, 201]):
@@ -66,6 +68,7 @@ class FlouciBackendClient:
         expires_at,
         webhook_url,
         destination,
+        is_reservation_payment,
     ):
         data = {
             "test_account": test_account,
@@ -79,6 +82,7 @@ class FlouciBackendClient:
             "fail_link": fail_link,
             "developer_tracking_id": developer_tracking_id,
             "expires_at": (timezone.now() + timedelta(seconds=expires_at)).isoformat(),
+            "is_reservation_payment": is_reservation_payment,
         }
         if webhook_url:
             data["webhook_url"] = webhook_url
@@ -134,6 +138,28 @@ class FlouciBackendClient:
         }
         response = requests.post(
             FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def confirm_payment(payment_id, amount):
+        data = {"payment_id": payment_id, "amount": amount}
+        response = requests.post(
+            FlouciBackendClient.CONFIRM_TRANSACTION_URL,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+    
+    @staticmethod
+    @handle_exceptions
+    def cancel_payment(payment_id):
+        data = {"payment_id": payment_id}
+        response = requests.post(
+            FlouciBackendClient.CANCEL_TRANSACTION_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )

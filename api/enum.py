@@ -25,6 +25,6 @@ class CurrencyEnum(Enum):
     EUR = "EUR"
     GBP = "GBP"
 
-    @staticmethod
-    def get_choices():
-        return ((tag.value, tag.name) for tag in CurrencyEnum)
+    @classmethod
+    def get_choices(cls):
+        return [(e.name, e.value) for e in cls]

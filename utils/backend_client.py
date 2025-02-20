@@ -145,19 +145,19 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def confirm_payment(payment_id, amount):
-        data = {"payment_id": payment_id, "amount": amount}
+    def confirm_payment(payment_id, amount, merchant_id):
+        data = {"payment_id": payment_id, "amount": amount, "merchant_id": merchant_id}
         response = requests.post(
             FlouciBackendClient.CONFIRM_TRANSACTION_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )
         return FlouciBackendClient._process_response(response)
-    
+
     @staticmethod
     @handle_exceptions
-    def cancel_payment(payment_id):
-        data = {"payment_id": payment_id}
+    def cancel_payment(payment_id, merchant_id):
+        data = {"payment_id": payment_id, "merchant_id": merchant_id}
         response = requests.post(
             FlouciBackendClient.CANCEL_TRANSACTION_URL,
             headers=FlouciBackendClient.HEADERS,

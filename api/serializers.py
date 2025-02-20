@@ -138,13 +138,9 @@ class SecureAcceptPaymentSerializer(AcceptPaymentSerializer):
 
 
 class ConfirmSMTPreAuthorizationSerializer(DefaultSerializer):
-    app_secret = serializers.UUIDField()
-    app_token = serializers.UUIDField()
     payment_id = serializers.CharField()
     amount = serializers.IntegerField()
 
 
 class CancelSMTPreAuthorizationSerializer(DefaultSerializer):
-    app_secret = serializers.UUIDField()
-    app_token = serializers.UUIDField()
     payment_id = serializers.CharField()

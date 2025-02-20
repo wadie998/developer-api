@@ -1,5 +1,4 @@
 import base64
-import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
@@ -36,7 +35,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     currency = serializers.ChoiceField(choices=CurrencyEnum.get_choices(), default=CurrencyEnum.TND.value)
     webhook = serializers.URLField(required=False)
     destination = DestinationSerializer(many=True, required=False)
-    is_reservation_payment = serializers.BooleanField(required=False)
+    is_reservation_payment = serializers.BooleanField(default=False)
 
     def validate(self, validate_data):
         try:
@@ -143,6 +142,7 @@ class ConfirmSMTPreAuthorizationSerializer(DefaultSerializer):
     app_token = serializers.UUIDField()
     payment_id = serializers.CharField()
     amount = serializers.IntegerField()
+
 
 class CancelSMTPreAuthorizationSerializer(DefaultSerializer):
     app_secret = serializers.UUIDField()

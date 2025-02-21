@@ -35,7 +35,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     currency = serializers.ChoiceField(choices=CurrencyEnum.get_choices(), default=CurrencyEnum.TND.value)
     webhook = serializers.URLField(required=False)
     destination = DestinationSerializer(many=True, required=False)
-    is_reservation_payment = serializers.BooleanField(default=False)
+    pre_authorization_payment = serializers.BooleanField(default=False)
 
     def validate(self, validate_data):
         try:

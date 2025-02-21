@@ -68,7 +68,7 @@ class FlouciBackendClient:
         expires_at,
         webhook_url,
         destination,
-        is_reservation_payment,
+        pre_authorization_payment,
     ):
         data = {
             "test_account": test_account,
@@ -82,7 +82,7 @@ class FlouciBackendClient:
             "fail_link": fail_link,
             "developer_tracking_id": developer_tracking_id,
             "expires_at": (timezone.now() + timedelta(seconds=expires_at)).isoformat(),
-            "is_reservation_payment": is_reservation_payment,
+            "pre_authorization_payment": pre_authorization_payment,
         }
         if webhook_url:
             data["webhook_url"] = webhook_url

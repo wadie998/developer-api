@@ -80,7 +80,7 @@ class GeneratePaymentView(GenericAPIView):
         destination = serializer.validated_data.get("destination")
         test_account = serializer.validated_data.get("test")
         merchant_id = serializer.validated_data.get("merchant_id")
-        is_reservation_payment = serializer.validated_data["is_reservation_payment"]
+        pre_authorization_payment = serializer.validated_data["pre_authorization_payment"]
 
         response = FlouciBackendClient.generate_payment_page(
             test_account=test_account,
@@ -97,7 +97,7 @@ class GeneratePaymentView(GenericAPIView):
             expires_at=session_timeout_secs or session_timeout,
             webhook_url=webhook,
             destination=destination,
-            is_reservation_payment=is_reservation_payment,
+            pre_authorization_payment=pre_authorization_payment,
         )
         if response.get("success"):
             data = {

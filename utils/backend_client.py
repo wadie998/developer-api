@@ -142,15 +142,17 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def generate_pos_transaction(merchant_id,webhook_url,id_terminal,serial_number,service_code,amount_in_millimes,payment_method):
+    def generate_pos_transaction(
+        merchant_id, webhook_url, id_terminal, serial_number, service_code, amount_in_millimes, payment_method
+    ):
         data = {
             "merchant_id": merchant_id,
             "webhook_url": webhook_url,
-            "idTerminal":id_terminal,
-            "serialNumber":serial_number,
-            "serviceCode":service_code,
-            "amount_in_millimes":amount_in_millimes,
-            "payment_method":payment_method
+            "idTerminal": id_terminal,
+            "serialNumber": serial_number,
+            "serviceCode": service_code,
+            "amount_in_millimes": amount_in_millimes,
+            "payment_method": payment_method,
         }
         response = requests.post(
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
@@ -158,4 +160,3 @@ class FlouciBackendClient:
             json=data,
         )
         return FlouciBackendClient._process_response(response)
-        

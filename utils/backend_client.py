@@ -128,13 +128,13 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def developer_check_send_money_status(operation_id, sender_id):
-        data = {
+        params = {
             "operation_id": operation_id,
             "sender_id": sender_id,
         }
-        response = requests.post(
+        response = requests.get(
             FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
             headers=FlouciBackendClient.HEADERS,
-            json=data,
+            params=params,
         )
         return FlouciBackendClient._process_response(response)

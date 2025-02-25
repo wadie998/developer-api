@@ -144,4 +144,4 @@ class AddPosTransactionSerializer(serializers.Serializer):
     serial_number = serializers.CharField()
     service_code = serializers.CharField(max_length=3, required=False, default="024")
     amount_in_millimes = serializers.IntegerField()
-    payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD.value)
+    payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)

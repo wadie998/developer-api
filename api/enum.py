@@ -30,12 +30,17 @@ class CurrencyEnum(Enum):
         return ((tag.value, tag.name) for tag in CurrencyEnum)
 
 
-class PaymentMethod(Enum):
-    NFC = "NFC"
-    CARD = "CARD"
-    WALLET = "WALLET"
-    CHEQUE = "CHEQUE"
+class PaymentMethod:
+    NFC = "nfc"
+    CARD = "card"
+    WALLET = "wallet"
+    CHEQUE = "cheque"
 
     @staticmethod
     def get_choices():
-        return ((tag.value, tag.name) for tag in PaymentMethod)
+        return (
+            (PaymentMethod.NFC, "nfc"),
+            (PaymentMethod.CARD, "card"),
+            (PaymentMethod.WALLET, "wallet"),
+            (PaymentMethod.CHEQUE, "cheque"),
+        )

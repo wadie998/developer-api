@@ -10,6 +10,7 @@ from api.views_developer_auth import (
 from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
 from api.views_public import (
     AcceptPayment,
+    AddPosTransaction,
     CheckSendMoneyStatusView,
     GeneratePaymentView,
     SendMoneyView,
@@ -24,6 +25,7 @@ urlpatterns = [
     path("verify_payment/<str:payment_id>", VerifyPaymentView.as_view(), name="verify_payment"),
     path("send_money", SendMoneyView.as_view(), name="send_money"),
     path("check_payment_status/<uuid:operation_id>", CheckSendMoneyStatusView.as_view(), name="check_payment_status"),
+    path("add_pos_transaction", AddPosTransaction.as_view(), name="add_pos_transaction"),
     # urls with backend authentication
     path("internal/checkuserexists/<str:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
     path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),  # Tested

@@ -2,7 +2,7 @@ import logging
 
 import jwt
 
-from settings.settings import BACKEND_JWT_PUBLIC_KEY
+from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY
 
 logger = logging.getLogger(__name__)
 

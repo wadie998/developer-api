@@ -7,7 +7,7 @@ from settings.settings import BACKEND_JWT_PUBLIC_KEY
 logger = logging.getLogger(__name__)
 
 
-def verify_backend_token(token, token_type="access", public_key=BACKEND_JWT_PUBLIC_KEY):
+def verify_backend_token(token, token_type="partner", public_key=BACKEND_JWT_PUBLIC_KEY):
     """
     :param token:
     :param token_type:
@@ -22,5 +22,5 @@ def verify_backend_token(token, token_type="access", public_key=BACKEND_JWT_PUBL
     except jwt.ExpiredSignatureError:
         return False, None
     except Exception as e:
-        logger.warning("error verifying jwt token: %s", e)
+        logger.warning(f"Error verifying jwt token:{e}")
         return False, None

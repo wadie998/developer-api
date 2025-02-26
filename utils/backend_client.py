@@ -35,6 +35,7 @@ class FlouciBackendClient:
     SEND_MONEY_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/send_money"
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
+    GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
 
     # PARTNER APIs
     INITIATE_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/initiate_link_flouci_account"
@@ -51,10 +52,10 @@ class FlouciBackendClient:
             return {"success": False, "code": 5, "message": "Service indisponible", "status_code": response.status_code}
         else:
             response_json = response.json()
-            if response.status_code in success_code and response_json.get("success"):
-                return response_json
+            if response.status_code in success_code:
+                return {"success": True, **response_json}
             else:
-                logger.error(f"Request failed with response: {response.text}")
+                logger.info(f"Request failed with response: {response.text}")
                 return {
                     "success": False,
                     "code": 1,
@@ -147,6 +148,27 @@ class FlouciBackendClient:
         }
         response = requests.post(
             FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def generate_pos_transaction(
+        merchant_id, webhook_url, id_terminal, serial_number, service_code, amount_in_millimes, payment_method
+    ):
+        data = {
+            "merchant_id": merchant_id,
+            "webhook_url": webhook_url,
+            "idTerminal": id_terminal,
+            "serialNumber": serial_number,
+            "serviceCode": service_code,
+            "amount_in_millimes": amount_in_millimes,
+            "payment_method": payment_method,
+        }
+        response = requests.post(
+            FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )

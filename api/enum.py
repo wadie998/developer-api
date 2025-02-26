@@ -114,3 +114,19 @@ class TransactionsTypes:
             (TransactionsTypes.P2P, "P2P"),
             (TransactionsTypes.MERCHANT, "MERCHANT"),
         )
+
+
+class PaymentMethod:
+    NFC = "NFC"
+    CARD = "CARD"
+    WALLET = "WALLET"
+    CHECK = "CHECK"
+
+    @staticmethod
+    def get_choices():
+        return (
+            (PaymentMethod.NFC, "Nfc"),
+            (PaymentMethod.CARD, "Card"),
+            (PaymentMethod.WALLET, "Wallet"),
+            (PaymentMethod.CHECK, "Check"),
+        )

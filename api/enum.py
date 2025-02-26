@@ -1,46 +1,31 @@
 from enum import Enum
 
 
-class AppStatus(Enum):
+class BaseEnum(Enum):
+    @classmethod
+    def get_choices(cls):
+        return [(member.value, member.name) for member in cls]
+
+
+class AppStatus(BaseEnum):
     VERIFIED = "VERIFIED"
     UNVERIFIED = "UNVERIFIED"
 
-    @staticmethod
-    def get_choices():
-        return ((tag.value, tag.name) for tag in AppStatus)
+
+class UserType(BaseEnum):
+    INDIVIDUAL = "Individual"
+    MERCHANT = "Merchant"
 
 
-class UserType(Enum):
-    Individual = "Individual"
-    Merchant = "Merchant"
-
-    @staticmethod
-    def get_choices():
-        return ((tag.value, tag.name) for tag in UserType)
-
-
-class CurrencyEnum(Enum):
+class CurrencyEnum(BaseEnum):
     TND = "TND"
     USD = "USD"
     EUR = "EUR"
     GBP = "GBP"
 
-    @staticmethod
-    def get_choices():
-        return ((tag.value, tag.name) for tag in CurrencyEnum)
 
-
-class PaymentMethod:
+class PaymentMethod(BaseEnum):
     NFC = "nfc"
     CARD = "card"
     WALLET = "wallet"
     CHEQUE = "cheque"
-
-    @staticmethod
-    def get_choices():
-        return (
-            (PaymentMethod.NFC, "nfc"),
-            (PaymentMethod.CARD, "card"),
-            (PaymentMethod.WALLET, "wallet"),
-            (PaymentMethod.CHEQUE, "cheque"),
-        )

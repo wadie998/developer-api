@@ -385,4 +385,4 @@ class AddPosTransaction(GenericAPIView):
             amount_in_millimes=serializer.validated_data["amount_in_millimes"],
             payment_method=serializer.validated_data["payment_method"],
         )
-        return Response(response, status=response.get("status_code", 200))
+        return Response(response, status=response.get("status_code", 201))

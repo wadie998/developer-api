@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
@@ -61,13 +60,13 @@ class CreateDeveloperAccountView(GenericAPIView):
                 first_name=serializer.validated_data.get("firstName"),
                 last_name=serializer.validated_data.get("lastName"),
                 email=serializer.validated_data.get("email"),
+                user_type=serializer.validated_data.get("user_type"),
             )
             if user:
                 FlouciApp.objects.create(
                     user=user,
                     name="TEST APP",
                     description="This is your test app",
-                    app_id=uuid.uuid4(),
                     wallet="Test wallet",
                     test=True,
                     merchant_id=0,

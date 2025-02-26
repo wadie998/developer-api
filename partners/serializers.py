@@ -1,7 +1,12 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from api.enum import PartnerProducts, RequestStatus, SendMoneyServiceOperationTypes
+from api.enum import (
+    PartnerProducts,
+    PaymentMethod,
+    RequestStatus,
+    SendMoneyServiceOperationTypes,
+)
 from partners.models import PartnerTransaction
 from partners.validators import (
     validator_string_is_digit,
@@ -94,3 +99,12 @@ class DevAPIDataApiCatcherSerializer(DefaultSerializer):
         )
     )
     result = serializers.JSONField()
+
+
+class InitiatePosTransactionSerializer(DefaultSerializer):
+    webhook = serializers.URLField()
+    id_terminal = serializers.CharField(max_length=16)
+    serial_number = serializers.CharField()
+    service_code = serializers.CharField(max_length=3, required=False, default="024")
+    amount_in_millimes = serializers.IntegerField()
+    payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)

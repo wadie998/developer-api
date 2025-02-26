@@ -19,6 +19,7 @@ from partners.serializers import (
     FilterHistorySerializer,
     InitiateLinkAccountViewSerializer,
     InitiatePaymentViewSerializer,
+    InitiatePosTransactionSerializer,
     PaginatedHistorySerializer,
     RefreshAuthenticateViewSerializer,
     SendMoneyViewSerializer,
@@ -242,6 +243,26 @@ class InitiatePaymentView(GenericAPIView):
         else:
             operation.set_operation_status(RequestStatus.DECLINED)
         return Response(data=response, status=response.get("status_code"))
+
+
+@IsValidGenericApi()
+class InitiatePosTransaction(GenericAPIView):
+    permission_classes = (HasValidPartnerAppCredentials,)
+    serializer_class = InitiatePosTransactionSerializer
+
+    def post(self, request, serializer):
+        app = request.application
+        merchant_id = app.merchant_id
+        response = FlouciBackendClient.generate_pos_transaction(
+            merchant_id=merchant_id,
+            webhook_url=serializer.validated_data["webhook_url"],
+            id_terminal=serializer.validated_data["id_terminal"],
+            serial_number=serializer.validated_data["serial_number"],
+            service_code=serializer.validated_data["service_code"],
+            amount_in_millimes=serializer.validated_data["amount_in_millimes"],
+            payment_method=serializer.validated_data["payment_method"],
+        )
+        return Response(response, status=response.get("status_code", 200))
 
 
 class SendMoneyView(GenericAPIView):

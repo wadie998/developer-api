@@ -4,9 +4,8 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from api.models import FlouciApp
-from api.permissions import HasValidAppCredentials, HasValidPartnerAppCredentials
+from api.permissions import HasValidAppCredentials
 from api.serializers import (
-    AddPosTransactionSerializer,
     CheckSendMoneyStatusSerializer,
     GeneratePaymentSerializer,
     SecureAcceptPaymentSerializer,
@@ -363,26 +362,3 @@ class AcceptPayment(GenericAPIView):
 
         response = DataApiClient.accept_payment(accept_payment_data)
         return Response(response, status=status.HTTP_200_OK)
-
-
-@IsValidGenericApi()
-class AddPosTransaction(GenericAPIView):
-    permission_classes = (HasValidPartnerAppCredentials,)
-    serializer_class = AddPosTransactionSerializer
-
-    def post(self, request, serializer):
-        try:
-            app = FlouciApp.objects.get(private_token=serializer.validated_data["app_secret"])
-        except FlouciApp.DoesNotExist:
-            return Response({"result": False, "message": "Not found"}, status=status.HTTP_404_NOT_FOUND)
-        merchant_id = app.merchant_id
-        response = FlouciBackendClient.generate_pos_transaction(
-            merchant_id=merchant_id,
-            webhook_url=serializer.validated_data["webhook_url"],
-            id_terminal=serializer.validated_data["id_terminal"],
-            serial_number=serializer.validated_data["serial_number"],
-            service_code=serializer.validated_data["service_code"],
-            amount_in_millimes=serializer.validated_data["amount_in_millimes"],
-            payment_method=serializer.validated_data["payment_method"],
-        )
-        return Response(response, status=response.get("status_code", 200))

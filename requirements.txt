@@ -11,3 +11,4 @@ PyJWT[crypto]==2.10.1
 python-decouple==3.8
 requests==2.32.2
 whitenoise[brotli]==6.8.2
+django_ratelimit==4.1.0

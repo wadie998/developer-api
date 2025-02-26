@@ -17,7 +17,7 @@ class DataApiClient:
         accepted_status_codes=[200, 201],
     )
     AUTHENTICATE_URL = DATA_API_ADDRESS + "/api/authenticate"
-    ACCEPT_PAYMENT = "/api/developer/accept"
+    ACCEPT_PAYMENT = DATA_API_ADDRESS + "/api/developer/accept"
 
     @staticmethod
     def accept_payment(self, data):

@@ -23,10 +23,6 @@ class CurrencyEnum(BaseEnum):
     EUR = "EUR"
     GBP = "GBP"
 
-    @staticmethod
-    def get_choices():
-        return ((tag.value, tag.name) for tag in CurrencyEnum)
-
 
 class RequestStatus:
     APPROVED = "A"

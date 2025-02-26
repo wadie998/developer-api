@@ -2,9 +2,15 @@ import logging
 from datetime import timedelta
 
 import requests
+from django.urls import reverse
 from django.utils import timezone
 
-from settings.settings import FLOUCI_BACKEND_API_ADDRESS, FLOUCI_BACKEND_API_KEY
+from api.enum import TransactionsTypes
+from settings.settings import (
+    FLOUCI_BACKEND_API_ADDRESS,
+    FLOUCI_BACKEND_API_KEY,
+    PROJECT_DOMAIN,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +35,14 @@ class FlouciBackendClient:
     SEND_MONEY_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/send_money"
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
+    GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
+
+    # PARTNER APIs
+    INITIATE_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/initiate_link_flouci_account"
+    CONFIRM_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/confirm_link_flouci_account"
+    PARTNER_AUTHENTICATE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/authenticate_user"
+    GET_BALANCE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/get_balance"
+    SEND_MONEY = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/send_money"
     CONFIRM_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_transaction"
     CANCEL_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_transaction"
 
@@ -40,10 +54,10 @@ class FlouciBackendClient:
             return {"success": False, "code": 5, "message": "Service indisponible", "status_code": response.status_code}
         else:
             response_json = response.json()
-            if response.status_code in success_code and response_json.get("success"):
-                return response_json
+            if response.status_code in success_code:
+                return {"success": True, **response_json}
             else:
-                logger.error(f"Request failed with response: {response.text}")
+                logger.info(f"Request failed with response: {response.text}")
                 return {
                     "success": False,
                     "code": 1,
@@ -132,14 +146,108 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def developer_check_send_money_status(operation_id, sender_id):
-        data = {
+        params = {
             "operation_id": operation_id,
             "sender_id": sender_id,
         }
-        response = requests.post(
+        response = requests.get(
             FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
             headers=FlouciBackendClient.HEADERS,
+            params=params,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def generate_pos_transaction(
+        merchant_id, webhook_url, id_terminal, serial_number, service_code, amount_in_millimes, payment_method
+    ):
+        data = {
+            "merchant_id": merchant_id,
+            "webhook_url": webhook_url,
+            "idTerminal": id_terminal,
+            "serialNumber": serial_number,
+            "serviceCode": service_code,
+            "amount_in_millimes": amount_in_millimes,
+            "payment_method": payment_method,
+        }
+        response = requests.post(
+            FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
+            headers=FlouciBackendClient.HEADERS,
             json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def initiate_link_account(phone_number, merchant_id):
+        data = {
+            "phone_number": phone_number,
+            "merchant_id": merchant_id,
+        }
+        response = requests.post(
+            FlouciBackendClient.INITIATE_LINK_ACCOUNT, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def confirm_link_account(phone_number, session_id, otp, merchant_id):
+        data = {
+            "phone_number": phone_number,
+            "session_id": str(session_id),
+            "otp": otp,
+            "merchant_id": merchant_id,
+        }
+        response = requests.post(
+            FlouciBackendClient.CONFIRM_LINK_ACCOUNT, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def generate_authentication_token(phone_number, partner_tracking_id, account_tracking_id, merchant_id):
+        data = {
+            "phone_number": phone_number,
+            "account_tracking_id": str(account_tracking_id),
+            "partner_tracking_id": str(partner_tracking_id),
+            "merchant_id": merchant_id,
+        }
+        response = requests.post(
+            FlouciBackendClient.PARTNER_AUTHENTICATE, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def get_user_balance(tracking_id):
+        data = {
+            "account_tracking_id": str(tracking_id),
+        }
+        response = requests.post(
+            FlouciBackendClient.GET_BALANCE, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def send_money(operation, merchant_id=None, receiver=None):
+        # TODO add receiver can be merchant
+
+        data = {
+            "operation_id": str(operation.operation_id),
+            "transaction_type": TransactionsTypes.P2P if operation.receiver else TransactionsTypes.MERCHANT,
+            "account_tracking_id": str(operation.sender.account_tracking_id),
+            "amount_in_millimes": operation.amount_in_millimes,
+            # TODO establish webhook
+            "webhook": PROJECT_DOMAIN + reverse("partner_send_money_catcher"),
+        }
+        if merchant_id:
+            data["merchant_id"] = merchant_id
+        if receiver:
+            data["receiver"] = receiver
+        response = requests.post(
+            FlouciBackendClient.SEND_MONEY, headers=FlouciBackendClient.HEADERS, json=data, verify=False
         )
         return FlouciBackendClient._process_response(response)
 

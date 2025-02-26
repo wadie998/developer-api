@@ -89,6 +89,8 @@ class FlouciApp(models.Model):
     revoke_number = models.IntegerField(blank=True, null=True)
     last_revoke_date = models.DateField(blank=True, null=True)
     merchant_id = models.BigIntegerField(blank=True, null=True)
+    has_partner_access = models.BooleanField(default=False)
+    has_advanced_payments_access = models.BooleanField(default=False)
 
     class Meta:
         db_table = "flouciapp"

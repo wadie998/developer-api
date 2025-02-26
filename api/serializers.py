@@ -5,7 +5,7 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from api.enum import CurrencyEnum
-from api.models import FlouciApp
+from api.models import FlouciApp, Peer
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -60,10 +60,10 @@ class CheckUserExistsSerializer(DefaultSerializer):
 
 class CreateDeveloperAccountSerializer(DefaultSerializer):
     login = serializers.CharField(max_length=100)
-    password = serializers.CharField(max_length=50)
     firstName = serializers.CharField(max_length=50)
     lastName = serializers.CharField(max_length=50, required=False)
     email = serializers.EmailField(required=False)
+    user_type = serializers.ChoiceField(choices=Peer.UserType, default=Peer.UserType.Merchant)
 
 
 class GetDeveloperAppSerializer(DefaultSerializer):

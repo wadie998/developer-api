@@ -13,7 +13,6 @@ import os
 
 from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
 from settings.configs.env import BASE_DIR, config
-from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY
 from settings.configs.logging_config import LOGGING
 from settings.configs.sqlite_config import SQLITE3_CONFIG
 
@@ -25,8 +24,6 @@ DJANGO_SERVICE_VERSION = "Flouci v1.0.0"
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 PROJECT_DOMAIN = config("PROJECT_DOMAIN")
-
-BACKEND_JWT_PUBLIC_KEY
 
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
@@ -61,6 +58,7 @@ INSTALLED_APPS += [
     "health_check.contrib.migrations",
     "drf_spectacular",
     "api",
+    "partners",
 ]
 
 MIDDLEWARE = [
@@ -188,8 +186,7 @@ else:
 
 # Adjustments for environment-enabled logging
 # Check configs in log config
-LOGGING
-
+# LOGGING
 
 if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
     ELASTIC_APM = ELASTIC_APM_CONFIG
@@ -215,3 +212,6 @@ FLOUCI_BACKEND_INTERNAL_API_KEY = config("FLOUCI_BACKEND_INTERNAL_API_KEY", defa
 DATA_API_ADDRESS = config("DATA_API_ADDRESS", default="")
 DATA_API_PASSWORD = config("DATA_API_PASSWORD", default="")
 DATA_API_USERNAME = config("DATA_API_USERNAME", default="")
+
+# WEBHOOK FROM SEND MONEY
+CASH_IO_VERIFICATION_TOKEN = config("CASH_IO_VERIFICATION_TOKEN", default="")

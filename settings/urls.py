@@ -24,6 +24,7 @@ from settings.settings import ADMIN_ENABLED, ADMIN_TWO_FA_ENABLED
 urlpatterns = [
     path("api/ht", include("health_check.urls")),
     path("api/", include("api.urls"), name="api"),
+    path("partners/", include("partners.urls"), name="partner_api"),
     # SCHEMA PUBLIC
     path("api/schema/public", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),

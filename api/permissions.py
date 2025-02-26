@@ -1,10 +1,14 @@
+import hmac
 import logging
 import uuid
+from hashlib import sha256
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import BasePermission
 
 from api.models import FlouciApp
+from partners.models import LinkedAccount
+from settings.settings import CASH_IO_VERIFICATION_TOKEN
 from utils.jwt_helpers import verify_backend_token
 
 logger = logging.getLogger(__name__)
@@ -51,3 +55,88 @@ class HasValidAppCredentials(BasePermission):
             return False
         request.application = application
         return True
+
+
+class HasValidPartnerAppCredentials(BasePermission):
+    """
+    Validates the app credentials and returns the application to the view
+    """
+
+    def has_permission(self, request, view):
+        token = request.META.get("HTTP_AUTHORIZATION")
+
+        if not token or not token.startswith("Bearer "):
+            return False
+        token = token.split(" ")[1]  # Extract the token part after "Bearer "
+        public_token = token.split(":")[0]
+        private_token = token.split(":")[1]
+        try:
+            uuid.UUID(public_token)
+            uuid.UUID(private_token)
+        except ValueError:
+            return False
+        try:
+            application = FlouciApp.objects.get(
+                public_token=public_token, private_token=private_token, active=True, has_partner_access=True
+            )
+        except ObjectDoesNotExist:
+            return False
+        request.application = application
+        return True
+
+
+class IsPartnerAuthenticated(BasePermission):
+    """
+    Allows access to only authenticated Flouci users with their personal or business account,
+    to use in API endpoint, just add this line
+    permission_classes = (IsFlouciAuthenticated, )
+    in the beginning of the class
+    """
+
+    def has_permission(self, request, view):
+        token = request.META.get("HTTP_AUTHORIZATION")
+        if not token or not token.startswith("Bearer "):
+            return False
+        token = token.split(" ")[1]  # Extract the token part after "Bearer "
+        verified, data = verify_backend_token(token)
+        if not verified:
+            return False
+        try:
+            linked_account = LinkedAccount.objects.get(
+                partner_tracking_id=data.get("partner_tracking_id"), merchant_id=data.get("mid")
+            )
+            request.account = linked_account
+            request.partner_tracking_id = data.get("partner_tracking_id")
+            request.merchant_id = data.get("mid")
+            return True
+        except ObjectDoesNotExist:
+            return False
+
+
+def signed_request_is_valid(request, secret):
+    """Validate signed requests."""
+    api_signature = request.META.get("HTTP_SIGNATURE")
+    if api_signature:
+        request_check_field = request.data.get("id")  # fetch check_field in request.data
+        if request_check_field is None:
+            return False
+        signature = generate_request_signature(secret, request.method, request.path, request_check_field)
+        return signature == api_signature
+    else:
+        return False
+
+
+def generate_request_signature(secret, request_method, request_path, request_check_field):
+    params = [secret, request_method, request_path, request_check_field]
+    formatted_data = "-".join(params)
+    formatted_data = formatted_data.encode("utf-8")
+    return hmac.new(secret.encode("utf-8"), msg=formatted_data, digestmod=sha256).hexdigest()
+
+
+class HasValidDataApiSignature(BasePermission):
+    def has_permission(self, request, view):
+        # For most webhook catchers we use this
+        if signed_request_is_valid(request, CASH_IO_VERIFICATION_TOKEN):
+            return True
+        logger.warning("A request with wrong api signature is calling data api webhook catcher")
+        return False

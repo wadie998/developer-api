@@ -21,14 +21,15 @@ class DefaultSerializer(serializers.Serializer):
     def update(self, *args, **kwargs):
         pass
 
+
 class DefaultPartnerSerializer(serializers.Serializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
     tracking_id = serializers.UUIDField()
-  
 
 
 class IsFlouciViewSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
+
 
 class InitiateLinkAccountViewSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])

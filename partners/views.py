@@ -10,7 +10,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.enum import RequestStatus, SendMoneyServiceOperationTypes
-from api.permissions import HasValidPartnerAppCredentials, IsPartnerAuthenticated, IsValidPartnerUser
+from api.permissions import (
+    HasValidPartnerAppCredentials,
+    IsPartnerAuthenticated,
+    IsValidPartnerUser,
+)
 from partners.models import LinkedAccount, PartnerTransaction
 from partners.serializers import (
     AuthenticateViewSerializer,
@@ -262,7 +266,7 @@ class PartnerHistoryView(BaseRequestView, ListAPIView):
         page_size = self.request.query_params.get("size", self.pagination_class.page_size)
         self.pagination_class.page_size = min(int(page_size), self.pagination_class.max_page_size)
         return queryset
-    
+
 
 @IsValidGenericApi()
 class InitiatePaymentView(GenericAPIView):

@@ -38,7 +38,7 @@ class FlouciBackendClient:
     GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
 
     # PARTNER APIs
-    IS_FLOUCI =  f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
+    IS_FLOUCI = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
     INITIATE_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/initiate_link_flouci_account"
     CONFIRM_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/confirm_link_flouci_account"
     PARTNER_AUTHENTICATE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/authenticate_user"

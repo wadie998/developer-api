@@ -86,15 +86,14 @@ class HasValidPartnerAppCredentials(BasePermission):
 
 
 class IsValidPartnerUser(BasePermission):
-
     def has_permission(self, request, view):
-        if request.method == 'GET':
+        if request.method == "GET":
             application_tracking_id = request.query_params.get("tracking_id")
             phone_number = request.query_params.get("phone_number")
         else:
             application_tracking_id = request.data.get("tracking_id")
             phone_number = request.data.get("phone_number")
-        
+
         merchant_id = request.application.merchant_id
         try:
             account = LinkedAccount.objects.get(
@@ -105,7 +104,7 @@ class IsValidPartnerUser(BasePermission):
         except ObjectDoesNotExist:
             raise PermissionDenied({"success": False, "message": "Invalid credentials"})
 
-    
+
 class IsPartnerAuthenticated(BasePermission):
     """
     Allows access to only authenticated Flouci users with their personal or business account,

@@ -2,28 +2,29 @@
 
 from django.db import migrations, models
 
+
 def populate_id_field(apps, schema_editor):
-    PartnerTransaction = apps.get_model('partners', 'PartnerTransaction')
+    PartnerTransaction = apps.get_model("partners", "PartnerTransaction")
     for transaction in PartnerTransaction.objects.all():
         if transaction.id is None:
             transaction.save()  # This will trigger the auto-increment behavior
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
-        ('partners', '0003_linkedaccount_phone_number'),
+        ("partners", "0003_linkedaccount_phone_number"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='partnertransaction',
-            name='id',
+            model_name="partnertransaction",
+            name="id",
             field=models.BigAutoField(primary_key=True, serialize=False, null=True),
         ),
         migrations.RunPython(populate_id_field),
         migrations.AlterField(
-            model_name='partnertransaction',
-            name='id',
+            model_name="partnertransaction",
+            name="id",
             field=models.BigAutoField(primary_key=True, serialize=False),
         ),
     ]

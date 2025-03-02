@@ -7,7 +7,8 @@ def populate_id_field(apps, schema_editor):
     PartnerTransaction = apps.get_model("partners", "PartnerTransaction")
     for transaction in PartnerTransaction.objects.all():
         if transaction.id is None:
-            transaction.save()  # This will trigger the auto-increment behavior
+            transaction.id = transaction.pk  # Assign the primary key directly
+            transaction.save(update_fields=["id"])  # Save only the 'id' field
 
 
 class Migration(migrations.Migration):

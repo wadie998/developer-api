@@ -6,7 +6,8 @@ from api.enum import RequestStatus, SendMoneyServiceOperationTypes
 
 
 class LinkedAccount(models.Model):
-    partner_tracking_id = models.UUIDField(editable=False, primary_key=True)  # The mapping id given to the partner
+    id = models.BigAutoField(primary_key=True, serialize=False)
+    partner_tracking_id = models.UUIDField(editable=False)  # The mapping id given to the partner
     account_tracking_id = models.UUIDField()
     phone_number = models.CharField(unique=False, null=False, max_length=15)
     merchant_id = models.CharField(max_length=255)
@@ -22,7 +23,8 @@ class LinkedAccount(models.Model):
 
 
 class PartnerTransaction(models.Model):
-    operation_id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    id = models.BigAutoField(primary_key=True, serialize=False)
+    operation_id = models.UUIDField(default=uuid.uuid4, editable=False)
     operation_type = models.CharField(max_length=50, null=True, choices=SendMoneyServiceOperationTypes.get_choices())
     sender = models.ForeignKey(
         LinkedAccount, on_delete=models.PROTECT, blank=True, null=True, related_name="sender_transactions"

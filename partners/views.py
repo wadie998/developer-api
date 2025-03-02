@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.enum import RequestStatus, SendMoneyServiceOperationTypes
-from api.permissions import HasValidPartnerAppCredentials, IsPartnerAuthenticated
+from api.permissions import HasValidPartnerAppCredentials, IsPartnerAuthenticated, IsValidPartnerUser
 from partners.models import LinkedAccount, PartnerTransaction
 from partners.serializers import (
     AuthenticateViewSerializer,
@@ -20,7 +20,11 @@ from partners.serializers import (
     InitiateLinkAccountViewSerializer,
     InitiatePaymentViewSerializer,
     InitiatePosTransactionSerializer,
+    IsFlouciViewSerializer,
     PaginatedHistorySerializer,
+    PartnerBalanceViewSerializer,
+    PartnerFilterHistorySerializer,
+    PartnerInitiatePaymentViewSerializer,
     RefreshAuthenticateViewSerializer,
     SendMoneyViewSerializer,
 )
@@ -107,6 +111,24 @@ class ConfirmLinkAccountView(GenericAPIView):
 
 
 @IsValidGenericApi()
+class IsFlouciView(GenericAPIView):
+    permission_classes = [HasValidPartnerAppCredentials]
+    serializer_class = IsFlouciViewSerializer
+
+    def post(self, request, serializer):
+        phone_number = serializer.validated_data.get("phone_number")
+        try:
+            merchant_id = request.application.merchant_id
+            response = FlouciBackendClient.is_flouci(
+                phone_number=phone_number,
+                merchant_id=merchant_id,
+            )
+            return Response(data=response, status=response.get("status_code"))
+        except ObjectDoesNotExist:
+            return Response({"success": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@IsValidGenericApi()
 class AuthenticateView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
     serializer_class = AuthenticateViewSerializer
@@ -148,6 +170,18 @@ class BalanceView(GenericAPIView):
         account = request.account
         response = FlouciBackendClient.get_user_balance(
             tracking_id=account.account_tracking_id,
+        )
+        return Response(data=response, status=response.get("status_code"))
+
+
+@IsValidGenericApi(post=False, get=True)
+class PartnerBalanceView(GenericAPIView):
+    permission_classes = [HasValidPartnerAppCredentials, IsValidPartnerUser]
+    serializer_class = PartnerBalanceViewSerializer
+
+    def get(self, request, serializer):
+        response = FlouciBackendClient.get_user_balance(
+            tracking_id=request.account.account_tracking_id,
         )
         return Response(data=response, status=response.get("status_code"))
 
@@ -213,10 +247,59 @@ class HistoryView(BaseRequestView, ListAPIView):
         return queryset
 
 
+@IsValidGenericApi(post=False, get=True)
+class PartnerHistoryView(BaseRequestView, ListAPIView):
+    """
+    Display paginated history of transactions.
+    """
+
+    permission_classes = [HasValidPartnerAppCredentials, IsValidPartnerUser]
+    serializer_class = PaginatedHistorySerializer
+    pagination_class = HistoryPagination
+
+    def get_queryset(self):
+        queryset = self.get_filtered_queryset(PartnerFilterHistorySerializer)
+        page_size = self.request.query_params.get("size", self.pagination_class.page_size)
+        self.pagination_class.page_size = min(int(page_size), self.pagination_class.max_page_size)
+        return queryset
+    
+
 @IsValidGenericApi()
 class InitiatePaymentView(GenericAPIView):
-    permission_classes = [IsPartnerAuthenticated]
+    permission_classes = [HasValidPartnerAppCredentials]
     serializer_class = InitiatePaymentViewSerializer
+
+    # @method_decorator(ratelimit(key="user", rate="1/10s"))
+    def post(self, request, serializer):
+        account = request.account
+        amount_in_millimes = serializer.validated_data.get("amount_in_millimes")
+        merchant_id = request.account.merchant_id
+
+        with transaction.atomic():
+            operation = PartnerTransaction.objects.create(
+                operation_id=uuid.uuid4(),
+                operation_type=SendMoneyServiceOperationTypes.PAYMENT,
+                sender=account,
+                operation_payload={
+                    "merchant_id": merchant_id,
+                    "product": serializer.validated_data.get("product"),
+                    "webhook": serializer.validated_data.get("webhook"),
+                },
+                amount_in_millimes=amount_in_millimes,
+                operation_status=RequestStatus.PENDING,
+            )
+        response = FlouciBackendClient.send_money(operation, merchant_id=merchant_id)
+        if response.get("success"):
+            operation.set_operation_status(RequestStatus.DATA_API_PENDING)
+        else:
+            operation.set_operation_status(RequestStatus.DECLINED)
+        return Response(data=response, status=response.get("status_code"))
+
+
+@IsValidGenericApi()
+class PartnerInitiatePaymentView(GenericAPIView):
+    permission_classes = [HasValidPartnerAppCredentials, IsValidPartnerUser]
+    serializer_class = PartnerInitiatePaymentViewSerializer
 
     # @method_decorator(ratelimit(key="user", rate="1/10s"))
     def post(self, request, serializer):

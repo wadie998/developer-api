@@ -3,7 +3,7 @@ import logging
 import uuid
 from hashlib import sha256
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from rest_framework.permissions import BasePermission
 
 from api.models import FlouciApp
@@ -85,11 +85,32 @@ class HasValidPartnerAppCredentials(BasePermission):
         return True
 
 
+class IsValidPartnerUser(BasePermission):
+
+    def has_permission(self, request, view):
+        if request.method == 'GET':
+            application_tracking_id = request.query_params.get("tracking_id")
+            phone_number = request.query_params.get("phone_number")
+        else:
+            application_tracking_id = request.data.get("tracking_id")
+            phone_number = request.data.get("phone_number")
+        
+        merchant_id = request.application.merchant_id
+        try:
+            account = LinkedAccount.objects.get(
+                phone_number=phone_number, partner_tracking_id=application_tracking_id, merchant_id=merchant_id
+            )
+            request.account = account
+            return True
+        except ObjectDoesNotExist:
+            raise PermissionDenied({"success": False, "message": "Invalid credentials"})
+
+    
 class IsPartnerAuthenticated(BasePermission):
     """
     Allows access to only authenticated Flouci users with their personal or business account,
     to use in API endpoint, just add this line
-    permission_classes = (IsFlouciAuthenticated, )
+    permission_classes = (IsPartnerAuthenticated, )
     in the beginning of the class
     """
 

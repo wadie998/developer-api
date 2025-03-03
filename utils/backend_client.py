@@ -47,7 +47,7 @@ class FlouciBackendClient:
     CANCEL_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_transaction"
 
     @staticmethod
-    def _process_response(response, success_code=[200, 201]):
+    def _process_response(response, success_code=[200, 201, 204]):
         """Process the HTTP response and standardize error handling."""
         if response.status_code >= 500:
             logger.critical(f"Request failed with status code {response.status_code}. Response: {response.text}")

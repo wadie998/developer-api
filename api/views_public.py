@@ -378,7 +378,29 @@ class ConfirmSMTPreAuthorization(GenericAPIView):
         payment_id = serializer.validated_data["payment_id"]
         amount = serializer.validated_data["amount"]
         response = FlouciBackendClient.confirm_payment(payment_id, amount, merchant_id)
-        return Response(response, status=status.HTTP_200_OK)
+        if response["success"]:
+            data = {
+                "result": {
+                    "status": True,
+                    "message": response.get("message"),
+                    "transaction_id": payment_id,
+                },
+                "name": "confirm_transaction",
+                "code": 0,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        else:
+            data = {
+                "result": {
+                    "success": False,
+                    "error": response.get("message") or response.get("error"),
+                    "details": response.get("non_field_errors"),
+                },
+                "name": "confirm_transaction",
+                "code": 1,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        return Response(data=data, status=response.get("status_code"))
 
 
 @IsValidGenericApi()
@@ -390,4 +412,26 @@ class CancelSMTPreAuthorization(GenericAPIView):
         merchant_id = request.application.merchant_id
         payment_id = serializer.validated_data["payment_id"]
         response = FlouciBackendClient.cancel_payment(payment_id, merchant_id)
-        return Response(response, status=status.HTTP_200_OK)
+        if response["success"]:
+            data = {
+                "result": {
+                    "status": True,
+                    "message": response.get("message"),
+                    "transaction_id": payment_id,
+                },
+                "name": "cancel_transaction",
+                "code": 0,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        else:
+            data = {
+                "result": {
+                    "success": False,
+                    "error": response.get("message") or response.get("error"),
+                    "details": response.get("non_field_errors"),
+                },
+                "name": "cancel_transaction",
+                "code": 1,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        return Response(data=data, status=response.get("status_code"))

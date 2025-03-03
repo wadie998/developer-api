@@ -15,7 +15,7 @@ class SendMoneyDeveloperApiCatcher(GenericAPIView):
     serializer_class = DevAPIDataApiCatcherSerializer
 
     def post(self, request, serializer):
-        operation = serializer.validated_data.get("id")
+        operation = serializer.validated_data.get("transaction")
 
         if not serializer.validated_data["result"]["success"]:
             operation.set_operation_status(RequestStatus.DECLINED)

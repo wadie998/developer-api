@@ -115,15 +115,19 @@ class SendMoneyViewSerializer(DefaultSerializer):
 
 
 class DevAPIDataApiCatcherSerializer(DefaultSerializer):
-    operation_id = serializers.UUIDField(
-        queryset=PartnerTransaction.objects.filter(
-            operation_status__in=[
-                RequestStatus.DATA_API_PENDING,
-            ]
-        ),
-        source="operation_id",
-    )
+    id = serializers.UUIDField()
     result = serializers.JSONField()
+
+    def validate(self, data):
+        operation_id = data.get("id")
+        try:
+            transaction = PartnerTransaction.objects.get(
+                operation_id=operation_id, operation_status__in=[RequestStatus.DATA_API_PENDING]
+            )
+            data["transaction"] = transaction
+        except PartnerTransaction.DoesNotExist:
+            raise serializers.ValidationError({"id": "Transaction with this operation_id does not exist."})
+        return data
 
 
 class InitiatePosTransactionSerializer(DefaultSerializer):

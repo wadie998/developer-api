@@ -245,7 +245,7 @@ class FlouciBackendClient:
 
         data = {
             "operation_id": str(operation.operation_id),
-            "transaction_type": TransactionsTypes.P2P if operation.receiver else TransactionsTypes.MERCHANT,
+            "transaction_type": TransactionsTypes.P2P.value if operation.receiver else TransactionsTypes.MERCHANT.value,
             "account_tracking_id": str(operation.sender.account_tracking_id),
             "amount_in_millimes": operation.amount_in_millimes,
             # TODO establish webhook

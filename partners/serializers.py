@@ -115,12 +115,13 @@ class SendMoneyViewSerializer(DefaultSerializer):
 
 
 class DevAPIDataApiCatcherSerializer(DefaultSerializer):
-    id = serializers.PrimaryKeyRelatedField(
+    operation_id = serializers.UUIDField(
         queryset=PartnerTransaction.objects.filter(
             operation_status__in=[
                 RequestStatus.DATA_API_PENDING,
             ]
-        )
+        ),
+        source="operation_id",
     )
     result = serializers.JSONField()
 

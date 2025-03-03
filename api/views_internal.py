@@ -57,9 +57,6 @@ class CreateDeveloperAccountView(GenericAPIView):
         except ObjectDoesNotExist:
             user, _ = Peer.objects.get_or_create(
                 tracking_id=request.tracking_id,
-                first_name=serializer.validated_data.get("firstName"),
-                last_name=serializer.validated_data.get("lastName"),
-                email=serializer.validated_data.get("email"),
                 user_type=serializer.validated_data.get("user_type"),
             )
             if user:

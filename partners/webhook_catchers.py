@@ -34,7 +34,7 @@ class SendMoneyDeveloperApiCatcher(GenericAPIView):
                 "operation_id": str(operation.operation_id),
             }
             developer_webhook_url = (
-                f"{operation.operation_payload.get('webhook_url')}?payment_id={operation.operation_id}"
+                f"{operation.operation_payload.get('webhook')}?payment_id={operation.operation_id}"
             )
             try:
                 response = requests.get(developer_webhook_url, params=response_data, headers=headers, timeout=10)

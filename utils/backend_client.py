@@ -248,9 +248,9 @@ class FlouciBackendClient:
             "transaction_type": TransactionsTypes.P2P.value if operation.receiver else TransactionsTypes.MERCHANT.value,
             "account_tracking_id": str(operation.sender.account_tracking_id),
             "amount_in_millimes": operation.amount_in_millimes,
-            # TODO establish webhook
             "webhook": PROJECT_DOMAIN + reverse("partner_send_money_catcher"),
         }
+        logger.info(f"Data send_money {data}")
         if merchant_id:
             data["merchant_id"] = merchant_id
         if receiver:

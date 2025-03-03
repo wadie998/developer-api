@@ -26,7 +26,7 @@ class SendMoneyDeveloperApiCatcher(GenericAPIView):
         operation.set_operation_status(RequestStatus.APPROVED)
         operation.blockchain_ref = serializer.validated_data["result"]["transactionId"]
         operation.save(update_fields=["blockchain_ref"])
-        if operation.operation_payload.get("webhook_url"):
+        if operation.operation_payload.get("webhook"):
             # TODO make this a task
             headers = {"Content-Type": "application/json"}
             response_data = {

@@ -329,7 +329,7 @@ class PartnerInitiatePaymentView(GenericAPIView):
             operation.set_operation_status(RequestStatus.DATA_API_PENDING)
         else:
             operation.set_operation_status(RequestStatus.DECLINED)
-        
+
         response_data = {key: value for key, value in response.items() if key != "hash"}
         response_data["operation_id"] = str(operation.operation_id)
         return Response(data=response_data, status=response.get("status_code"))

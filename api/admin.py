@@ -14,7 +14,6 @@ class FlouciAppAdmin(admin.ModelAdmin):
         "public_token",
         "wallet",
         "user__tracking_id",
-        "user__email",
         "user__phone_number",
     )
     list_filter = ("status", "active", "date_created")
@@ -29,7 +28,7 @@ class PeerAdmin(admin.ModelAdmin):
         "created_date",
         "last_modified_date",
     )
-    search_fields = ("tracking_id", "email", "first_name", "last_name", "phone_number")
+    search_fields = ("tracking_id", "phone_number")
     list_filter = ("activated", "created_date", "last_modified_date")
     readonly_fields = ("created_date", "last_modified_date")
 

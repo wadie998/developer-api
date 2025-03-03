@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from api.enum import CurrencyEnum
+from api.enum import Currency
 from api.models import FlouciApp, Peer
 
 
@@ -32,7 +32,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     fail_link = serializers.URLField()
     developer_tracking_id = serializers.CharField(max_length=40)
     accept_edinar = serializers.BooleanField(required=False)
-    currency = serializers.ChoiceField(choices=CurrencyEnum.get_choices(), default=CurrencyEnum.TND.value)
+    currency = serializers.ChoiceField(choices=Currency.get_choices(), default=Currency.TND.value)
     webhook = serializers.URLField(required=False)
     destination = DestinationSerializer(many=True, required=False)
 
@@ -55,19 +55,19 @@ class VerifyPaymentSerializer(DefaultSerializer):
 
 
 class CheckUserExistsSerializer(DefaultSerializer):
-    tracking_id = serializers.CharField()
+    tracking_id = serializers.UUIDField()
 
 
 class CreateDeveloperAccountSerializer(DefaultSerializer):
     login = serializers.CharField(max_length=100)
-    firstName = serializers.CharField(max_length=50)
+    firstName = serializers.CharField(max_length=50, required=False)
     lastName = serializers.CharField(max_length=50, required=False)
     email = serializers.EmailField(required=False)
-    user_type = serializers.ChoiceField(choices=Peer.UserType, default=Peer.UserType.Merchant)
+    user_type = serializers.ChoiceField(choices=Peer.UserType, default=Peer.UserType.Merchant, required=False)
 
 
 class GetDeveloperAppSerializer(DefaultSerializer):
-    pass
+    tracking_id = serializers.UUIDField()
 
 
 class CreateDeveloperAppSerializer(DefaultSerializer):

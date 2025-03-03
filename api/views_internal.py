@@ -74,7 +74,6 @@ class CreateDeveloperAccountView(GenericAPIView):
         return Response(
             {
                 "result": "account_created",
-                "code": 201,
                 "name": "developer_account",
                 "version": DJANGO_SERVICE_VERSION,
             },

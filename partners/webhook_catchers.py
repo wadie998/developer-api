@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -7,6 +9,8 @@ from api.enum import RequestStatus
 from api.permissions import HasValidDataApiSignature
 from partners.serializers import DevAPIDataApiCatcherSerializer
 from utils.decorators import IsValidGenericApi
+
+logger = logging.getLogger(__name__)
 
 
 @IsValidGenericApi()
@@ -28,19 +32,20 @@ class SendMoneyDeveloperApiCatcher(GenericAPIView):
         operation.save(update_fields=["blockchain_ref"])
         if operation.operation_payload.get("webhook"):
             # TODO make this a task
+            logger.info(f"Sending webhook to {operation.operation_payload.get('webhook')}")
             headers = {"Content-Type": "application/json"}
             response_data = {
                 "success": True,
                 "operation_id": str(operation.operation_id),
             }
-            developer_webhook_url = f"{operation.operation_payload.get('webhook')}?payment_id={operation.operation_id}"
+            developer_webhook_url = f"{operation.operation_payload.get('webhook')}"
             try:
                 response = requests.get(developer_webhook_url, params=response_data, headers=headers, timeout=10)
                 if response:
                     operation.operation_payload.update({"webhook_sent": True})
                     operation.save(update_fields=["operation_payload"])
-            except requests.RequestException:
-                pass
+            except requests.RequestException as e:
+                logger.warning(f"Failed to send webhook to {developer_webhook_url}: {e}")
         return Response(
             data={"success": True, "message": f"Operation {operation.operation_id} validated"},
             status=status.HTTP_200_OK,

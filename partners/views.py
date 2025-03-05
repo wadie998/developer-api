@@ -1,5 +1,3 @@
-import uuid
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
@@ -97,7 +95,6 @@ class ConfirmLinkAccountView(GenericAPIView):
         if response.get("success"):
             account_link, _ = LinkedAccount.objects.get_or_create(
                 phone_number=phone_number,
-                partner_tracking_id=uuid.uuid4(),
                 account_tracking_id=response.get("tracking_id"),
                 merchant_id=request.application.merchant_id,
             )
@@ -121,15 +118,12 @@ class IsFlouciView(GenericAPIView):
 
     def post(self, request, serializer):
         phone_number = serializer.validated_data.get("phone_number")
-        try:
-            merchant_id = request.application.merchant_id
-            response = FlouciBackendClient.is_flouci(
-                phone_number=phone_number,
-                merchant_id=merchant_id,
-            )
-            return Response(data=response, status=response.get("status_code"))
-        except ObjectDoesNotExist:
-            return Response({"success": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        merchant_id = request.application.merchant_id
+        response = FlouciBackendClient.is_flouci(
+            phone_number=phone_number,
+            merchant_id=merchant_id,
+        )
+        return Response(data=response, status=response.get("status_code"))
 
 
 @IsValidGenericApi()
@@ -145,15 +139,15 @@ class AuthenticateView(GenericAPIView):
             linked_account = LinkedAccount.objects.get(
                 partner_tracking_id=application_tracking_id, merchant_id=merchant_id
             )
-            response = FlouciBackendClient.generate_authentication_token(
-                phone_number=phone_number,
-                account_tracking_id=str(linked_account.account_tracking_id),
-                partner_tracking_id=str(linked_account.partner_tracking_id),
-                merchant_id=merchant_id,
-            )
-            return Response(data=response, status=response.get("status_code"))
         except ObjectDoesNotExist:
             return Response({"success": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        response = FlouciBackendClient.generate_authentication_token(
+            phone_number=phone_number,
+            account_tracking_id=str(linked_account.account_tracking_id),
+            partner_tracking_id=str(linked_account.partner_tracking_id),
+            merchant_id=merchant_id,
+        )
+        return Response(data=response, status=response.get("status_code"))
 
 
 class RefreshAuthenticateView(APIView):
@@ -171,7 +165,7 @@ class BalanceView(GenericAPIView):
     serializer_class = BalanceViewSerializer
 
     def get(self, request, serializer):
-        account = request.account
+        account: LinkedAccount = request.account
         response = FlouciBackendClient.get_user_balance(
             tracking_id=account.account_tracking_id,
         )
@@ -281,7 +275,6 @@ class InitiatePaymentView(GenericAPIView):
 
         with transaction.atomic():
             operation = PartnerTransaction.objects.create(
-                operation_id=uuid.uuid4(),
                 operation_type=SendMoneyServiceOperationTypes.PAYMENT,
                 sender=account,
                 operation_payload={
@@ -313,7 +306,6 @@ class PartnerInitiatePaymentView(GenericAPIView):
 
         with transaction.atomic():
             operation = PartnerTransaction.objects.create(
-                operation_id=uuid.uuid4(),
                 operation_type=SendMoneyServiceOperationTypes.PAYMENT,
                 sender=account,
                 operation_payload={

@@ -80,7 +80,7 @@ class GeneratePaymentView(GenericAPIView):
         destination = serializer.validated_data.get("destination")
         test_account = serializer.validated_data.get("test")
         merchant_id = serializer.validated_data.get("merchant_id")
-        pre_authorization_payment = serializer.validated_data["pre_authorization_payment"]
+        pre_authorization = serializer.validated_data["pre_authorization"]
 
         response = FlouciBackendClient.generate_payment_page(
             test_account=test_account,
@@ -97,7 +97,7 @@ class GeneratePaymentView(GenericAPIView):
             expires_at=session_timeout_secs or session_timeout,
             webhook_url=webhook,
             destination=destination,
-            pre_authorization_payment=pre_authorization_payment,
+            pre_authorization=pre_authorization,
         )
         if response.get("success"):
             data = {
@@ -378,7 +378,7 @@ class AcceptPayment(GenericAPIView):
 
 @IsValidGenericApi()
 class ConfirmSMTPreAuthorization(GenericAPIView):
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
     serializer_class = ConfirmSMTPreAuthorizationSerializer
 
     def post(self, request, serializer):
@@ -413,7 +413,7 @@ class ConfirmSMTPreAuthorization(GenericAPIView):
 
 @IsValidGenericApi()
 class CancelSMTPreAuthorization(GenericAPIView):
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
     serializer_class = CancelSMTPreAuthorizationSerializer
 
     def post(self, request, serializer):

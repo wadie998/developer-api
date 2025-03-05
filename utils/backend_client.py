@@ -45,8 +45,8 @@ class FlouciBackendClient:
     PARTNER_AUTHENTICATE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/authenticate_user"
     GET_BALANCE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/get_balance"
     SEND_MONEY = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/send_money"
-    CONFIRM_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_transaction"
-    CANCEL_TRANSACTION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_transaction"
+    CONFIRM_PAYMENT_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_payment"
+    CANCEL_PAYMENT_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_payment"
 
     @staticmethod
     def _process_response(response, success_code=[200, 201, 204]):
@@ -59,7 +59,7 @@ class FlouciBackendClient:
             if response.status_code in success_code:
                 return {"success": True, **response_json}
             elif response.status_code == status.HTTP_406_NOT_ACCEPTABLE:
-                return {"success": False, **response_json}
+                return {"success": False, **response_json, "status_code": status.HTTP_406_NOT_ACCEPTABLE}
             else:
                 logger.info(f"Request failed with response: {response.text}")
                 return {
@@ -86,7 +86,7 @@ class FlouciBackendClient:
         expires_at,
         webhook_url,
         destination,
-        pre_authorization_payment,
+        pre_authorization,
     ):
         data = {
             "test_account": test_account,
@@ -100,7 +100,7 @@ class FlouciBackendClient:
             "fail_link": fail_link,
             "developer_tracking_id": developer_tracking_id,
             "expires_at": (timezone.now() + timedelta(seconds=expires_at)).isoformat(),
-            "pre_authorization_payment": pre_authorization_payment,
+            "pre_authorization": pre_authorization,
         }
         if webhook_url:
             data["webhook_url"] = webhook_url
@@ -272,7 +272,7 @@ class FlouciBackendClient:
     def confirm_payment(payment_id, amount, merchant_id):
         data = {"payment_id": payment_id, "amount": amount, "merchant_id": merchant_id}
         response = requests.post(
-            FlouciBackendClient.CONFIRM_TRANSACTION_URL,
+            FlouciBackendClient.CONFIRM_PAYMENT_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )
@@ -283,7 +283,7 @@ class FlouciBackendClient:
     def cancel_payment(payment_id, merchant_id):
         data = {"payment_id": payment_id, "merchant_id": merchant_id}
         response = requests.post(
-            FlouciBackendClient.CANCEL_TRANSACTION_URL,
+            FlouciBackendClient.CANCEL_PAYMENT_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )

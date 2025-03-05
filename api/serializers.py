@@ -35,7 +35,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     currency = serializers.ChoiceField(choices=Currency.get_choices(), default=Currency.TND.value)
     webhook = serializers.URLField(required=False)
     destination = DestinationSerializer(many=True, required=False)
-    pre_authorization_payment = serializers.BooleanField(default=False)
+    pre_authorization = serializers.BooleanField(default=False)
 
     def validate(self, validate_data):
         try:
@@ -134,15 +134,10 @@ class SecureAcceptPaymentSerializer(AcceptPaymentSerializer):
     app_secret = serializers.UUIDField()
 
 
-class AppCredentialsSerializer(DefaultSerializer):
-    app_secret = serializers.UUIDField()
-    app_token = serializers.UUIDField()
-
-
-class ConfirmSMTPreAuthorizationSerializer(AppCredentialsSerializer):
+class ConfirmSMTPreAuthorizationSerializer(DefaultSerializer):
     payment_id = serializers.CharField()
     amount = serializers.IntegerField()
 
 
-class CancelSMTPreAuthorizationSerializer(AppCredentialsSerializer):
+class CancelSMTPreAuthorizationSerializer(DefaultSerializer):
     payment_id = serializers.CharField()

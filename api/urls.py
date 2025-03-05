@@ -39,6 +39,6 @@ urlpatterns = [
     # Depricated views
     path("internal/metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_internal_metrics"),
     path("internal/orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_internal_orders"),
-    path("confirm_transaction", ConfirmSMTPreAuthorization.as_view(), name="confirm_transaction"),
-    path("cancel_transaction", CancelSMTPreAuthorization.as_view(), name="cancel_transaction"),
+    path("confirm_payment", ConfirmSMTPreAuthorization.as_view(), name="confirm_payment"),
+    path("cancel_payment", CancelSMTPreAuthorization.as_view(), name="cancel_payment"),
 ]

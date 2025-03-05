@@ -79,7 +79,7 @@ class TokenBasedRequests:
             for key in data_to_log_fields:
                 # get data to log from data
                 extra_data = key + " = " + str(data[key]) + ", "
-            error_text = "Data API CashIO error while requesting url:%s, status_code:%s,response text:%s" % (
+            error_text = "Data API error while requesting url:%s, status_code:%s,response text:%s" % (
                 result.url,
                 result.status_code,
                 result.text,

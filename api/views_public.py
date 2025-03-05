@@ -4,7 +4,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from api.models import FlouciApp
-from api.permissions import HasValidAppCredentials
+from api.permissions import HasValidAppCredentials, HasValidAppCredentialsV2
 from api.serializers import (
     CheckSendMoneyStatusSerializer,
     GeneratePaymentSerializer,
@@ -60,7 +60,7 @@ from utils.decorators import IsValidGenericApi
 @IsValidGenericApi()
 class GeneratePaymentView(GenericAPIView):
     serializer_class = GeneratePaymentSerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
         app_token = serializer.validated_data.get("app_token")
@@ -161,7 +161,7 @@ class GeneratePaymentView(GenericAPIView):
 @IsValidGenericApi(post=False, get=True)
 class VerifyPaymentView(GenericAPIView):
     serializer_class = VerifyPaymentSerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def get(self, request, serializer):
         payment_id = serializer.validated_data["payment_id"]
@@ -235,7 +235,7 @@ class VerifyPaymentView(GenericAPIView):
 @IsValidGenericApi(post=True, get=False)
 class SendMoneyView(GenericAPIView):
     serializer_class = SendMoneySerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
         validated_data = serializer.validated_data
@@ -311,7 +311,7 @@ class SendMoneyView(GenericAPIView):
 @IsValidGenericApi(post=False, get=True)
 class CheckSendMoneyStatusView(GenericAPIView):
     serializer_class = CheckSendMoneyStatusSerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def get(self, request, serializer):
         sender_id = request.application.merchant_id
@@ -343,7 +343,7 @@ class CheckSendMoneyStatusView(GenericAPIView):
 
 @IsValidGenericApi()
 class AcceptPayment(GenericAPIView):
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
     serializer_class = SecureAcceptPaymentSerializer
 
     def post(self, request, serializer):

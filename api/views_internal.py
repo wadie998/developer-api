@@ -26,15 +26,15 @@ class CheckUserExistsView(GenericAPIView):
     def get(self, request, serializer):
         tracking_id = serializer.validated_data.get("tracking_id")
         if request.tracking_id and request.tracking_id != tracking_id:
-            return Response({"success": False, "result": {"message": "bad input"}}, status=status.HTTP_200_OK)
+            return Response({"success": False, "result": {"message": "bad input"}}, status=status.HTTP_400_BAD_REQUEST)
         try:
             Peer.objects.get(tracking_id=tracking_id)
-            return Response({"success": True, "result": {"message": "User exists"}}, status=status.HTTP_200_OK)
-        except ObjectDoesNotExist:
+        except Peer.DoesNotExist:
             return Response(
                 {"success": False, "result": {"message": "User has no developer account"}},
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
+        return Response({"success": True, "result": {"message": "User exists"}}, status=status.HTTP_200_OK)
 
 
 # NO LONGER NEEDED POST MIGRATION

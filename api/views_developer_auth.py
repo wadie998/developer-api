@@ -32,7 +32,7 @@ class CreateDeveloperAppView(GenericAPIView):
         page = int(request.query_params.get("page", 0))
         size = int(request.query_params.get("size", 20))
 
-        apps = FlouciApp.objects.filter(user__login=request.tracking_id)
+        apps = FlouciApp.objects.filter(user__tracking_id=request.tracking_id)
         total_apps = apps.count()
         start = page * size
         end = start + size
@@ -72,7 +72,7 @@ class CreateDeveloperAppView(GenericAPIView):
         )
         data = app.get_app_details()
         data["success"] = True
-        return Response({data}, status=status.HTTP_201_CREATED)
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(exclude=True)

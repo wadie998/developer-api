@@ -99,8 +99,8 @@ class FlouciApp(models.Model):
         return {
             "id": str(self.app_id),
             "name": self.name,
-            "token": str(self.public_token),
-            "secret": str(self.private_token),
+            "app_token": str(self.public_token),
+            "app_secret": str(self.private_token),
             "status": self.status,
             "active": self.active,
             "test": self.test,

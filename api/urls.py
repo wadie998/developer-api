@@ -27,8 +27,8 @@ urlpatterns = [
     path("send_money", SendMoneyView.as_view(), name="send_money"),
     path("check_payment_status/<uuid:operation_id>", CheckSendMoneyStatusView.as_view(), name="check_payment_status"),
     # urls with backend authentication
-    path("internal/checkuserexists/<str:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
-    path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),  # Tested
+    path("internal/checkuserexists/<uuid:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
+    path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),
     # urls with either jhipster or backend authentication
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),

@@ -4,7 +4,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from api.models import FlouciApp
-from api.permissions import HasValidAppCredentials
+from api.permissions import HasValidAppCredentials, HasValidAppCredentialsV2
 from api.serializers import (
     CancelSMTPreAuthorizationSerializer,
     CheckSendMoneyStatusSerializer,
@@ -62,7 +62,7 @@ from utils.decorators import IsValidGenericApi
 @IsValidGenericApi()
 class GeneratePaymentView(GenericAPIView):
     serializer_class = GeneratePaymentSerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
         app_token = serializer.validated_data.get("app_token")
@@ -165,7 +165,7 @@ class GeneratePaymentView(GenericAPIView):
 @IsValidGenericApi(post=False, get=True)
 class VerifyPaymentView(GenericAPIView):
     serializer_class = VerifyPaymentSerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def get(self, request, serializer):
         payment_id = serializer.validated_data["payment_id"]
@@ -239,7 +239,7 @@ class VerifyPaymentView(GenericAPIView):
 @IsValidGenericApi(post=True, get=False)
 class SendMoneyView(GenericAPIView):
     serializer_class = SendMoneySerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
         validated_data = serializer.validated_data
@@ -303,7 +303,7 @@ class SendMoneyView(GenericAPIView):
             "description": "Invalid request data",
             "examples": {
                 "application/json": {
-                    "result": {"success": False, "error": "Invalid data", "details": "Detailed error message"},
+                    "result": {"success": False, "error": "Invalid data", "message": "Detailed error message"},
                     "name": "check_send_money_status",
                     "code": 1,
                     "version": "5.0.0",
@@ -315,7 +315,7 @@ class SendMoneyView(GenericAPIView):
 @IsValidGenericApi(post=False, get=True)
 class CheckSendMoneyStatusView(GenericAPIView):
     serializer_class = CheckSendMoneyStatusSerializer
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def get(self, request, serializer):
         sender_id = request.application.merchant_id
@@ -336,9 +336,7 @@ class CheckSendMoneyStatusView(GenericAPIView):
         else:
             data = {
                 "result": {
-                    "success": False,
-                    "error": response.get("result"),
-                    "details": response.get("non_field_errors"),
+                    **response,
                 },
                 "name": "check_send_money_status",
                 "code": 1,
@@ -349,12 +347,22 @@ class CheckSendMoneyStatusView(GenericAPIView):
 
 @IsValidGenericApi()
 class AcceptPayment(GenericAPIView):
-    permission_classes = (HasValidAppCredentials,)
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
     serializer_class = SecureAcceptPaymentSerializer
 
     def post(self, request, serializer):
         accept_payment_data = serializer.validated_data
-        app = FlouciApp.objects.get(private_token=serializer.validated_data["app_secret"])
+        try:
+            app = FlouciApp.objects.get(private_token=serializer.validated_data["app_secret"], active=True)
+        except FlouciApp.DoesNotExist:
+            return Response(
+                {
+                    "result": {"status": "FAILED"},
+                    "code": 1,
+                    "message": "App not found",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if app.test:
             flouci_otp = serializer.validated_data["flouci_otp"]
             if flouci_otp == "F-111111":
@@ -364,7 +372,7 @@ class AcceptPayment(GenericAPIView):
         accept_payment_data["app_id"] = app.app_id
         accept_payment_data["destination"] = app.wallet
 
-        response = DataApiClient.accept_payment(accept_payment_data)
+        response = DataApiClient.accept_payment(data=accept_payment_data)
         return Response(response, status=status.HTTP_200_OK)
 
 

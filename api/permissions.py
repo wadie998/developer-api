@@ -62,57 +62,54 @@ class HasValidAppCredentials(BasePermission):
         return True
 
 
-class HasValidAppCredentialsV2(BasePermission):
+class BaseAppCredentialPermission(BasePermission):
     """
-    Validates the app credentials and returns the application to the view
+    Base permission class for validating app credentials.
     """
+
+    requires_partner_access = False
 
     def has_permission(self, request, view):
         token = request.META.get("HTTP_AUTHORIZATION")
         if not token or not token.startswith("Bearer "):
             return False
-        token = token.split(" ")[1]  # Extract the token part after "Bearer "
-        public_token = token.split(":")[0]
-        private_token = token.split(":")[1]
+
         try:
+            _, credentials = token.split(" ", 1)
+            public_token, private_token = credentials.split(":")
             uuid.UUID(public_token)
             uuid.UUID(private_token)
-        except ValueError:
+        except (ValueError, IndexError):
             return False
-        try:
-            application = FlouciApp.objects.get(public_token=public_token, private_token=private_token, active=True)
-        except ObjectDoesNotExist:
-            return False
-        request.application = application
-        return True
 
-
-class HasValidPartnerAppCredentials(BasePermission):
-    """
-    Validates the app credentials and returns the application to the view
-    """
-
-    def has_permission(self, request, view):
-        token = request.META.get("HTTP_AUTHORIZATION")
-
-        if not token or not token.startswith("Bearer "):
-            return False
-        token = token.split(" ")[1]  # Extract the token part after "Bearer "
-        public_token = token.split(":")[0]
-        private_token = token.split(":")[1]
-        try:
-            uuid.UUID(public_token)
-            uuid.UUID(private_token)
-        except ValueError:
-            return False
         try:
             application = FlouciApp.objects.get(
-                public_token=public_token, private_token=private_token, active=True, has_partner_access=True
+                public_token=public_token,
+                private_token=private_token,
+                active=True,
+                has_partner_access=self.requires_partner_access,
             )
         except ObjectDoesNotExist:
             return False
+
         request.application = application
         return True
+
+
+class HasValidAppCredentialsV2(BaseAppCredentialPermission):
+    """
+    Validates the app credentials and returns the application to the view.
+    """
+
+    requires_partner_access = False
+
+
+class HasValidPartnerAppCredentials(BaseAppCredentialPermission):
+    """
+    Validates the partner app credentials and returns the application to the view.
+    """
+
+    requires_partner_access = True
 
 
 class IsValidPartnerUser(BasePermission):

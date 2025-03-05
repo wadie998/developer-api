@@ -368,5 +368,5 @@ class AcceptPayment(GenericAPIView):
         accept_payment_data["app_id"] = app.app_id
         accept_payment_data["destination"] = app.wallet
 
-        response = DataApiClient().accept_payment(data=accept_payment_data)
+        response = DataApiClient.accept_payment(data=accept_payment_data)
         return Response(response, status=status.HTTP_200_OK)

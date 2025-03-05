@@ -40,8 +40,13 @@ class HasValidAppCredentials(BasePermission):
     """
 
     def has_permission(self, request, view):
+        # Try to get from headers first
         app_token = request.headers.get("App-Token")
         app_secret = request.headers.get("App-Secret")
+        # If not found in headers, check request data
+        if not app_token or not app_secret:
+            app_token = request.data.get("app_token") or request.query_params.get("app_token")
+            app_secret = request.data.get("app_secret") or request.query_params.get("app_secret")
         if not app_token or not app_secret:
             return False
         try:

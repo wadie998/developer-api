@@ -20,15 +20,16 @@ class DataApiClient:
     ACCEPT_PAYMENT = DATA_API_ADDRESS + "/api/developer/accept"
 
     @staticmethod
-    def accept_payment(self, data):
+    def accept_payment(data):
         data = {
-            "code": data["flouci_otp"],
-            "appToken": data["app_token"],
-            "id": data["payment_id"],
+            "flouciOtp": data["flouci_otp"],
+            "appToken": str(data["app_token"]),
             "amount": convert_millimes_to_drops(data["amount"]),
             "destination": data.get("destination"),
-            "developerTrackingId": data.get("developer_tracking_id"),
-            "appId": data.get("app_id"),
+            "developerTrackingId": str(data.get("developer_tracking_id")),
+            "appId": str(data.get("app_id")),
+            "paymentId": str(data.get("payment_id")),
+            "acceptPayment": True,
         }
         response = DataApiClient.request_client.post(DataApiClient.ACCEPT_PAYMENT, data)
         response_data = response.json()

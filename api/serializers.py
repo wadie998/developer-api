@@ -69,7 +69,7 @@ class GetDeveloperAppSerializer(DefaultSerializer):
 
 class CreateDeveloperAppSerializer(DefaultSerializer):
     name = serializers.CharField(min_length=3, max_length=100)
-    description = serializers.CharField(min_length=3, max_length=255)
+    description = serializers.CharField(min_length=3, max_length=255, required=False)
     merchant_id = serializers.CharField(max_length=255)
     username = serializers.CharField()
     wallet = serializers.CharField(max_length=255)

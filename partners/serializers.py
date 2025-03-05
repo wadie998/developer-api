@@ -22,6 +22,15 @@ class DefaultSerializer(serializers.Serializer):
         pass
 
 
+class DefaultPartnerSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
+    tracking_id = serializers.UUIDField()
+
+
+class IsFlouciViewSerializer(DefaultSerializer):
+    phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
+
+
 class InitiateLinkAccountViewSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
 
@@ -42,6 +51,10 @@ class RefreshAuthenticateViewSerializer(DefaultSerializer):
 
 
 class BalanceViewSerializer(DefaultSerializer):
+    pass
+
+
+class PartnerBalanceViewSerializer(DefaultPartnerSerializer):
     pass
 
 
@@ -80,7 +93,18 @@ class FilterHistorySerializer(BaseRequestViewSerializer):
     size = serializers.IntegerField(min_value=1, max_value=10000, default=10)
 
 
+class PartnerFilterHistorySerializer(DefaultPartnerSerializer, BaseRequestViewSerializer):
+    page = serializers.IntegerField(min_value=1, default=1)
+    size = serializers.IntegerField(min_value=1, max_value=10000, default=10)
+
+
 class InitiatePaymentViewSerializer(DefaultSerializer):
+    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
+    webhook = serializers.URLField(required=False)
+
+
+class PartnerInitiatePaymentViewSerializer(DefaultPartnerSerializer):
     amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
@@ -91,14 +115,19 @@ class SendMoneyViewSerializer(DefaultSerializer):
 
 
 class DevAPIDataApiCatcherSerializer(DefaultSerializer):
-    id = serializers.PrimaryKeyRelatedField(
-        queryset=PartnerTransaction.objects.filter(
-            operation_status__in=[
-                RequestStatus.DATA_API_PENDING,
-            ]
-        )
-    )
+    id = serializers.UUIDField()
     result = serializers.JSONField()
+
+    def validate(self, data):
+        operation_id = data.get("id")
+        try:
+            transaction = PartnerTransaction.objects.get(
+                operation_id=operation_id, operation_status__in=[RequestStatus.DATA_API_PENDING]
+            )
+            data["transaction"] = transaction
+        except PartnerTransaction.DoesNotExist:
+            raise serializers.ValidationError({"id": "Transaction with this operation_id does not exist."})
+        return data
 
 
 class InitiatePosTransactionSerializer(DefaultSerializer):

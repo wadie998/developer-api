@@ -177,7 +177,7 @@ class VerifyPaymentView(GenericAPIView):
         if response.get("success"):
             data = {
                 "result": {
-                    "payment_status": response.get("status"),
+                    "payment_status": response["result"].get("status"),
                     "payment_id": payment_id,
                     "success": True,
                 },
@@ -325,8 +325,8 @@ class CheckSendMoneyStatusView(GenericAPIView):
         if response["success"]:
             data = {
                 "result": {
-                    "transaction_status": response.get("status"),
-                    "transaction_id": response.get("transaction_id"),
+                    "transaction_status": response["result"].get("status"),
+                    "transaction_id": operation_id,
                     "success": True,
                 },
                 "name": "check_send_money_status",

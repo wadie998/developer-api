@@ -38,6 +38,7 @@ class FlouciBackendClient:
     GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
 
     # PARTNER APIs
+    IS_FLOUCI = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
     INITIATE_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/initiate_link_flouci_account"
     CONFIRM_LINK_ACCOUNT = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/confirm_link_flouci_account"
     PARTNER_AUTHENTICATE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/authenticate_user"
@@ -192,6 +193,18 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
+    def is_flouci(phone_number, merchant_id):
+        data = {
+            "phone_number": phone_number,
+            "merchant_id": merchant_id,
+        }
+        response = requests.post(
+            FlouciBackendClient.IS_FLOUCI, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
     def confirm_link_account(phone_number, session_id, otp, merchant_id):
         data = {
             "phone_number": phone_number,
@@ -236,12 +249,12 @@ class FlouciBackendClient:
 
         data = {
             "operation_id": str(operation.operation_id),
-            "transaction_type": TransactionsTypes.P2P if operation.receiver else TransactionsTypes.MERCHANT,
+            "transaction_type": TransactionsTypes.P2P.value if operation.receiver else TransactionsTypes.MERCHANT.value,
             "account_tracking_id": str(operation.sender.account_tracking_id),
             "amount_in_millimes": operation.amount_in_millimes,
-            # TODO establish webhook
             "webhook": PROJECT_DOMAIN + reverse("partner_send_money_catcher"),
         }
+        logger.info(f"Data send_money {data}")
         if merchant_id:
             data["merchant_id"] = merchant_id
         if receiver:

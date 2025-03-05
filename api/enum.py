@@ -17,11 +17,41 @@ class UserType(BaseEnum):
     MERCHANT = "Merchant"
 
 
-class CurrencyEnum(BaseEnum):
+class Currency(BaseEnum):
     TND = "TND"
     USD = "USD"
     EUR = "EUR"
     GBP = "GBP"
+
+
+class SendMoneyServiceOperationTypes(BaseEnum):
+    P2P = "P2P"
+    PAYMENT = "PAYMENT"
+    TOPUP = "TOPUP"
+    GIFTCARD = "GIFTCARD"
+    BILL_PAYMENT = "BILL_PAYMENT"
+    DEVELOPER_API = "DEVELOPER_API"
+
+
+class PartnerProducts(BaseEnum):
+    TOPUP = "001"
+    DATA_OPTION = "002"
+    BILL_PAYMENT = "003"
+    ECOMMERCE = "004"
+    VAS = "005"
+
+
+class TransactionsTypes(BaseEnum):
+    P2P = "P2P"
+    MERCHANT = "MERCHANT"
+
+
+# TODO: Make them caps once updated by backend & front
+class PaymentMethod(BaseEnum):
+    NFC = "nfc"
+    CARD = "card"
+    WALLET = "wallet"
+    CHECK = "check"
 
 
 class RequestStatus:
@@ -57,70 +87,4 @@ class RequestStatus:
             (RequestStatus.REFUND_FAILED, "REFUND_FAILED"),
             (RequestStatus.REFUND_CONFIRMED, "REFUND_CONFIRMED"),
             (RequestStatus.WORKER_PENDING, "WORKER_PENDING"),
-        )
-
-
-class SendMoneyServiceOperationTypes:
-    P2P = "P2P"
-    PAYMENT = "PAYMENT"
-    TOPUP = "TOPUP"
-    GIFTCARD = "GIFTCARD"
-    BILL_PAYMENT = "BILL_PAYMENT"
-    DEVELOPER_API = "DEVELOPER_API"
-
-    @staticmethod
-    def get_choices():
-        return (
-            (SendMoneyServiceOperationTypes.P2P, "P2P"),
-            (SendMoneyServiceOperationTypes.PAYMENT, "PAYMENT"),
-            (SendMoneyServiceOperationTypes.GIFTCARD, "GIFTCARD"),
-            (SendMoneyServiceOperationTypes.TOPUP, "TOPUP"),
-            (SendMoneyServiceOperationTypes.BILL_PAYMENT, "BILL_PAYMENT"),
-            (SendMoneyServiceOperationTypes.DEVELOPER_API, "DEVELOPER_API"),
-        )
-
-
-class PartnerProducts:
-    TOPUP = "001"
-    DATA_OPTION = "002"
-    BILL_PAYMENT = "003"
-    ECOMMERCE = "004"
-    VAS = "005"
-
-    @staticmethod
-    def get_choices():
-        return (
-            (PartnerProducts.TOPUP, "TOPUP"),
-            (PartnerProducts.DATA_OPTION, "DATA_OPTION"),
-            (PartnerProducts.BILL_PAYMENT, "BILL_PAYMENT"),
-            (PartnerProducts.ECOMMERCE, "ECOMMERCE"),
-            (PartnerProducts.VAS, "VAS"),
-        )
-
-
-class TransactionsTypes:
-    P2P = "P2P"
-    MERCHANT = "MERCHANT"
-
-    @staticmethod
-    def get_choices():
-        return (
-            (TransactionsTypes.P2P, "P2P"),
-            (TransactionsTypes.MERCHANT, "MERCHANT"),
-        )
-
-
-class PaymentMethod:
-    NFC = "NFC"
-    CARD = "CARD"
-    WALLET = "WALLET"
-    CHECK = "CHECK"
-
-    @staticmethod
-    def get_choices():
-        return (
-            (PaymentMethod.NFC, "Nfc"),
-            (PaymentMethod.CARD, "Card"),
-            (PaymentMethod.WALLET, "Wallet"),
-            (PaymentMethod.CHECK, "Check"),
         )

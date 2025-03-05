@@ -4,6 +4,7 @@ from datetime import timedelta
 import requests
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework import status
 
 from api.enum import TransactionsTypes
 from settings.settings import (
@@ -57,6 +58,8 @@ class FlouciBackendClient:
             response_json = response.json()
             if response.status_code in success_code:
                 return {"success": True, **response_json}
+            elif response.status_code == status.HTTP_406_NOT_ACCEPTABLE:
+                return {"success": False, **response_json}
             else:
                 logger.info(f"Request failed with response: {response.text}")
                 return {

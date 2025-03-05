@@ -62,6 +62,31 @@ class HasValidAppCredentials(BasePermission):
         return True
 
 
+class HasValidAppCredentialsV2(BasePermission):
+    """
+    Validates the app credentials and returns the application to the view
+    """
+
+    def has_permission(self, request, view):
+        token = request.META.get("HTTP_AUTHORIZATION")
+        if not token or not token.startswith("Bearer "):
+            return False
+        token = token.split(" ")[1]  # Extract the token part after "Bearer "
+        public_token = token.split(":")[0]
+        private_token = token.split(":")[1]
+        try:
+            uuid.UUID(public_token)
+            uuid.UUID(private_token)
+        except ValueError:
+            return False
+        try:
+            application = FlouciApp.objects.get(public_token=public_token, private_token=private_token, active=True)
+        except ObjectDoesNotExist:
+            return False
+        request.application = application
+        return True
+
+
 class HasValidPartnerAppCredentials(BasePermission):
     """
     Validates the app credentials and returns the application to the view

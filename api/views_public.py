@@ -394,7 +394,7 @@ class ConfirmSMTPreAuthorization(GenericAPIView):
                 "result": {
                     "success": False,
                     "error": response.get("message") or response.get("error"),
-                    "resultCode": response.get("resultCode"),
+                    "code": response.get("resultCode"),
                 },
                 "name": "confirm_transaction",
                 "code": 1,
@@ -428,7 +428,7 @@ class CancelSMTPreAuthorization(GenericAPIView):
                 "result": {
                     "success": False,
                     "error": response.get("message") or response.get("error"),
-                    "resultCode": response.get("resultCode"),
+                    "code": response.get("resultCode"),
                 },
                 "name": "cancel_transaction",
                 "code": 1,

@@ -347,7 +347,7 @@ class InitiatePosTransaction(GenericAPIView):
         return Response(response, status=response.get("status_code", 200))
 
 
-class SendMoneyView(GenericAPIView):
+class PartnerSendMoneyView(GenericAPIView):
     permission_classes = [IsPartnerAuthenticated]
     serializer_class = SendMoneyViewSerializer
 

@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
@@ -6,8 +6,12 @@ from rest_framework.response import Response
 from api.models import FlouciApp
 from api.permissions import HasValidAppCredentials, HasValidAppCredentialsV2
 from api.serializers import (
+    AcceptPaymentSerializer,
+    BaseCheckSendMoneyStatusSerializer,
+    BaseSendMoneySerializer,
     CheckSendMoneyStatusSerializer,
     GeneratePaymentSerializer,
+    GeneratePaymentSerializerV1,
     SecureAcceptPaymentSerializer,
     SendMoneySerializer,
     VerifyPaymentSerializer,
@@ -18,53 +22,26 @@ from utils.dataapi_client import DataApiClient
 from utils.decorators import IsValidGenericApi
 
 
-@extend_schema(
-    tags=["Accept-Payments"],
-    summary="Generate Payment Page",
-    description=(
-        "This endpoint generates a payment page for the user. "
-        "The user can specify various parameters such as the amount, currency, and payment methods accepted. "
-        "Upon success, a URL to the payment page is returned along with a payment ID."
-    ),
-    request=GeneratePaymentSerializer,
-    responses={
-        200: {
-            "description": "Payment page generated successfully",
-            "examples": {
-                "application/json": {
-                    "result": {
-                        "link": "https://payment.page.url",
-                        "payment_id": "123456789",
-                        "developer_tracking_id": "dev_track_id",
-                        "success": True,
-                    },
-                    "name": "developers",
-                    "code": 0,
-                    "version": "5.0.0",
-                }
-            },
-        },
-        400: {
-            "description": "Invalid request data",
-            "examples": {
-                "application/json": {
-                    "result": {"success": False, "error": "Invalid data", "details": "Detailed error message"},
-                    "name": "developers",
-                    "code": 1,
-                    "version": "5.0.0",
-                }
-            },
-        },
-    },
-)
 @IsValidGenericApi()
-class GeneratePaymentView(GenericAPIView):
-    serializer_class = GeneratePaymentSerializer
-    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
-
+class BaseGeneratePaymentView(GenericAPIView):
     def post(self, request, serializer):
-        app_token = serializer.validated_data.get("app_token")
-        app_secret = serializer.validated_data.get("app_secret")
+        """Handles both V1 (deprecated) and V2 dynamically."""
+        # Check if request is from V1 (by looking for explicit `app_token` in request data)
+        is_v1 = "app_token" in serializer.validated_data and "app_secret" in serializer.validated_data
+
+        if is_v1:
+            app_token = serializer.validated_data.get("app_token")
+            app_secret = serializer.validated_data.get("app_secret")
+            version = "v1 (deprecated)"
+        else:
+            application: FlouciApp = request.application
+            app_token = application.public_token
+            app_secret = application.private_token
+            version = "v2"
+
+        application: FlouciApp = request.application
+        app_token = application.public_token
+        app_secret = application.private_token
         amount_in_millimes = serializer.validated_data.get("amount_in_millimes")
         accept_card = serializer.validated_data.get("accept_card")
         accept_edinar = serializer.validated_data.get("accept_edinar")
@@ -101,6 +78,144 @@ class GeneratePaymentView(GenericAPIView):
                     "link": response.get("url"),
                     "payment_id": response.get("payment_id"),
                     "developer_tracking_id": developer_tracking_id,
+                    "success": True,
+                },
+                "name": "developers",
+                "code": 0,
+                "version": version,
+            }
+        else:
+            data = {
+                "result": {
+                    "success": False,
+                    "error": response.get("result"),
+                    "details": response.get("non_field_errors"),
+                },
+                "name": "developers",
+                "code": 1,
+                "version": version,
+            }
+        return Response(data=data, status=response.get("status_code"))
+
+
+@extend_schema_view(
+    post=extend_schema(
+        tags=["Accept-Payments"],
+        summary="Generate Payment Page (V1)",
+        description=(
+            "This endpoint generates a payment page for the user (Version 1). "
+            "It requires `app_token` and `app_secret` in the request body."
+        ),
+        request=GeneratePaymentSerializerV1,
+        responses={
+            200: {
+                "description": "Payment page generated successfully",
+                "examples": {
+                    "application/json": {
+                        "result": {
+                            "link": "https://payment.page.url",
+                            "payment_id": "123456789",
+                            "developer_tracking_id": "dev_track_id",
+                            "success": True,
+                        },
+                        "name": "developers",
+                        "code": 0,
+                        "version": "5.0.0",
+                    }
+                },
+            },
+            400: {
+                "description": "Invalid request data",
+                "examples": {
+                    "application/json": {
+                        "result": {"success": False, "error": "Invalid data", "details": "Detailed error message"},
+                        "name": "developers",
+                        "code": 1,
+                        "version": "5.0.0",
+                    }
+                },
+            },
+        },
+        deprecated=True,  # Marking it as deprecated
+    )
+)
+class GeneratePaymentView(BaseGeneratePaymentView):
+    serializer_class = GeneratePaymentSerializerV1
+    permission_classes = (HasValidAppCredentials,)
+
+
+@extend_schema(exclude=True)
+class GeneratePaymentWordpressView(GeneratePaymentView):
+    pass
+
+
+@extend_schema_view(
+    post=extend_schema(
+        tags=["Accept-Payments"],
+        summary="Generate Payment Page",
+        description=(
+            "This endpoint generates a payment page for the user. "
+            "The user can specify various parameters such as the amount, currency, and payment methods accepted. "
+            "Upon success, a URL to the payment page is returned along with a payment ID."
+        ),
+        request=GeneratePaymentSerializer,
+        responses={
+            200: {
+                "description": "Payment page generated successfully",
+                "examples": {
+                    "application/json": {
+                        "result": {
+                            "link": "https://payment.page.url",
+                            "payment_id": "123456789",
+                            "developer_tracking_id": "dev_track_id",
+                            "success": True,
+                        },
+                        "name": "developers",
+                        "code": 0,
+                        "version": "5.0.0",
+                    }
+                },
+            },
+            400: {
+                "description": "Invalid request data",
+                "examples": {
+                    "application/json": {
+                        "result": {"success": False, "error": "Invalid data", "details": "Detailed error message"},
+                        "name": "developers",
+                        "code": 1,
+                        "version": "5.0.0",
+                    }
+                },
+            },
+        },
+    )
+)
+class GeneratePaymentViewV2(BaseGeneratePaymentView):
+    serializer_class = GeneratePaymentSerializer
+    permission_classes = (HasValidAppCredentialsV2,)
+
+
+@extend_schema(exclude=True)
+class GeneratePaymentWordpressViewV2(GeneratePaymentViewV2):
+    pass
+
+
+@IsValidGenericApi(post=False, get=True)
+class BaseVerifyPaymentView(GenericAPIView):
+    serializer_class = VerifyPaymentSerializer
+
+    def get(self, request, serializer):
+        payment_id = serializer.validated_data["payment_id"]
+        application = request.application
+        # TODO change in backend and depricate the wallet field
+        response = FlouciBackendClient.check_payment(
+            payment_id=payment_id, wallet=application.wallet, merchant_id=application.merchant_id
+        )
+        if response.get("success"):
+            data = {
+                "result": {
+                    "payment_status": response["result"].get("status"),
+                    "payment_id": payment_id,
                     "success": True,
                 },
                 "name": "developers",
@@ -157,24 +272,71 @@ class GeneratePaymentView(GenericAPIView):
             },
         },
     },
+    deprecated=True,
 )
-@IsValidGenericApi(post=False, get=True)
-class VerifyPaymentView(GenericAPIView):
-    serializer_class = VerifyPaymentSerializer
+class VerifyPaymentView(BaseVerifyPaymentView):
+    permission_classes = (HasValidAppCredentials,)
+
+
+@extend_schema(
+    tags=["Accept-Payments"],
+    summary="Verify Payment",
+    description=(
+        "This endpoint verifies the status of a payment. "
+        "The user can provide the payment ID to check the current status of the payment."
+    ),
+    request=VerifyPaymentSerializer,
+    responses={
+        200: {
+            "description": "Payment verified successfully",
+            "examples": {
+                "application/json": {
+                    "result": {
+                        "payment_status": "completed",
+                        "payment_id": "123456789",
+                        "success": True,
+                    },
+                    "name": "developers",
+                    "code": 0,
+                    "version": "5.0.0",
+                }
+            },
+        },
+        400: {
+            "description": "Invalid request data",
+            "examples": {
+                "application/json": {
+                    "result": {"success": False, "error": "Invalid data", "details": "Detailed error message"},
+                    "name": "developers",
+                    "code": 1,
+                    "version": "5.0.0",
+                }
+            },
+        },
+    },
+)
+class VerifyPaymentViewV2(BaseVerifyPaymentView):
+    permission_classes = (HasValidAppCredentialsV2,)
+
+
+@IsValidGenericApi(post=True, get=False)
+class BaseSendMoneyView(GenericAPIView):
     permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
-    def get(self, request, serializer):
-        payment_id = serializer.validated_data["payment_id"]
-        application = request.application
-        # TODO change in backend and depricate the wallet field
-        response = FlouciBackendClient.check_payment(
-            payment_id=payment_id, wallet=application.wallet, merchant_id=application.merchant_id
+    def post(self, request, serializer):
+        validated_data = serializer.validated_data
+
+        response = FlouciBackendClient.developer_send_money_status(
+            amount_in_millimes=validated_data.get("amount_in_millimes"),
+            destination=validated_data.get("destination"),
+            webhook=validated_data.get("webhook"),
+            wallet=request.application.wallet,
         )
-        if response.get("success"):
+        if response["success"]:
             data = {
                 "result": {
-                    "payment_status": response["result"].get("status"),
-                    "payment_id": payment_id,
+                    "transaction_status": response.get("status"),
+                    "transaction_id": response.get("transaction_id"),
                     "success": True,
                 },
                 "name": "developers",
@@ -231,40 +393,79 @@ class VerifyPaymentView(GenericAPIView):
             },
         },
     },
+    deprecated=True,  # Marking it as deprecated
 )
-@IsValidGenericApi(post=True, get=False)
-class SendMoneyView(GenericAPIView):
+class SendMoneyView(BaseSendMoneyView):
     serializer_class = SendMoneySerializer
-    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
+    permission_classes = (HasValidAppCredentials,)
 
-    def post(self, request, serializer):
-        validated_data = serializer.validated_data
 
-        response = FlouciBackendClient.developer_send_money_status(
-            amount_in_millimes=validated_data.get("amount_in_millimes"),
-            destination=validated_data.get("destination"),
-            webhook=validated_data.get("webhook"),
-            wallet=request.application.wallet,
-        )
+@extend_schema(
+    tags=["Orchestration-Payments"],
+    summary="Send Money",
+    description=(
+        "This endpoint allows the user to send money to a specified destination. "
+        "The user can specify the amount, destination, and webhook URL for notifications."
+    ),
+    request=BaseSendMoneySerializer,
+    responses={
+        200: {
+            "description": "Money sent successfully",
+            "examples": {
+                "application/json": {
+                    "result": {
+                        "transaction_status": "completed",
+                        "transaction_id": "987654321",
+                        "success": True,
+                    },
+                    "name": "developers",
+                    "code": 0,
+                    "version": "5.0.0",
+                }
+            },
+        },
+        400: {
+            "description": "Invalid request data",
+            "examples": {
+                "application/json": {
+                    "result": {"success": False, "error": "Invalid data", "details": "Detailed error message"},
+                    "name": "developers",
+                    "code": 1,
+                    "version": "5.0.0",
+                }
+            },
+        },
+    },
+)
+class SendMoneyViewV2(BaseSendMoneyView):
+    serializer_class = BaseSendMoneySerializer
+    permission_classes = (HasValidAppCredentialsV2,)
+
+
+@IsValidGenericApi(post=False, get=True)
+class BaseCheckSendMoneyStatusView(GenericAPIView):
+    def get(self, request, serializer):
+        sender_id = request.application.merchant_id
+        operation_id = serializer.validated_data["operation_id"]
+        response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
+
         if response["success"]:
             data = {
                 "result": {
-                    "transaction_status": response.get("status"),
-                    "transaction_id": response.get("transaction_id"),
+                    "transaction_status": response["result"].get("status"),
+                    "transaction_id": operation_id,
                     "success": True,
                 },
-                "name": "developers",
+                "name": "check_send_money_status",
                 "code": 0,
                 "version": DJANGO_SERVICE_VERSION,
             }
         else:
             data = {
                 "result": {
-                    "success": False,
-                    "error": response.get("result"),
-                    "details": response.get("non_field_errors"),
+                    **response,
                 },
-                "name": "developers",
+                "name": "check_send_money_status",
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
             }
@@ -307,58 +508,60 @@ class SendMoneyView(GenericAPIView):
             },
         },
     },
+    deprecated=True,
 )
-@IsValidGenericApi(post=False, get=True)
-class CheckSendMoneyStatusView(GenericAPIView):
+class CheckSendMoneyStatusView(BaseCheckSendMoneyStatusView):
     serializer_class = CheckSendMoneyStatusSerializer
-    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
+    permission_classes = (HasValidAppCredentials,)
 
-    def get(self, request, serializer):
-        sender_id = request.application.merchant_id
-        operation_id = serializer.validated_data["operation_id"]
-        response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
 
-        if response["success"]:
-            data = {
-                "result": {
-                    "transaction_status": response["result"].get("status"),
-                    "transaction_id": operation_id,
-                    "success": True,
-                },
-                "name": "check_send_money_status",
-                "code": 0,
-                "version": DJANGO_SERVICE_VERSION,
-            }
-        else:
-            data = {
-                "result": {
-                    **response,
-                },
-                "name": "check_send_money_status",
-                "code": 1,
-                "version": DJANGO_SERVICE_VERSION,
-            }
-        return Response(data=data, status=response.get("status_code"))
+@extend_schema(
+    tags=["Orchestration-Payments"],
+    summary="Check Send Money Status",
+    description=(
+        "This endpoint checks the status of a money sending operation. "
+        "The user can provide the operation ID and sender ID to get the current status."
+    ),
+    request=BaseCheckSendMoneyStatusSerializer,
+    responses={
+        200: {
+            "description": "Send money status checked successfully",
+            "examples": {
+                "application/json": {
+                    "result": {
+                        "transaction_status": "completed",
+                        "transaction_id": "987654321",
+                        "success": True,
+                    },
+                    "name": "check_send_money_status",
+                    "code": 0,
+                    "version": "5.0.0",
+                }
+            },
+        },
+        400: {
+            "description": "Invalid request data",
+            "examples": {
+                "application/json": {
+                    "result": {"success": False, "error": "Invalid data", "message": "Detailed error message"},
+                    "name": "check_send_money_status",
+                    "code": 1,
+                    "version": "5.0.0",
+                }
+            },
+        },
+    },
+)
+class CheckSendMoneyStatusViewV2(BaseCheckSendMoneyStatusView):
+    serializer_class = BaseCheckSendMoneyStatusSerializer
+    permission_classes = (HasValidAppCredentialsV2,)
 
 
 @IsValidGenericApi()
-class AcceptPayment(GenericAPIView):
-    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
-    serializer_class = SecureAcceptPaymentSerializer
-
+class BaseAcceptPayment(GenericAPIView):
     def post(self, request, serializer):
         accept_payment_data = serializer.validated_data
-        try:
-            app = FlouciApp.objects.get(private_token=serializer.validated_data["app_secret"], active=True)
-        except FlouciApp.DoesNotExist:
-            return Response(
-                {
-                    "result": {"status": "FAILED"},
-                    "code": 1,
-                    "message": "App not found",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        app = request.application
         if app.test:
             flouci_otp = serializer.validated_data["flouci_otp"]
             if flouci_otp == "F-111111":
@@ -370,3 +573,46 @@ class AcceptPayment(GenericAPIView):
 
         response = DataApiClient.accept_payment(data=accept_payment_data)
         return Response(response, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=["Orchestration-Payments"],
+    summary="Accept Money Status",
+    description=("This endpoint accept payment. "),
+    request=SecureAcceptPaymentSerializer,
+    responses={
+        200: {
+            "description": "Send money successfully",
+            "examples": {"application/json": {"result": {"status": "SUCCESS"}, "code": 0}},
+        },
+        400: {
+            "description": "Invalid request data",
+            "examples": {"application/json": {"result": {"status": "FAILED"}, "code": 1}},
+        },
+    },
+    deprecated=True,
+)
+class AcceptPayment(BaseAcceptPayment):
+    permission_classes = (HasValidAppCredentials,)
+    serializer_class = SecureAcceptPaymentSerializer
+
+
+@extend_schema(
+    tags=["Orchestration-Payments"],
+    summary="Check Send Money Status",
+    description=("This endpoint accept payment. "),
+    request=AcceptPaymentSerializer,
+    responses={
+        200: {
+            "description": "Send money status checked successfully",
+            "examples": {"application/json": {"result": {"status": "SUCCESS"}, "code": 0}},
+        },
+        400: {
+            "description": "Invalid request data",
+            "examples": {"application/json": {"result": {"status": "FAILED"}, "code": 1}},
+        },
+    },
+)
+class AcceptPaymentV2(GenericAPIView):
+    permission_classes = (HasValidAppCredentialsV2,)
+    serializer_class = AcceptPaymentSerializer

@@ -26,7 +26,7 @@ from api.views_public import (
 urlpatterns = [
     # urls with developer app authentication (public)
     path("accept", AcceptPayment.as_view(), name="accept"),
-    path("v2/accept", AcceptPaymentV2.as_view(), name="accept"),
+    path("v2/accept", AcceptPaymentV2.as_view(), name="accept_v2"),
     path("generate_payment", GeneratePaymentView.as_view(), name="generate_payment"),
     path("v2/generate_payment", GeneratePaymentViewV2.as_view(), name="generate_payment_v2"),
     path("generate_payment/wordpress", GeneratePaymentWordpressView.as_view(), name="generate_payment_wordpress"),

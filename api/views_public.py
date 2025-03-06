@@ -599,12 +599,12 @@ class AcceptPayment(BaseAcceptPayment):
 
 @extend_schema(
     tags=["Orchestration-Payments"],
-    summary="Check Send Money Status",
+    summary="Accept Money Status",
     description=("This endpoint accept payment. "),
     request=AcceptPaymentSerializer,
     responses={
         200: {
-            "description": "Send money status checked successfully",
+            "description": "Send money successfully",
             "examples": {"application/json": {"result": {"status": "SUCCESS"}, "code": 0}},
         },
         400: {
@@ -613,6 +613,6 @@ class AcceptPayment(BaseAcceptPayment):
         },
     },
 )
-class AcceptPaymentV2(GenericAPIView):
+class AcceptPaymentV2(BaseAcceptPayment):
     permission_classes = (HasValidAppCredentialsV2,)
     serializer_class = AcceptPaymentSerializer

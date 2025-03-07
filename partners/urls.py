@@ -1,6 +1,5 @@
 from django.urls import path
 
-from api.views_public import SendMoneyViewV2
 from partners.views import (
     AuthenticateView,
     BalanceView,
@@ -13,6 +12,7 @@ from partners.views import (
     PartnerBalanceView,
     PartnerHistoryView,
     PartnerInitiatePaymentView,
+    PartnerSendMoneyView,
     RefreshAuthenticateView,
 )
 from partners.webhook_catchers import SendMoneyDeveloperApiCatcher
@@ -29,7 +29,7 @@ urlpatterns = [
     path("transactions/history", HistoryView.as_view(), name="partner_history"),
     path("transactions/initiate_payment", InitiatePaymentView.as_view(), name="partner_initiate_payment"),
     # Money transfer
-    path("transactions/send_money", SendMoneyViewV2.as_view(), name="partner_send_money"),
+    path("transactions/send_money", PartnerSendMoneyView.as_view(), name="partner_send_money"),
     path(
         "internal/send_money_catcher",
         SendMoneyDeveloperApiCatcher.as_view(),

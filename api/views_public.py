@@ -328,16 +328,16 @@ class BaseSendMoneyView(GenericAPIView):
 
         response = FlouciBackendClient.developer_send_money_status(
             amount_in_millimes=validated_data.get("amount_in_millimes"),
-            destination=validated_data.get("destination"),
+            receiver=validated_data.get("destination"),
             webhook=validated_data.get("webhook"),
-            wallet=request.application.wallet,
+            sender_id=request.application.merchant_id,
         )
         if response["success"]:
             data = {
                 "result": {
-                    "transaction_status": response.get("status"),
-                    "transaction_id": response.get("transaction_id"),
                     "success": True,
+                    "message": response.get("message"),
+                    "transaction_id": response.get("payment_id"),
                 },
                 "name": "developers",
                 "code": 0,
@@ -347,8 +347,8 @@ class BaseSendMoneyView(GenericAPIView):
             data = {
                 "result": {
                     "success": False,
-                    "error": response.get("result"),
-                    "details": response.get("non_field_errors"),
+                    "error": response.get("message"),
+                    "code": response.get("code"),
                 },
                 "name": "developers",
                 "code": 1,

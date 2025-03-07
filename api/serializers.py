@@ -1,11 +1,10 @@
 import base64
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from api.enum import Currency
-from api.models import FlouciApp, Peer
+from api.models import Peer
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -16,12 +15,12 @@ class DefaultSerializer(serializers.Serializer):
         pass
 
 
-class AppCredsSerializer(serializers.Serializer):
+class AppCredsSerializer(DefaultSerializer):
     app_token = serializers.UUIDField()
     app_secret = serializers.UUIDField()
 
 
-class DestinationSerializer(serializers.Serializer):
+class DestinationSerializer(DefaultSerializer):
     amount = serializers.IntegerField(min_value=1)
     destination = serializers.CharField(max_length=255)
 
@@ -40,12 +39,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     destination = DestinationSerializer(many=True, required=False)
 
     def validate(self, validate_data):
-        try:
-            application = FlouciApp.objects.get(
-                public_token=validate_data.get("app_token"), private_token=validate_data.get("app_secret")
-            )
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError("App not found.")
+        application = self.context.get("request").application
         validate_data["merchant_id"] = application.merchant_id
         validate_data["test"] = application.test
         validate_data["webhook"] = validate_data.get("webhook", None)
@@ -130,7 +124,7 @@ class CheckSendMoneyStatusSerializer(BaseCheckSendMoneyStatusSerializer, AppCred
     pass
 
 
-class AcceptPaymentSerializer(serializers.Serializer):
+class AcceptPaymentSerializer(DefaultSerializer):
     flouci_otp = serializers.CharField()
     payment_id = serializers.CharField()
     app_id = serializers.UUIDField(required=False, default=None)

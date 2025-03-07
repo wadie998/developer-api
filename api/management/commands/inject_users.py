@@ -10,15 +10,19 @@ from utils.backend_client import FlouciBackendClient
 class Command(BaseCommand):
     help = "Migrate users and their apps from the old database to the new database"
 
-    def fetch_tracking_id(self, user_id, wallet):
+    def fetch_tracking_id(self, user_id, wallet, wallet_tracking_cache):
         try:
             UUID(user_id)
             return None, None
         except Exception:
             if wallet and wallet != "Test wallet":
+                if wallet in wallet_tracking_cache:
+                    return wallet_tracking_cache[wallet]
+
                 result = FlouciBackendClient.fetch_associated_tracking_id(wallet)
                 tracking_id = result.get("tracking_id")
                 user_type = result.get("type")
+                wallet_tracking_cache[wallet] = (tracking_id, user_type)
             return tracking_id, user_type
 
     def migrate_users(self):
@@ -161,18 +165,26 @@ class Command(BaseCommand):
 
     def update_to_tracking_id(self, users_wallets):
         """Update the user_id field to tracking_id using the wallet from the App model."""
-
+        wallet_tracking_cache = {}
         migrated_count = 0
         skipped_count = 0
 
         for user_id, wallet in users_wallets.items():
-            tracking_id, user_type = self.fetch_tracking_id(user_id, wallet)
+            tracking_id, user_type = self.fetch_tracking_id(user_id, wallet, wallet_tracking_cache)
 
             if tracking_id:
-                # Update the user's user_id field to tracking_id
-                Peer.objects.using("default").filter(id=user_id).update(tracking_id=tracking_id, user_type=user_type)
-                migrated_count += 1
-                self.stdout.write(self.style.SUCCESS(f"Updated user {user_id} to tracking_id {tracking_id}"))
+                # Only update if the tracking_id isn't already set
+                updated = (
+                    Peer.objects.using("default")
+                    .filter(id=user_id, tracking_id__isnull=True)
+                    .update(tracking_id=tracking_id, user_type=user_type)
+                )
+                if updated:
+                    migrated_count += 1
+                    self.stdout.write(self.style.SUCCESS(f"Updated user {user_id} to tracking_id {tracking_id}"))
+                else:
+                    skipped_count += 1
+                    self.stdout.write(self.style.WARNING(f"Skipping user {user_id}: Already has tracking_id"))
             else:
                 skipped_count += 1
                 self.stdout.write(self.style.WARNING(f"Skipping user {user_id}: No tracking_id found"))

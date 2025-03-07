@@ -9,6 +9,7 @@ from api.enum import TransactionsTypes
 from settings.settings import (
     FLOUCI_BACKEND_API_ADDRESS,
     FLOUCI_BACKEND_API_KEY,
+    FLOUCI_BACKEND_INTERNAL_API_KEY,
     PROJECT_DOMAIN,
 )
 
@@ -258,4 +259,14 @@ class FlouciBackendClient:
         response = requests.post(
             FlouciBackendClient.SEND_MONEY, headers=FlouciBackendClient.HEADERS, json=data, verify=False
         )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def fetch_associated_tracking_id(wallet):
+        params = {
+            "wallet": wallet,
+        }
+        headers = {"Content-Type": "application/json", "Authorization": "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY}
+        response = requests.get(FlouciBackendClient.FETCH_TRACKING_ID_URL, headers=headers, params=params, verify=False)
         return FlouciBackendClient._process_response(response)

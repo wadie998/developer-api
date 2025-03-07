@@ -11,10 +11,9 @@ class Command(BaseCommand):
     help = "Migrate users and their apps from the old database to the new database"
 
     def fetch_tracking_id(self, user_id, wallet):
-        """Fetch tracking_id for a user from an external service."""
         try:
-            UUID(user_id)  # If user_id is already a valid UUID, return it
-            return user_id
+            UUID(user_id)
+            return None, None
         except Exception:
             if wallet and wallet != "Test wallet":
                 result = FlouciBackendClient.fetch_associated_tracking_id(wallet)

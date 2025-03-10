@@ -47,7 +47,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
         return validate_data
 
 
-class GeneratePaymentSerializerV1(GeneratePaymentSerializer, AppCredsSerializer):
+class OldGeneratePaymentSerializer(AppCredsSerializer, GeneratePaymentSerializer):
     pass
 
 

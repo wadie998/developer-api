@@ -26,7 +26,7 @@ class App(models.Model):
     deleted = models.BooleanField(default=False)
     gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
     transaction_number = models.BigIntegerField(blank=True, null=True)
-    revoke_number = models.IntegerField(blank=True, null=True)
+    revoke_number = models.IntegerField(blank=True, null=True, default=0)
     last_revoke_date = models.DateField(blank=True, null=True)
     app_id = models.UUIDField(blank=True, null=True)
     merchant_id = models.BigIntegerField()
@@ -112,7 +112,7 @@ class FlouciApp(models.Model):
 
     def revoke_keys(self):
         self.private_token = uuid.uuid4()
-        self.revoke_number = self.revoke_number + 1 if self.revoke_number else 1
+        self.revoke_number += 1
         self.last_revoke_date = datetime.now()
         self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
 

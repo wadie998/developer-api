@@ -11,7 +11,7 @@ from api.serializers import (
     BaseSendMoneySerializer,
     CheckSendMoneyStatusSerializer,
     GeneratePaymentSerializer,
-    GeneratePaymentSerializerV1,
+    OldGeneratePaymentSerializer,
     SecureAcceptPaymentSerializer,
     SendMoneySerializer,
     VerifyPaymentSerializer,
@@ -24,12 +24,11 @@ from utils.decorators import IsValidGenericApi
 
 @IsValidGenericApi()
 class BaseGeneratePaymentView(GenericAPIView):
+    depricated = True
+
     def post(self, request, serializer):
         """Handles both V1 (deprecated) and V2 dynamically."""
-        # Check if request is from V1 (by looking for explicit `app_token` in request data)
-        is_v1 = "app_token" in serializer.validated_data and "app_secret" in serializer.validated_data
-
-        if is_v1:
+        if self.depricated:
             app_token = serializer.validated_data.get("app_token")
             app_secret = serializer.validated_data.get("app_secret")
             version = "v1 (deprecated)"
@@ -106,7 +105,7 @@ class BaseGeneratePaymentView(GenericAPIView):
             "This endpoint generates a payment page for the user (Version 1). "
             "It requires `app_token` and `app_secret` in the request body."
         ),
-        request=GeneratePaymentSerializerV1,
+        request=OldGeneratePaymentSerializer,
         responses={
             200: {
                 "description": "Payment page generated successfully",
@@ -139,13 +138,13 @@ class BaseGeneratePaymentView(GenericAPIView):
         deprecated=True,  # Marking it as deprecated
     )
 )
-class GeneratePaymentView(BaseGeneratePaymentView):
-    serializer_class = GeneratePaymentSerializerV1
+class OldGeneratePaymentView(BaseGeneratePaymentView):
+    serializer_class = OldGeneratePaymentSerializer
     permission_classes = (HasValidAppCredentials,)
 
 
 @extend_schema(exclude=True)
-class GeneratePaymentWordpressView(GeneratePaymentView):
+class OldGeneratePaymentWordpressView(OldGeneratePaymentView):
     pass
 
 
@@ -190,13 +189,13 @@ class GeneratePaymentWordpressView(GeneratePaymentView):
         },
     )
 )
-class GeneratePaymentViewV2(BaseGeneratePaymentView):
+class GeneratePaymentView(BaseGeneratePaymentView):
     serializer_class = GeneratePaymentSerializer
     permission_classes = (HasValidAppCredentialsV2,)
 
 
 @extend_schema(exclude=True)
-class GeneratePaymentWordpressViewV2(GeneratePaymentViewV2):
+class GeneratePaymentWordpressView(GeneratePaymentView):
     pass
 
 
@@ -274,7 +273,7 @@ class BaseVerifyPaymentView(GenericAPIView):
     },
     deprecated=True,
 )
-class VerifyPaymentView(BaseVerifyPaymentView):
+class OldVerifyPaymentView(BaseVerifyPaymentView):
     permission_classes = (HasValidAppCredentials,)
 
 
@@ -315,7 +314,7 @@ class VerifyPaymentView(BaseVerifyPaymentView):
         },
     },
 )
-class VerifyPaymentViewV2(BaseVerifyPaymentView):
+class VerifyPaymentView(BaseVerifyPaymentView):
     permission_classes = (HasValidAppCredentialsV2,)
 
 
@@ -395,7 +394,7 @@ class BaseSendMoneyView(GenericAPIView):
     },
     deprecated=True,  # Marking it as deprecated
 )
-class SendMoneyView(BaseSendMoneyView):
+class OldSendMoneyView(BaseSendMoneyView):
     serializer_class = SendMoneySerializer
     permission_classes = (HasValidAppCredentials,)
 
@@ -437,7 +436,7 @@ class SendMoneyView(BaseSendMoneyView):
         },
     },
 )
-class SendMoneyViewV2(BaseSendMoneyView):
+class SendMoneyView(BaseSendMoneyView):
     serializer_class = BaseSendMoneySerializer
     permission_classes = (HasValidAppCredentialsV2,)
 
@@ -510,7 +509,7 @@ class BaseCheckSendMoneyStatusView(GenericAPIView):
     },
     deprecated=True,
 )
-class CheckSendMoneyStatusView(BaseCheckSendMoneyStatusView):
+class OldCheckSendMoneyStatusView(BaseCheckSendMoneyStatusView):
     serializer_class = CheckSendMoneyStatusSerializer
     permission_classes = (HasValidAppCredentials,)
 
@@ -552,7 +551,7 @@ class CheckSendMoneyStatusView(BaseCheckSendMoneyStatusView):
         },
     },
 )
-class CheckSendMoneyStatusViewV2(BaseCheckSendMoneyStatusView):
+class CheckSendMoneyStatusView(BaseCheckSendMoneyStatusView):
     serializer_class = BaseCheckSendMoneyStatusSerializer
     permission_classes = (HasValidAppCredentialsV2,)
 
@@ -613,6 +612,6 @@ class AcceptPayment(BaseAcceptPayment):
         },
     },
 )
-class AcceptPaymentV2(BaseAcceptPayment):
+class AcceptPaymentView(BaseAcceptPayment):
     permission_classes = (HasValidAppCredentialsV2,)
     serializer_class = AcceptPaymentSerializer

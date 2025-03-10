@@ -58,6 +58,12 @@ class VerifyPaymentSerializer(DefaultSerializer):
 class CheckUserExistsSerializer(DefaultSerializer):
     tracking_id = serializers.UUIDField()
 
+    def validate(self, validate_data):
+        tracking_id = self.context.get("request").tracking_id
+        if tracking_id and tracking_id != str(validate_data["tracking_id"]):
+            raise serializers.ValidationError("Bad input")
+        return validate_data
+
 
 class CreateDeveloperAccountSerializer(DefaultSerializer):
     login = serializers.CharField(max_length=100)
@@ -135,3 +141,7 @@ class AcceptPaymentSerializer(DefaultSerializer):
 
 class SecureAcceptPaymentSerializer(AcceptPaymentSerializer, AppCredsSerializer):
     pass
+
+
+class DeveloperAppSerializer(DefaultSerializer):
+    app_id = serializers.UUIDField()

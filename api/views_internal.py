@@ -1,6 +1,5 @@
 import logging
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -25,8 +24,6 @@ class CheckUserExistsView(GenericAPIView):
 
     def get(self, request, serializer):
         tracking_id = serializer.validated_data.get("tracking_id")
-        if request.tracking_id and request.tracking_id != tracking_id:
-            return Response({"success": False, "result": {"message": "bad input"}}, status=status.HTTP_400_BAD_REQUEST)
         try:
             Peer.objects.get(tracking_id=tracking_id)
         except Peer.DoesNotExist:
@@ -54,7 +51,7 @@ class CreateDeveloperAccountView(GenericAPIView):
                 {"success": False, "message": "User exists.", "result": "NA"},
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
-        except ObjectDoesNotExist:
+        except Peer.DoesNotExist:
             user, _ = Peer.objects.get_or_create(
                 tracking_id=request.tracking_id,
                 user_type=serializer.validated_data.get("user_type"),

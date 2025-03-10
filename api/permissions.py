@@ -145,7 +145,7 @@ class IsPartnerAuthenticated(BasePermission):
         if not token or not token.startswith("Bearer "):
             return False
         token = token.split(" ")[1]  # Extract the token part after "Bearer "
-        verified, data = verify_backend_token(token)
+        verified, data = verify_backend_token(token, token_partner=True)
         if not verified:
             return False
         try:

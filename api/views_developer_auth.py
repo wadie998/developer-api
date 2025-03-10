@@ -2,12 +2,16 @@ import logging
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
 from api.models import FlouciApp, Peer
 from api.permissions import IsFlouciAuthenticated
-from api.serializers import CreateDeveloperAppSerializer, GetDeveloperAppSerializer
+from api.serializers import (
+    CreateDeveloperAppSerializer,
+    DeveloperAppSerializer,
+    GetDeveloperAppSerializer,
+)
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
@@ -76,8 +80,7 @@ class CreateDeveloperAppView(GenericAPIView):
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi()
-class GetDeveloperAppDetailsView(GenericAPIView):
+class GetDeveloperAppDetailsView(ListCreateAPIView):
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
     """
     returns:
@@ -96,7 +99,7 @@ class GetDeveloperAppDetailsView(GenericAPIView):
     }
     """
 
-    def post(self, request, app_id):
+    def get(self, request, app_id):
         try:
             apps = FlouciApp.objects.get(app_id=app_id)
         except FlouciApp.DoesNotExist:
@@ -127,9 +130,11 @@ class RevokeDeveloperAppView(GenericAPIView):
     "version": "4.4.91"
     """
 
+    serializer_class = DeveloperAppSerializer
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
-    def post(self, request, app_id):
+    def post(self, request, serializer):
+        app_id = serializer.validated_data.get("app_id")
         try:
             app = FlouciApp.objects.get(app_id=app_id)
         except FlouciApp.DoesNotExist:

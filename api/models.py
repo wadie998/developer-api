@@ -112,7 +112,7 @@ class FlouciApp(models.Model):
 
     def revoke_keys(self):
         self.private_token = uuid.uuid4()
-        self.revoke_number += 1
+        self.revoke_number = self.revoke_number + 1 if self.revoke_number else 1
         self.last_revoke_date = datetime.now()
         self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
 

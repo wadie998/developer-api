@@ -7,7 +7,7 @@ from settings.configs.jwt_config import BACKEND_JWT_PUBLIC_KEY
 logger = logging.getLogger(__name__)
 
 
-def verify_backend_token(token, token_partner=False, public_key=BACKEND_JWT_PUBLIC_KEY):
+def verify_backend_token(token, is_token_partner=False, public_key=BACKEND_JWT_PUBLIC_KEY):
     """
     :param token:
     :param token_type:
@@ -17,7 +17,7 @@ def verify_backend_token(token, token_partner=False, public_key=BACKEND_JWT_PUBL
     """
     try:
         decoded = jwt.decode(token, public_key, options={"verify_exp": True, "require": ["exp"]}, algorithms=["ES256"])
-        if token_partner:
+        if is_token_partner:
             assert decoded["type"] == "partner"
         return True, {key: val for key, val in decoded.items() if key not in ["exp", "iat", "type"]}
     except jwt.ExpiredSignatureError:

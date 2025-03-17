@@ -31,7 +31,7 @@ class CreateDeveloperAppView(GenericAPIView):
 
     def get(self, request, serializer):
         if not request.tracking_id:
-            request.tracking_id = request.headers.get("login")
+            request.tracking_id = serializer.validated_data["tracking_id"]
 
         page = int(request.query_params.get("page", 0))
         size = int(request.query_params.get("size", 20))

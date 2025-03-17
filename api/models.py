@@ -26,7 +26,7 @@ class App(models.Model):
     deleted = models.BooleanField(default=False)
     gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
     transaction_number = models.BigIntegerField(blank=True, null=True)
-    revoke_number = models.IntegerField(blank=True, null=True)
+    revoke_number = models.IntegerField(blank=True, null=True, default=0)
     last_revoke_date = models.DateField(blank=True, null=True)
     app_id = models.UUIDField(blank=True, null=True)
     merchant_id = models.BigIntegerField()

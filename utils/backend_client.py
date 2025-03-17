@@ -125,14 +125,14 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def developer_send_money_status(amount_in_millimes, receiver, sender_id, webhook_url=None):
+    def developer_send_money_status(amount_in_millimes, receiver, sender_id, webhook=None):
         data = {
             "amount_in_millimes": amount_in_millimes,
             "receiver": receiver,
             "sender_id": sender_id,
         }
-        if webhook_url:
-            data["webhook_url"] = webhook_url
+        if webhook:
+            data["webhook_url"] = webhook
 
         response = requests.post(
             FlouciBackendClient.SEND_MONEY_URL,

@@ -10,20 +10,49 @@ from api.views_developer_auth import (
 from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
 from api.views_public import (
     AcceptPayment,
+    AcceptPaymentView,
     CheckSendMoneyStatusView,
     GeneratePaymentView,
+    GeneratePaymentWordpressView,
+    OldCheckSendMoneyStatusView,
+    OldGeneratePaymentView,
+    OldGeneratePaymentWordpressView,
+    OldSendMoneyView,
+    OldVerifyPaymentView,
     SendMoneyView,
     VerifyPaymentView,
 )
 
 urlpatterns = [
-    # urls with developer app authentication (public)
-    path("accept", AcceptPayment.as_view(), name="accept"),
-    path("generate_payment", GeneratePaymentView.as_view(), name="generate_payment"),
-    path("generate_payment/wordpress", GeneratePaymentView.as_view(), name="generate_payment_wordpress"),
-    path("verify_payment/<str:payment_id>", VerifyPaymentView.as_view(), name="verify_payment"),
-    path("send_money", SendMoneyView.as_view(), name="send_money"),
-    path("check_payment_status/<uuid:operation_id>", CheckSendMoneyStatusView.as_view(), name="check_payment_status"),
+    # urls that start with Old are depricated onc
+    path("accept", AcceptPayment.as_view(), name="old_accept_payment"),
+    path("v2/accept", AcceptPaymentView.as_view(), name="accept_payment"),
+    path("generate_payment", OldGeneratePaymentView.as_view(depricated=True), name="old_generate_payment"),
+    path("v2/generate_payment", GeneratePaymentView.as_view(depricated=False), name="generate_payment"),
+    path(
+        "generate_payment/wordpress",
+        OldGeneratePaymentWordpressView.as_view(depricated=True),
+        name="old_generate_payment_wordpress",
+    ),
+    path(
+        "v2/generate_payment/wordpress",
+        GeneratePaymentWordpressView.as_view(depricated=False),
+        name="generate_payment_wordpress",
+    ),
+    path("verify_payment/<str:payment_id>", OldVerifyPaymentView.as_view(), name="old_verify_payment"),
+    path("v2/verify_payment/<str:payment_id>", VerifyPaymentView.as_view(), name="verify_payment"),
+    path("send_money", OldSendMoneyView.as_view(), name="old_send_money"),
+    path("v2/send_money", SendMoneyView.as_view(), name="send_money"),
+    path(
+        "check_payment_status/<uuid:operation_id>",
+        OldCheckSendMoneyStatusView.as_view(),
+        name="old_check_payment_status",
+    ),
+    path(
+        "v2/check_payment_status/<uuid:operation_id>",
+        CheckSendMoneyStatusView.as_view(),
+        name="check_payment_status",
+    ),
     # urls with backend authentication
     path("internal/checkuserexists/<uuid:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
     path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),

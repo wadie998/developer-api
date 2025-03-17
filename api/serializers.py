@@ -1,11 +1,10 @@
 import base64
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from api.enum import Currency
-from api.models import FlouciApp, Peer
+from api.models import Peer
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -16,14 +15,17 @@ class DefaultSerializer(serializers.Serializer):
         pass
 
 
-class DestinationSerializer(serializers.Serializer):
+class AppCredsSerializer(DefaultSerializer):
+    app_token = serializers.UUIDField()
+    app_secret = serializers.UUIDField()
+
+
+class DestinationSerializer(DefaultSerializer):
     amount = serializers.IntegerField(min_value=1)
     destination = serializers.CharField(max_length=255)
 
 
 class GeneratePaymentSerializer(DefaultSerializer):
-    app_token = serializers.UUIDField()
-    app_secret = serializers.UUIDField()
     amount = serializers.IntegerField(min_value=100, max_value=5000000)
     accept_card = serializers.BooleanField()
     session_timeout_secs = serializers.IntegerField(min_value=300, default=1200)
@@ -37,17 +39,16 @@ class GeneratePaymentSerializer(DefaultSerializer):
     destination = DestinationSerializer(many=True, required=False)
 
     def validate(self, validate_data):
-        try:
-            application = FlouciApp.objects.get(
-                public_token=validate_data.get("app_token"), private_token=validate_data.get("app_secret")
-            )
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError("App not found.")
+        application = self.context.get("request").application
         validate_data["merchant_id"] = application.merchant_id
         validate_data["test"] = application.test
         validate_data["webhook"] = validate_data.get("webhook", None)
         validate_data["amount_in_millimes"] = validate_data.get("amount")
         return validate_data
+
+
+class OldGeneratePaymentSerializer(AppCredsSerializer, GeneratePaymentSerializer):
+    pass
 
 
 class VerifyPaymentSerializer(DefaultSerializer):
@@ -56,6 +57,12 @@ class VerifyPaymentSerializer(DefaultSerializer):
 
 class CheckUserExistsSerializer(DefaultSerializer):
     tracking_id = serializers.UUIDField()
+
+    def validate(self, validate_data):
+        tracking_id = self.context.get("request").tracking_id
+        if tracking_id and tracking_id != str(validate_data["tracking_id"]):
+            raise serializers.ValidationError("Bad input")
+        return validate_data
 
 
 class CreateDeveloperAccountSerializer(DefaultSerializer):
@@ -99,13 +106,11 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
         return ContentFile(img_data, name=f"temp.{ext}")
 
 
-class SendMoneySerializer(DefaultSerializer):
+class BaseSendMoneySerializer(DefaultSerializer):
     amount = serializers.IntegerField(
         min_value=100, max_value=5000000
     )  # To verify with Anis, Should we consider packs/limits
     destination = serializers.CharField(max_length=35)
-    app_secret = serializers.UUIDField()
-    app_token = serializers.UUIDField()
     webhook = serializers.URLField(required=False)
 
     def validate(self, data):
@@ -113,15 +118,20 @@ class SendMoneySerializer(DefaultSerializer):
         return data
 
 
-class CheckSendMoneyStatusSerializer(DefaultSerializer):
-    app_secret = serializers.UUIDField()
-    app_token = serializers.UUIDField()
+class SendMoneySerializer(BaseSendMoneySerializer, AppCredsSerializer):
+    pass
+
+
+class BaseCheckSendMoneyStatusSerializer(DefaultSerializer):
     operation_id = serializers.UUIDField()
 
 
-class AcceptPaymentSerializer(serializers.Serializer):
+class CheckSendMoneyStatusSerializer(BaseCheckSendMoneyStatusSerializer, AppCredsSerializer):
+    pass
+
+
+class AcceptPaymentSerializer(DefaultSerializer):
     flouci_otp = serializers.CharField()
-    app_token = serializers.UUIDField()
     payment_id = serializers.CharField()
     app_id = serializers.UUIDField(required=False, default=None)
     amount = serializers.IntegerField()
@@ -129,5 +139,9 @@ class AcceptPaymentSerializer(serializers.Serializer):
     developer_tracking_id = serializers.CharField(required=False, allow_null=True, max_length=40)
 
 
-class SecureAcceptPaymentSerializer(AcceptPaymentSerializer):
-    app_secret = serializers.UUIDField()
+class SecureAcceptPaymentSerializer(AcceptPaymentSerializer, AppCredsSerializer):
+    pass
+
+
+class DeveloperAppSerializer(DefaultSerializer):
+    app_id = serializers.UUIDField()

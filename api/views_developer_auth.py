@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
-from api.models import FlouciApp, Peer
+from api.models import FlouciApp
 from api.permissions import IsFlouciAuthenticated
 from api.serializers import (
     CreateDeveloperAppSerializer,
@@ -36,7 +36,7 @@ class CreateDeveloperAppView(GenericAPIView):
         page = int(request.query_params.get("page", 0))
         size = int(request.query_params.get("size", 20))
 
-        apps = FlouciApp.objects.filter(user__tracking_id=request.tracking_id)
+        apps = FlouciApp.objects.filter(tracking_id=request.tracking_id)
         total_apps = apps.count()
         start = page * size
         end = start + size
@@ -63,16 +63,15 @@ class CreateDeveloperAppView(GenericAPIView):
             return Response(
                 {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
-        try:
-            user = Peer.objects.get(tracking_id=request.tracking_id)
-        except Peer.DoesNotExist:
+        user_exists = FlouciApp.objects.filter(tracking_id=request.tracking_id).exists()
+        if not user_exists:
             return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         app = FlouciApp.objects.create(
-            user=user,
             name=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
             wallet=serializer.validated_data.get("wallet"),
             merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
+            tracking_id=request.tracking_id,
         )
         data = app.get_app_details()
         data["success"] = True

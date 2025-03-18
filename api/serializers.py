@@ -4,7 +4,6 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from api.enum import Currency
-from api.models import Peer
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -67,7 +66,6 @@ class CheckUserExistsSerializer(DefaultSerializer):
 
 class CreateDeveloperAccountSerializer(DefaultSerializer):
     login = serializers.CharField(max_length=100)
-    user_type = serializers.ChoiceField(choices=Peer.UserType, default=Peer.UserType.Merchant, required=False)
 
 
 class GetDeveloperAppSerializer(DefaultSerializer):

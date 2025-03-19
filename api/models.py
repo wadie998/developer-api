@@ -115,6 +115,7 @@ class FlouciApp(models.Model):
             "wallet": self.wallet,
             "has_partner_access": self.has_partner_access,
             "has_advanced_payments_access": self.has_advanced_payments_access,
+            "image_url": self.image_url,
         }
 
     def revoke_keys(self):

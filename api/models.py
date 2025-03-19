@@ -97,7 +97,8 @@ class FlouciApp(models.Model):
 
     def get_app_details(self):
         return {
-            "id": str(self.app_id),
+            "id": self.id,
+            "app_id": str(self.app_id),
             "name": self.name,
             "token": str(self.public_token),
             "secret": str(self.private_token),
@@ -108,6 +109,12 @@ class FlouciApp(models.Model):
             "description": self.description,
             "transaction_number": self.transaction_number,
             "gross": self.gross,
+            "revoke_number": self.revoke_number,
+            "merchant_id": self.merchant_id,
+            "last_revoke_date": self.last_revoke_date,
+            "wallet": self.wallet,
+            "has_partner_access": self.has_partner_access,
+            "has_advanced_payments_access": self.has_advanced_payments_access,
         }
 
     def revoke_keys(self):

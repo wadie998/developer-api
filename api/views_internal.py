@@ -12,6 +12,7 @@ from api.serializers import CheckUserExistsSerializer, CreateDeveloperAccountSer
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
+from utils.model_helper import user_exists_by_tracking_id
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class CheckUserExistsView(GenericAPIView):
 
     def get(self, request, serializer):
         tracking_id = serializer.validated_data.get("tracking_id")
-        user_exists = FlouciApp.objects.filter(tracking_id=tracking_id).exists()
+        user_exists = user_exists_by_tracking_id(tracking_id)
         if not user_exists:
             return Response(
                 {"success": False, "result": {"message": "User has no developer account"}},
@@ -44,7 +45,7 @@ class CreateDeveloperAccountView(GenericAPIView):
         if not request.tracking_id:
             # From backend
             request.tracking_id = serializer.validated_data.get("login")
-        user_exists = FlouciApp.objects.filter(tracking_id=request.tracking_id).exists()
+        user_exists = user_exists_by_tracking_id(request.tracking_id)
         if user_exists:
             return JsonResponse(
                 {"success": False, "message": "User exists.", "result": "NA"},

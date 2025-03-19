@@ -15,6 +15,7 @@ from api.serializers import (
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
+from utils.model_helper import user_exists_by_tracking_id
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class CreateDeveloperAppView(GenericAPIView):
             return Response(
                 {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
-        user_exists = FlouciApp.objects.filter(tracking_id=request.tracking_id).exists()
+        user_exists = user_exists_by_tracking_id(request.tracking_id)
         if not user_exists:
             return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         app = FlouciApp.objects.create(

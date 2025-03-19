@@ -69,7 +69,7 @@ class CreateDeveloperAccountSerializer(DefaultSerializer):
 
 
 class GetDeveloperAppSerializer(DefaultSerializer):
-    tracking_id = serializers.UUIDField()
+    tracking_id = serializers.UUIDField(required=False)
 
 
 class CreateDeveloperAppSerializer(DefaultSerializer):

@@ -3,34 +3,19 @@ from django.contrib.admin import display
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Permission
 
-from .models import FlouciApp, Peer
+from .models import FlouciApp
 
 
 class FlouciAppAdmin(admin.ModelAdmin):
-    list_display = ("name", "public_token", "wallet", "status", "active", "date_created")
+    list_display = ("name", "tracking_id", "public_token", "wallet", "status", "active", "date_created")
     search_fields = (
         "app_id",
         "name",
+        "tracking_id",
         "public_token",
         "wallet",
-        "user__tracking_id",
-        "user__phone_number",
     )
     list_filter = ("status", "active", "date_created")
-    raw_id_fields = ("user",)
-
-
-class PeerAdmin(admin.ModelAdmin):
-    list_display = (
-        "tracking_id",
-        "phone_number",
-        "activated",
-        "created_date",
-        "last_modified_date",
-    )
-    search_fields = ("tracking_id", "phone_number")
-    list_filter = ("activated", "created_date", "last_modified_date")
-    readonly_fields = ("created_date", "last_modified_date")
 
 
 class LogEntryAdmin(admin.ModelAdmin):
@@ -61,4 +46,3 @@ admin.site.site_header = "Django Developer Api"
 admin.site.register(LogEntry, LogEntryAdmin)
 
 admin.site.register(FlouciApp, FlouciAppAdmin)
-admin.site.register(Peer, PeerAdmin)

@@ -6,7 +6,7 @@ def generate_pagination_headers(base_url, page, size, total_count):
     Generates pagination headers similar to Spring Boot's HttpHeaders.
     """
     headers = {
-        "X-Total-Count": str(total_count),
+        "x-total-count": str(total_count),
     }
 
     total_pages = (total_count + size - 1) // size  # Equivalent to math.ceil(total_count / size)

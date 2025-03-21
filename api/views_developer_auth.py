@@ -11,6 +11,7 @@ from api.serializers import (
     CreateDeveloperAppSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
+    UpdateDeveloperAppSerializer,
 )
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
@@ -22,13 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi(post=True, get=True)
+@IsValidGenericApi(post=True, get=True, put=True)
 class CreateDeveloperAppView(GenericAPIView):
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def get_serializer_class(self):
         if self.request.method == "GET":
             return GetDeveloperAppSerializer
+        if self.request.method == "PUT":
+            return UpdateDeveloperAppSerializer
         return CreateDeveloperAppSerializer
 
     def get(self, request, serializer):
@@ -87,6 +90,25 @@ class CreateDeveloperAppView(GenericAPIView):
         data = app.get_app_details()
         data["success"] = True
         return Response(data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, serializer):
+        id = serializer.validated_data.get("id")
+        try:
+            app = FlouciApp.objects.get(id=id)
+        except FlouciApp.DoesNotExist:
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        updated_fields = []
+        for field in ["name", "description"]:
+            new_value = serializer.validated_data.get(field)
+            if new_value is not None and getattr(app, field) != new_value:
+                setattr(app, field, new_value)
+                updated_fields.append(field)
+
+        if updated_fields:
+            app.save(update_fields=updated_fields)
+        data = app.get_app_details()
+        data["success"] = True
+        return Response(data, status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)

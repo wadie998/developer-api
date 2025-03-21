@@ -104,6 +104,12 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
         return ContentFile(img_data, name=f"temp.{ext}")
 
 
+class UpdateDeveloperAppSerializer(DefaultSerializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(min_length=3, max_length=100, required=False)
+    description = serializers.CharField(min_length=3, max_length=255, required=False)
+
+
 class BaseSendMoneySerializer(DefaultSerializer):
     amount = serializers.IntegerField(
         min_value=100, max_value=5000000

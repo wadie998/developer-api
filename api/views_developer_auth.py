@@ -99,9 +99,9 @@ class GetDeveloperAppDetailsView(ListCreateAPIView):
     }
     """
 
-    def get(self, request, app_id):
+    def get(self, request, id):
         try:
-            apps = FlouciApp.objects.get(app_id=app_id)
+            apps = FlouciApp.objects.get(app_id=id)
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(data=apps.get_app_details(), status=status.HTTP_200_OK)
@@ -134,7 +134,7 @@ class RevokeDeveloperAppView(GenericAPIView):
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def post(self, request, serializer):
-        app_id = serializer.validated_data.get("app_id")
+        app_id = serializer.validated_data.get("id")
         try:
             app = FlouciApp.objects.get(app_id=app_id)
         except FlouciApp.DoesNotExist:

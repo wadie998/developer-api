@@ -142,4 +142,4 @@ class SecureAcceptPaymentSerializer(AcceptPaymentSerializer, AppCredsSerializer)
 
 
 class DeveloperAppSerializer(DefaultSerializer):
-    id = serializers.UUIDField()
+    id = serializers.IntegerField()

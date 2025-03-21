@@ -155,10 +155,12 @@ class RevokeDeveloperAppView(GenericAPIView):
 class EnableOrDisableDeveloperAppView(GenericAPIView):
     enable_or_disable = True
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
+    serializer_class = DeveloperAppSerializer
 
-    def get(self, request, id):
+    def get(self, request, serializer):
+        id = serializer.validated_data.get("id")
         try:
-            app = FlouciApp.objects.get(app_id=id)
+            app = FlouciApp.objects.get(id=id)
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         app.active = self.enable_or_disable

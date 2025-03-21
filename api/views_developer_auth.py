@@ -51,7 +51,7 @@ class CreateDeveloperAppView(GenericAPIView):
 
         response = Response(
             {
-                "result": app_list,
+                **app_list,
                 "code": 200,
                 "name": "developers",
                 "total": total_apps,

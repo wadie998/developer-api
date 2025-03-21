@@ -156,7 +156,7 @@ class EnableOrDisableDeveloperAppView(GenericAPIView):
     enable_or_disable = True
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
-    def get(self, request, id):
+    def post(self, request, id):
         try:
             app = FlouciApp.objects.get(app_id=id)
         except FlouciApp.DoesNotExist:

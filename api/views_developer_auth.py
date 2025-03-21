@@ -16,6 +16,7 @@ from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
 from utils.model_helper import user_exists_by_tracking_id
+from utils.pagination_helper import generate_pagination_headers
 
 logger = logging.getLogger(__name__)
 
@@ -32,19 +33,23 @@ class CreateDeveloperAppView(GenericAPIView):
 
     def get(self, request, serializer):
         if not request.tracking_id:
-            request.tracking_id = serializer.validated_data["tracking_id"]
-
+            tracking_id = serializer.validated_data.get("tracking_id")
+        else:
+            tracking_id = request.tracking_id
         page = int(request.query_params.get("page", 0))
         size = int(request.query_params.get("size", 20))
 
-        apps = FlouciApp.objects.filter(tracking_id=request.tracking_id)
+        apps = FlouciApp.objects.filter(tracking_id=tracking_id)
         total_apps = apps.count()
         start = page * size
         end = start + size
         apps = apps[start:end]
 
         app_list = [app.get_app_details() for app in apps]
-        return Response(
+        base_url = request.build_absolute_uri(request.path)
+        headers = generate_pagination_headers(base_url, page, size, total_apps)
+
+        response = Response(
             {
                 "result": app_list,
                 "code": 200,
@@ -56,6 +61,11 @@ class CreateDeveloperAppView(GenericAPIView):
             },
             status=status.HTTP_200_OK,
         )
+        # Attach pagination headers
+        for key, value in headers.items():
+            response[key] = value
+
+        return response
 
     def post(self, request, serializer):
         if not request.tracking_id:

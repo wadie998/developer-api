@@ -134,9 +134,9 @@ class RevokeDeveloperAppView(GenericAPIView):
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def post(self, request, serializer):
-        app_id = serializer.validated_data.get("id")
+        id = serializer.validated_data.get("id")
         try:
-            app = FlouciApp.objects.get(app_id=app_id)
+            app = FlouciApp.objects.get(id=id)
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         app.revoke_keys()
@@ -146,6 +146,27 @@ class RevokeDeveloperAppView(GenericAPIView):
             "message": "App revoked successfully.",
             "name": "developers",
             "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
+class EnableOrDisableDeveloperAppView(GenericAPIView):
+    enable_or_disable = True
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
+
+    def get(self, request, id):
+        try:
+            app = FlouciApp.objects.get(app_id=id)
+        except FlouciApp.DoesNotExist:
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        app.active = self.enable_or_disable
+        app.save(update_fields=["active"])
+        response_data = {
+            "result": app.get_app_details(),
+            "code": 0,
+            "message": f"App {'enabled' if self.enable_or_disable else 'disabled'} successfully.",
         }
         return Response(response_data, status=status.HTTP_200_OK)
 

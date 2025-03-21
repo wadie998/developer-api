@@ -2,6 +2,7 @@ from django.urls import path
 
 from api.views_developer_auth import (
     CreateDeveloperAppView,
+    EnableOrDisableDeveloperAppView,
     GetDeveloperAppDetailsView,
     GetDeveloperAppMetricsView,
     GetDeveloperAppOrdersView,
@@ -60,7 +61,17 @@ urlpatterns = [
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),
     path("apps/<uuid:id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),
-    path("apps/<uuid:id>/revoke", RevokeDeveloperAppView.as_view(), name="revoke_developer_app"),
+    path("apps/<int:id>/revoke", RevokeDeveloperAppView.as_view(), name="revoke_developer_app"),
+    path(
+        "apps/<int:id>/disable",
+        EnableOrDisableDeveloperAppView.as_view(enable_or_disable=False),
+        name="enable_developer_app",
+    ),
+    path(
+        "apps/<int:id>/enable",
+        EnableOrDisableDeveloperAppView.as_view(enable_or_disable=True),
+        name="disable_developer_app",
+    ),
     # Depricated views
     path("metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_internal_metrics"),
     path("orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_internal_orders"),

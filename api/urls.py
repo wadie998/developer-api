@@ -63,12 +63,12 @@ urlpatterns = [
     path("apps/<uuid:id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),
     path("apps/<int:id>/revoke", RevokeDeveloperAppView.as_view(), name="revoke_developer_app"),
     path(
-        "apps/<int:id>/disable",
+        "app/<int:id>/disable",
         EnableOrDisableDeveloperAppView.as_view(enable_or_disable=False),
         name="enable_developer_app",
     ),
     path(
-        "apps/<int:id>/enable",
+        "app/<int:id>/enable",
         EnableOrDisableDeveloperAppView.as_view(enable_or_disable=True),
         name="disable_developer_app",
     ),

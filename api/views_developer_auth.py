@@ -108,7 +108,7 @@ class GetDeveloperAppDetailsView(ListCreateAPIView):
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi()
+@IsValidGenericApi(get=True, post=False)
 class RevokeDeveloperAppView(GenericAPIView):
     """
     "result": {
@@ -133,7 +133,7 @@ class RevokeDeveloperAppView(GenericAPIView):
     serializer_class = DeveloperAppSerializer
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
-    def post(self, request, serializer):
+    def get(self, request, serializer):
         id = serializer.validated_data.get("id")
         try:
             app = FlouciApp.objects.get(id=id)
@@ -151,12 +151,12 @@ class RevokeDeveloperAppView(GenericAPIView):
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi()
+@IsValidGenericApi(get=True, post=False)
 class EnableOrDisableDeveloperAppView(GenericAPIView):
     enable_or_disable = True
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
-    def post(self, request, id):
+    def get(self, request, id):
         try:
             app = FlouciApp.objects.get(app_id=id)
         except FlouciApp.DoesNotExist:

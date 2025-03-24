@@ -10,8 +10,10 @@ from api.enum import TransactionsTypes
 from settings.settings import (
     FLOUCI_BACKEND_API_ADDRESS,
     FLOUCI_BACKEND_API_KEY,
+    FLOUCI_BACKEND_INTERNAL_API_KEY,
     PROJECT_DOMAIN,
 )
+from utils.dataapi_client import convert_millimes_to_dinars
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +47,8 @@ class FlouciBackendClient:
     PARTNER_AUTHENTICATE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/authenticate_user"
     GET_BALANCE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/get_balance"
     SEND_MONEY = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/send_money"
-    CONFIRM_PAYMENT_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_payment"
-    CANCEL_PAYMENT_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_payment"
+    CONFIRM_PAYMENT_AUTHORIZATION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_pre_authorized_payment"
+    CANCEL_PAYMENT_AUTHORIZATION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_pre_authorized_payment"
 
     @staticmethod
     def _process_response(response, success_code=[200, 201, 204]):
@@ -91,7 +93,7 @@ class FlouciBackendClient:
         data = {
             "test_account": test_account,
             "accept_card": accept_card,
-            "amount": amount_in_millimes,
+            "amount": str(convert_millimes_to_dinars(amount_in_millimes)),
             "amount_in_millimes": amount_in_millimes,
             "merchant_id": merchant_id,
             "app_token": str(app_token),
@@ -131,14 +133,14 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def developer_send_money_status(amount_in_millimes, receiver, sender_id, webhook_url=None):
+    def developer_send_money_status(amount_in_millimes, receiver, sender_id, webhook=None):
         data = {
             "amount_in_millimes": amount_in_millimes,
             "receiver": receiver,
             "sender_id": sender_id,
         }
-        if webhook_url:
-            data["webhook_url"] = webhook_url
+        if webhook:
+            data["webhook_url"] = webhook
 
         response = requests.post(
             FlouciBackendClient.SEND_MONEY_URL,
@@ -272,7 +274,7 @@ class FlouciBackendClient:
     def confirm_payment(payment_id, amount, merchant_id):
         data = {"payment_id": payment_id, "amount": amount, "merchant_id": merchant_id}
         response = requests.post(
-            FlouciBackendClient.CONFIRM_PAYMENT_URL,
+            FlouciBackendClient.CONFIRM_PAYMENT_AUTHORIZATION_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )
@@ -283,8 +285,16 @@ class FlouciBackendClient:
     def cancel_payment(payment_id, merchant_id):
         data = {"payment_id": payment_id, "merchant_id": merchant_id}
         response = requests.post(
-            FlouciBackendClient.CANCEL_PAYMENT_URL,
+            FlouciBackendClient.CANCEL_PAYMENT_AUTHORIZATION_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
         )
+        return FlouciBackendClient._process_response(response)
+
+    def fetch_associated_tracking_id(wallet):
+        params = {
+            "wallet": wallet,
+        }
+        headers = {"Content-Type": "application/json", "Authorization": "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY}
+        response = requests.get(FlouciBackendClient.FETCH_TRACKING_ID_URL, headers=headers, params=params, verify=False)
         return FlouciBackendClient._process_response(response)

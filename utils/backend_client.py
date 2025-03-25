@@ -4,6 +4,7 @@ from datetime import timedelta
 import requests
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework import status
 
 from api.enum import TransactionsTypes
 from settings.settings import (
@@ -12,6 +13,7 @@ from settings.settings import (
     FLOUCI_BACKEND_INTERNAL_API_KEY,
     PROJECT_DOMAIN,
 )
+from utils.dataapi_client import convert_millimes_to_dinars
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +47,11 @@ class FlouciBackendClient:
     PARTNER_AUTHENTICATE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/authenticate_user"
     GET_BALANCE = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/get_balance"
     SEND_MONEY = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/send_money"
+    CONFIRM_PAYMENT_AUTHORIZATION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_pre_authorized_payment"
+    CANCEL_PAYMENT_AUTHORIZATION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_pre_authorized_payment"
 
     @staticmethod
-    def _process_response(response, success_code=[200, 201]):
+    def _process_response(response, success_code=[200, 201, 204]):
         """Process the HTTP response and standardize error handling."""
         if response.status_code >= 500:
             logger.critical(f"Request failed with status code {response.status_code}. Response: {response.text}")
@@ -56,6 +60,8 @@ class FlouciBackendClient:
             response_json = response.json()
             if response.status_code in success_code:
                 return {"success": True, **response_json}
+            elif response.status_code == status.HTTP_406_NOT_ACCEPTABLE:
+                return {"success": False, **response_json, "status_code": status.HTTP_406_NOT_ACCEPTABLE}
             else:
                 logger.info(f"Request failed with response: {response.text}")
                 return {
@@ -82,11 +88,12 @@ class FlouciBackendClient:
         expires_at,
         webhook_url,
         destination,
+        pre_authorization,
     ):
         data = {
             "test_account": test_account,
             "accept_card": accept_card,
-            "amount": amount_in_millimes,
+            "amount": str(convert_millimes_to_dinars(amount_in_millimes)),
             "amount_in_millimes": amount_in_millimes,
             "merchant_id": merchant_id,
             "app_token": str(app_token),
@@ -95,6 +102,7 @@ class FlouciBackendClient:
             "fail_link": fail_link,
             "developer_tracking_id": developer_tracking_id,
             "expires_at": (timezone.now() + timedelta(seconds=expires_at)).isoformat(),
+            "pre_authorization": pre_authorization,
         }
         if webhook_url:
             data["webhook_url"] = webhook_url
@@ -263,6 +271,26 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
+    def confirm_payment(payment_id, amount, merchant_id):
+        data = {"payment_id": payment_id, "amount": amount, "merchant_id": merchant_id}
+        response = requests.post(
+            FlouciBackendClient.CONFIRM_PAYMENT_AUTHORIZATION_URL,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def cancel_payment(payment_id, merchant_id):
+        data = {"payment_id": payment_id, "merchant_id": merchant_id}
+        response = requests.post(
+            FlouciBackendClient.CANCEL_PAYMENT_AUTHORIZATION_URL,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
     def fetch_associated_tracking_id(wallet):
         params = {
             "wallet": wallet,

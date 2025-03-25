@@ -12,7 +12,9 @@ from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
 from api.views_public import (
     AcceptPayment,
     AcceptPaymentView,
+    CancelSMTPreAuthorization,
     CheckSendMoneyStatusView,
+    ConfirmSMTPreAuthorization,
     GeneratePaymentView,
     GeneratePaymentWordpressView,
     OldCheckSendMoneyStatusView,
@@ -75,4 +77,7 @@ urlpatterns = [
     # Depricated views
     path("metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_internal_metrics"),
     path("orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_internal_orders"),
+    # Pre-authorization endpoints
+    path("confirm_payment", ConfirmSMTPreAuthorization.as_view(), name="confirm_payment"),
+    path("cancel_payment", CancelSMTPreAuthorization.as_view(), name="cancel_payment"),
 ]

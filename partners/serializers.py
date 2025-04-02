@@ -1,4 +1,5 @@
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from api.enum import (
@@ -68,12 +69,13 @@ class PaginatedHistorySerializer(serializers.ModelSerializer):
         model = PartnerTransaction
         fields = ["operation_id", "sender", "receiver", "status", "time_created", "payload"]
 
+    @extend_schema_field(serializers.JSONField())  # Explicitly specify the schema type
     def get_payload(self, obj):
         payload = obj.operation_payload or {}
         return {
             "blockchain_ref": obj.blockchain_ref[:6] if obj.blockchain_ref else None,
             "operation_type": obj.operation_type,
-            "product": payload.get("product"),
+            "product": payload.get("product", ""),
         }
 
 

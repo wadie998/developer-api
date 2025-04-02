@@ -53,8 +53,8 @@ class InitiateLinkAccountView(GenericAPIView):
     @extend_schema(
         parameters=[
             CUSTOM_AUTHENTICATION,
-            InitiateLinkAccountViewSerializer,
         ],
+        request=InitiateLinkAccountViewSerializer,
         responses={
             200: OpenApiResponse(response=InitiateLinkAccounResponseSerializer, description="Linking Account"),
             202: OpenApiResponse(response=BaseResponseSerializer, description="Account already Linked"),
@@ -209,7 +209,6 @@ class BalanceView(GenericAPIView):
     @extend_schema(
         parameters=[
             CUSTOM_AUTHENTICATION,
-            BalanceViewSerializer,
         ],
         responses={
             200: OpenApiResponse(response=BalanceResponseSerializer, description="Check user alance"),
@@ -328,15 +327,13 @@ class InitiatePaymentView(GenericAPIView):
         responses={
             200: OpenApiResponse(response=PartnerInitiatePaymentResponseSerializer, description="Linking Account"),
             406: OpenApiResponse(response=BaseResponseSerializer, description="Wallet is not active"),
-            412: [
-                OpenApiResponse(
-                    response=BaseResponseSerializer, description="Amount cannot exceed max amount per transaction"
-                ),
-                OpenApiResponse(
-                    response=BaseResponseSerializer, description="Amount cannot be less than minimal transaction"
-                ),
-                OpenApiResponse(response=BaseResponseSerializer, description="Insufficient funds"),
-            ],
+            412: OpenApiResponse(
+                response=BaseResponseSerializer,
+                description="Possible reasons:\n"
+                "- Amount cannot exceed max amount per transaction\n"
+                "- Amount cannot be less than minimal transaction\n"
+                "- Insufficient funds",
+            ),
             451: OpenApiResponse(response=BaseResponseSerializer, description="Transaction blocked due to limits"),
         },
     )
@@ -379,15 +376,13 @@ class PartnerInitiatePaymentView(GenericAPIView):
         responses={
             200: OpenApiResponse(response=PartnerInitiatePaymentResponseSerializer, description="Linking Account"),
             406: OpenApiResponse(response=BaseResponseSerializer, description="Wallet is not active"),
-            412: [
-                OpenApiResponse(
-                    response=BaseResponseSerializer, description="Amount cannot exceed max amount per transaction"
-                ),
-                OpenApiResponse(
-                    response=BaseResponseSerializer, description="Amount cannot be less than minimal transaction"
-                ),
-                OpenApiResponse(response=BaseResponseSerializer, description="Insufficient funds"),
-            ],
+            412: OpenApiResponse(
+                response=BaseResponseSerializer,
+                description="Possible reasons:\n"
+                "- Amount cannot exceed max amount per transaction\n"
+                "- Amount cannot be less than minimal transaction\n"
+                "- Insufficient funds",
+            ),
             451: OpenApiResponse(response=BaseResponseSerializer, description="Transaction blocked due to limits"),
         },
     )

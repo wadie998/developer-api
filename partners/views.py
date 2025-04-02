@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -14,6 +15,15 @@ from api.permissions import (
     IsValidPartnerUser,
 )
 from partners.models import LinkedAccount, PartnerTransaction
+from partners.responses_serializers import (
+    AccountBalanceNotFoundSerializer,
+    BalanceResponseSerializer,
+    BaseResponseSerializer,
+    ConfirmLinkAccountResponseSerializer,
+    InitiateLinkAccounResponseSerializer,
+    IsFlouciResponseSerializer,
+    PartnerInitiatePaymentResponseSerializer,
+)
 from partners.serializers import (
     AuthenticateViewSerializer,
     BalanceViewSerializer,
@@ -32,6 +42,7 @@ from partners.serializers import (
 )
 from utils.backend_client import FlouciBackendClient
 from utils.decorators import IsValidGenericApi
+from utils.docs_helper import CUSTOM_AUTHENTICATION
 
 
 @IsValidGenericApi()
@@ -39,6 +50,19 @@ class InitiateLinkAccountView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
     serializer_class = InitiateLinkAccountViewSerializer
 
+    @extend_schema(
+        parameters=[
+            CUSTOM_AUTHENTICATION,
+        ],
+        request=InitiateLinkAccountViewSerializer,
+        responses={
+            200: OpenApiResponse(response=InitiateLinkAccounResponseSerializer, description="Linking Account"),
+            202: OpenApiResponse(response=BaseResponseSerializer, description="Account already Linked"),
+            404: OpenApiResponse(response=BaseResponseSerializer, description="User not found"),
+            412: OpenApiResponse(response=BaseResponseSerializer, description="Account not compatible"),
+            429: OpenApiResponse(response=BaseResponseSerializer, description="Too many sms sent, try again later"),
+        },
+    )
     def post(self, request, serializer):
         phone_number = serializer.validated_data.get("phone_number")
         if LinkedAccount.objects.filter(
@@ -81,6 +105,17 @@ class ConfirmLinkAccountView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
     serializer_class = ConfirmLinkAccountViewSerializer
 
+    @extend_schema(
+        parameters=[
+            CUSTOM_AUTHENTICATION,
+            ConfirmLinkAccountViewSerializer,
+        ],
+        responses={
+            200: OpenApiResponse(response=ConfirmLinkAccountResponseSerializer, description="Linking Account"),
+            401: OpenApiResponse(response=BaseResponseSerializer, description="Invalid expired code"),
+            406: OpenApiResponse(response=BaseResponseSerializer, description="Invalid wrong code"),
+        },
+    )
     def post(self, request, serializer):
         phone_number = serializer.validated_data.get("phone_number")
         session_id = serializer.validated_data.get("session_id")
@@ -106,9 +141,7 @@ class ConfirmLinkAccountView(GenericAPIView):
                 status=response.get("status_code"),
             )
         else:
-            return Response(
-                {"success": False, "message": "Unexpected error occurred"}, status=response.get("status_code")
-            )
+            return Response({"success": False, "message": response.get("message")}, status=response.get("status_code"))
 
 
 @IsValidGenericApi()
@@ -116,6 +149,15 @@ class IsFlouciView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
     serializer_class = IsFlouciViewSerializer
 
+    @extend_schema(
+        parameters=[
+            CUSTOM_AUTHENTICATION,
+            IsFlouciViewSerializer,
+        ],
+        responses={
+            200: OpenApiResponse(response=IsFlouciResponseSerializer, description="Check if the user is flouci user"),
+        },
+    )
     def post(self, request, serializer):
         phone_number = serializer.validated_data.get("phone_number")
         merchant_id = request.application.merchant_id
@@ -164,6 +206,15 @@ class BalanceView(GenericAPIView):
     permission_classes = [IsPartnerAuthenticated]
     serializer_class = BalanceViewSerializer
 
+    @extend_schema(
+        parameters=[
+            CUSTOM_AUTHENTICATION,
+        ],
+        responses={
+            200: OpenApiResponse(response=BalanceResponseSerializer, description="Check user alance"),
+            412: OpenApiResponse(response=AccountBalanceNotFoundSerializer, description="Couldn't get account balance"),
+        },
+    )
     def get(self, request, serializer):
         account: LinkedAccount = request.account
         response = FlouciBackendClient.get_user_balance(
@@ -268,6 +319,24 @@ class InitiatePaymentView(GenericAPIView):
     serializer_class = InitiatePaymentViewSerializer
 
     # @method_decorator(ratelimit(key="user", rate="1/10s"))
+    @extend_schema(
+        parameters=[
+            CUSTOM_AUTHENTICATION,
+            InitiatePaymentViewSerializer,
+        ],
+        responses={
+            200: OpenApiResponse(response=PartnerInitiatePaymentResponseSerializer, description="Linking Account"),
+            406: OpenApiResponse(response=BaseResponseSerializer, description="Wallet is not active"),
+            412: OpenApiResponse(
+                response=BaseResponseSerializer,
+                description="Possible reasons:\n"
+                "- Amount cannot exceed max amount per transaction\n"
+                "- Amount cannot be less than minimal transaction\n"
+                "- Insufficient funds",
+            ),
+            451: OpenApiResponse(response=BaseResponseSerializer, description="Transaction blocked due to limits"),
+        },
+    )
     def post(self, request, serializer):
         account = request.account
         amount_in_millimes = serializer.validated_data.get("amount_in_millimes")
@@ -299,6 +368,24 @@ class PartnerInitiatePaymentView(GenericAPIView):
     serializer_class = PartnerInitiatePaymentViewSerializer
 
     # @method_decorator(ratelimit(key="user", rate="1/10s"))
+    @extend_schema(
+        parameters=[
+            CUSTOM_AUTHENTICATION,
+            PartnerInitiatePaymentViewSerializer,
+        ],
+        responses={
+            200: OpenApiResponse(response=PartnerInitiatePaymentResponseSerializer, description="Linking Account"),
+            406: OpenApiResponse(response=BaseResponseSerializer, description="Wallet is not active"),
+            412: OpenApiResponse(
+                response=BaseResponseSerializer,
+                description="Possible reasons:\n"
+                "- Amount cannot exceed max amount per transaction\n"
+                "- Amount cannot be less than minimal transaction\n"
+                "- Insufficient funds",
+            ),
+            451: OpenApiResponse(response=BaseResponseSerializer, description="Transaction blocked due to limits"),
+        },
+    )
     def post(self, request, serializer):
         account = request.account
         amount_in_millimes = serializer.validated_data.get("amount_in_millimes")

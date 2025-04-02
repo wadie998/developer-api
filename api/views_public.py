@@ -9,7 +9,9 @@ from api.serializers import (
     AcceptPaymentSerializer,
     BaseCheckSendMoneyStatusSerializer,
     BaseSendMoneySerializer,
+    CancelSMTPreAuthorizationSerializer,
     CheckSendMoneyStatusSerializer,
+    ConfirmSMTPreAuthorizationSerializer,
     GeneratePaymentSerializer,
     OldGeneratePaymentSerializer,
     SecureAcceptPaymentSerializer,
@@ -54,6 +56,7 @@ class BaseGeneratePaymentView(GenericAPIView):
         destination = serializer.validated_data.get("destination")
         test_account = serializer.validated_data.get("test")
         merchant_id = serializer.validated_data.get("merchant_id")
+        pre_authorization = serializer.validated_data["pre_authorization"]
 
         response = FlouciBackendClient.generate_payment_page(
             test_account=test_account,
@@ -70,6 +73,7 @@ class BaseGeneratePaymentView(GenericAPIView):
             expires_at=session_timeout_secs or session_timeout,
             webhook_url=webhook,
             destination=destination,
+            pre_authorization=pre_authorization,
         )
         if response.get("success"):
             data = {
@@ -572,6 +576,75 @@ class BaseAcceptPayment(GenericAPIView):
 
         response = DataApiClient.accept_payment(data=accept_payment_data)
         return Response(response, status=status.HTTP_200_OK)
+
+
+@IsValidGenericApi()
+class ConfirmSMTPreAuthorization(GenericAPIView):
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
+    serializer_class = ConfirmSMTPreAuthorizationSerializer
+
+    def post(self, request, serializer):
+        merchant_id = request.application.merchant_id
+        payment_id = serializer.validated_data["payment_id"]
+        amount = serializer.validated_data["amount"]
+        response = FlouciBackendClient.confirm_payment(payment_id, amount, merchant_id)
+        if response["success"]:
+            data = {
+                "result": {
+                    "status": True,
+                    "message": response.get("message"),
+                    "payment_id": payment_id,
+                },
+                "name": "confirm_transaction",
+                "code": 0,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        else:
+            data = {
+                "result": {
+                    "success": False,
+                    "error": response.get("message") or response.get("error"),
+                    "code": response.get("resultCode"),
+                },
+                "name": "confirm_transaction",
+                "code": 1,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        return Response(data=data, status=response.get("status_code"))
+
+
+@IsValidGenericApi()
+class CancelSMTPreAuthorization(GenericAPIView):
+    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
+    serializer_class = CancelSMTPreAuthorizationSerializer
+
+    def post(self, request, serializer):
+        merchant_id = request.application.merchant_id
+        payment_id = serializer.validated_data["payment_id"]
+        response = FlouciBackendClient.cancel_payment(payment_id, merchant_id)
+        if response["success"]:
+            data = {
+                "result": {
+                    "status": True,
+                    "message": response.get("message"),
+                    "payment_id": payment_id,
+                },
+                "name": "cancel_transaction",
+                "code": 0,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        else:
+            data = {
+                "result": {
+                    "success": False,
+                    "error": response.get("message") or response.get("error"),
+                    "code": response.get("resultCode"),
+                },
+                "name": "cancel_transaction",
+                "code": 1,
+                "version": DJANGO_SERVICE_VERSION,
+            }
+        return Response(data=data, status=response.get("status_code"))
 
 
 @extend_schema(

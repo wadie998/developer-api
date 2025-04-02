@@ -5,45 +5,54 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
-from api.models import FlouciApp, Peer
+from api.models import FlouciApp
 from api.permissions import IsFlouciAuthenticated
 from api.serializers import (
     CreateDeveloperAppSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
+    UpdateDeveloperAppSerializer,
 )
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
+from utils.model_helper import user_exists_by_tracking_id
+from utils.pagination_helper import generate_pagination_headers
 
 logger = logging.getLogger(__name__)
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi(post=True, get=True)
+@IsValidGenericApi(post=True, get=True, put=True)
 class CreateDeveloperAppView(GenericAPIView):
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
     def get_serializer_class(self):
         if self.request.method == "GET":
             return GetDeveloperAppSerializer
+        if self.request.method == "PUT":
+            return UpdateDeveloperAppSerializer
         return CreateDeveloperAppSerializer
 
     def get(self, request, serializer):
         if not request.tracking_id:
-            request.tracking_id = serializer.validated_data["tracking_id"]
-
+            tracking_id = serializer.validated_data.get("tracking_id")
+        else:
+            tracking_id = request.tracking_id
         page = int(request.query_params.get("page", 0))
         size = int(request.query_params.get("size", 20))
 
-        apps = FlouciApp.objects.filter(user__tracking_id=request.tracking_id)
+        apps = FlouciApp.objects.filter(tracking_id=tracking_id)
         total_apps = apps.count()
         start = page * size
         end = start + size
         apps = apps[start:end]
 
         app_list = [app.get_app_details() for app in apps]
-        return Response(
+        base_url = request.build_absolute_uri(request.path)
+        headers = generate_pagination_headers(base_url, page, size, total_apps)
+
+        response = Response(
             {
                 "result": app_list,
                 "code": 200,
@@ -55,6 +64,11 @@ class CreateDeveloperAppView(GenericAPIView):
             },
             status=status.HTTP_200_OK,
         )
+        # Attach pagination headers
+        for key, value in headers.items():
+            response[key] = value
+
+        return response
 
     def post(self, request, serializer):
         if not request.tracking_id:
@@ -63,20 +77,38 @@ class CreateDeveloperAppView(GenericAPIView):
             return Response(
                 {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
-        try:
-            user = Peer.objects.get(tracking_id=request.tracking_id)
-        except Peer.DoesNotExist:
+        user_exists = user_exists_by_tracking_id(request.tracking_id)
+        if not user_exists:
             return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         app = FlouciApp.objects.create(
-            user=user,
             name=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
             wallet=serializer.validated_data.get("wallet"),
             merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
+            tracking_id=request.tracking_id,
         )
         data = app.get_app_details()
         data["success"] = True
         return Response(data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, serializer):
+        id = serializer.validated_data.get("id")
+        try:
+            app = FlouciApp.objects.get(id=id)
+        except FlouciApp.DoesNotExist:
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        updated_fields = []
+        for field in ["name", "description"]:
+            new_value = serializer.validated_data.get(field)
+            if new_value is not None and getattr(app, field) != new_value:
+                setattr(app, field, new_value)
+                updated_fields.append(field)
+
+        if updated_fields:
+            app.save(update_fields=updated_fields)
+        data = app.get_app_details()
+        data["success"] = True
+        return Response(data, status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)
@@ -99,16 +131,16 @@ class GetDeveloperAppDetailsView(ListCreateAPIView):
     }
     """
 
-    def get(self, request, app_id):
+    def get(self, request, id):
         try:
-            apps = FlouciApp.objects.get(app_id=app_id)
+            apps = FlouciApp.objects.get(app_id=id)
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(data=apps.get_app_details(), status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)
-@IsValidGenericApi()
+@IsValidGenericApi(get=True, post=False)
 class RevokeDeveloperAppView(GenericAPIView):
     """
     "result": {
@@ -133,10 +165,10 @@ class RevokeDeveloperAppView(GenericAPIView):
     serializer_class = DeveloperAppSerializer
     permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
 
-    def post(self, request, serializer):
-        app_id = serializer.validated_data.get("app_id")
+    def get(self, request, serializer):
+        id = serializer.validated_data.get("id")
         try:
-            app = FlouciApp.objects.get(app_id=app_id)
+            app = FlouciApp.objects.get(id=id)
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         app.revoke_keys()
@@ -146,6 +178,29 @@ class RevokeDeveloperAppView(GenericAPIView):
             "message": "App revoked successfully.",
             "name": "developers",
             "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi(get=True, post=False)
+class EnableOrDisableDeveloperAppView(GenericAPIView):
+    enable_or_disable = True
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
+    serializer_class = DeveloperAppSerializer
+
+    def get(self, request, serializer):
+        id = serializer.validated_data.get("id")
+        try:
+            app = FlouciApp.objects.get(id=id)
+        except FlouciApp.DoesNotExist:
+            return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
+        app.active = self.enable_or_disable
+        app.save(update_fields=["active"])
+        response_data = {
+            "result": app.get_app_details(),
+            "code": 0,
+            "message": f"App {'enabled' if self.enable_or_disable else 'disabled'} successfully.",
         }
         return Response(response_data, status=status.HTTP_200_OK)
 

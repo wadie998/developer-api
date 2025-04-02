@@ -73,11 +73,11 @@ class FlouciApp(models.Model):
     app_id = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
+    tracking_id = models.UUIDField(blank=True, null=True, editable=False)
     wallet = models.CharField(max_length=35)
     status = models.CharField(choices=AppStatus.choices, default=AppStatus.VERIFIED, max_length=20)
     active = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    user = models.ForeignKey("Peer", models.PROTECT, blank=True, null=True)
     webhook = models.URLField(max_length=1000, blank=True, null=True)
     test = models.BooleanField(default=False)
     description = models.CharField(max_length=255, blank=True, null=True)
@@ -97,10 +97,11 @@ class FlouciApp(models.Model):
 
     def get_app_details(self):
         return {
-            "id": str(self.app_id),
+            "id": self.id,
+            "app_id": str(self.app_id),
             "name": self.name,
-            "app_token": str(self.public_token),
-            "app_secret": str(self.private_token),
+            "token": str(self.public_token),
+            "secret": str(self.private_token),
             "status": self.status,
             "active": self.active,
             "test": self.test,
@@ -108,6 +109,13 @@ class FlouciApp(models.Model):
             "description": self.description,
             "transaction_number": self.transaction_number,
             "gross": self.gross,
+            "revoke_number": self.revoke_number,
+            "merchant_id": self.merchant_id,
+            "last_revoke_date": self.last_revoke_date,
+            "wallet": self.wallet,
+            "has_partner_access": self.has_partner_access,
+            "has_advanced_payments_access": self.has_advanced_payments_access,
+            "image_url": self.image_url,
         }
 
     def revoke_keys(self):
@@ -115,21 +123,3 @@ class FlouciApp(models.Model):
         self.revoke_number += 1
         self.last_revoke_date = datetime.now()
         self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
-
-
-class Peer(models.Model):
-    class UserType(models.TextChoices):
-        Individual = "Individual", "Individual"
-        Merchant = "Merchant", "Merchant"
-
-    id = models.BigAutoField(primary_key=True, serialize=False)
-    tracking_id = models.UUIDField(blank=True, null=True)
-    activated = models.BooleanField(default=True)
-    created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    last_modified_date = models.DateTimeField(auto_now=True, blank=True, null=True)
-    phone_number = models.CharField(max_length=12, blank=True, null=True)
-    deleted = models.BooleanField(default=False)
-    user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.Merchant)
-
-    class Meta:
-        db_table = "peer"

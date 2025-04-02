@@ -4,7 +4,6 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from api.enum import Currency
-from api.models import Peer
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -37,6 +36,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     currency = serializers.ChoiceField(choices=Currency.get_choices(), default=Currency.TND.value)
     webhook = serializers.URLField(required=False)
     destination = DestinationSerializer(many=True, required=False)
+    pre_authorization = serializers.BooleanField(default=False)
 
     def validate(self, validate_data):
         application = self.context.get("request").application
@@ -67,11 +67,10 @@ class CheckUserExistsSerializer(DefaultSerializer):
 
 class CreateDeveloperAccountSerializer(DefaultSerializer):
     login = serializers.CharField(max_length=100)
-    user_type = serializers.ChoiceField(choices=Peer.UserType, default=Peer.UserType.Merchant, required=False)
 
 
 class GetDeveloperAppSerializer(DefaultSerializer):
-    tracking_id = serializers.UUIDField()
+    tracking_id = serializers.UUIDField(required=False)
 
 
 class CreateDeveloperAppSerializer(DefaultSerializer):
@@ -104,6 +103,12 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
             raise serializers.ValidationError("Image size must be less than 3 MB.")
 
         return ContentFile(img_data, name=f"temp.{ext}")
+
+
+class UpdateDeveloperAppSerializer(DefaultSerializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(min_length=3, max_length=100, required=False)
+    description = serializers.CharField(min_length=3, max_length=255, required=False)
 
 
 class BaseSendMoneySerializer(DefaultSerializer):
@@ -144,4 +149,13 @@ class SecureAcceptPaymentSerializer(AcceptPaymentSerializer, AppCredsSerializer)
 
 
 class DeveloperAppSerializer(DefaultSerializer):
-    app_id = serializers.UUIDField()
+    id = serializers.IntegerField()
+
+
+class ConfirmSMTPreAuthorizationSerializer(DefaultSerializer):
+    payment_id = serializers.CharField()
+    amount = serializers.IntegerField()
+
+
+class CancelSMTPreAuthorizationSerializer(DefaultSerializer):
+    payment_id = serializers.CharField()

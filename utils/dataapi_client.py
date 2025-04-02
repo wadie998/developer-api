@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal
 
 from settings.settings import DATA_API_ADDRESS, DATA_API_PASSWORD, DATA_API_USERNAME
 from utils.token_based_requests_manager import TokenBasedRequests
@@ -56,3 +57,7 @@ def convert_millimes_to_drops(millimes):
 
 def convert_drops_to_millimes(drops):
     return drops // 100
+
+
+def convert_millimes_to_dinars(amount):
+    return Decimal(str(amount)) * Decimal("0.001")

@@ -195,8 +195,12 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def fetch_associated_partner_transaction(merchant_id, gps_transaction_id):
-        params = {"merchant_id": merchant_id, "gps_transaction_id": gps_transaction_id}
+    def fetch_associated_partner_transaction(merchant_id, gps_transaction_id, flouci_transaction_id):
+        params = {"merchant_id": merchant_id}
+        if flouci_transaction_id:
+            params["transaction_id"] = flouci_transaction_id
+        else:
+            params["gps_transaction_id"] = gps_transaction_id
         response = requests.get(
             FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
             headers=FlouciBackendClient.HEADERS,

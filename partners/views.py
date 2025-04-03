@@ -446,7 +446,8 @@ class FetchGPSTransactionStatusView(GenericAPIView):
         merchant_id = app.merchant_id
         response = FlouciBackendClient.fetch_associated_partner_transaction(
             merchant_id=merchant_id,
-            gps_transaction_id=serializer.validated_data["gps_transaction_id"],
+            gps_transaction_id=serializer.validated_data.get("gps_transaction_id"),
+            flouci_transaction_id=serializer.validated_data.get("flouci_transaction_id"),
         )
         return Response(response, status=response.get("status_code", 200))
 

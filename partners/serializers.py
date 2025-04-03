@@ -143,4 +143,12 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
 
 
 class FetchGPSTransactionStatusViewSerializer(DefaultSerializer):
-    gps_transaction_id = serializers.CharField()
+    gps_transaction_id = serializers.CharField(required=False)
+    flouci_transaction_id = serializers.CharField(required=False)
+
+    def validate(self, validate_data):
+        transaction_id = validate_data.get("flouci_transaction_id")
+        gps_transaction_id = validate_data.get("gps_transaction_id")
+        if (transaction_id and gps_transaction_id) or (not transaction_id and not gps_transaction_id):
+            raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'gps_transaction_id'.")
+        return validate_data

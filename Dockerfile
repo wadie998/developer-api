@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bookworm
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install virtualenv &&\
@@ -6,7 +6,7 @@ RUN pip install virtualenv &&\
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt &&\
     find $VIRTUAL_ENV | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bookworm
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY --from=0 $VIRTUAL_ENV $VIRTUAL_ENV
@@ -19,4 +19,8 @@ RUN apt update && apt install -y libpq-dev \
     chown app:app /app
 USER app
 COPY --chown=app . /app
+RUN mv .env.example .env &&\
+    python manage.py collectstatic --noinput --link &&\
+    rm -rf .env &&\
+    find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
 CMD gunicorn -c settings/gunicorn_config.py settings.wsgi

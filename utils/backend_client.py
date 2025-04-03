@@ -168,7 +168,7 @@ class FlouciBackendClient:
     @handle_exceptions
     def generate_pos_transaction(
         merchant_id,
-        webhook_url,
+        webhook,
         id_terminal,
         serial_number,
         service_code,
@@ -178,7 +178,7 @@ class FlouciBackendClient:
     ):
         data = {
             "merchant_id": merchant_id,
-            "webhook_url": webhook_url,
+            "webhook": webhook,
             "idTerminal": id_terminal,
             "serialNumber": serial_number,
             "serviceCode": service_code,

@@ -133,9 +133,14 @@ class DevAPIDataApiCatcherSerializer(DefaultSerializer):
 
 
 class InitiatePosTransactionSerializer(DefaultSerializer):
-    webhook = serializers.URLField()
+    webhook = serializers.URLField(required=False)
     id_terminal = serializers.CharField(max_length=16)
     serial_number = serializers.CharField()
     service_code = serializers.CharField(max_length=3, required=False, default="024")
     amount_in_millimes = serializers.IntegerField()
     payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)
+    gps_transaction_id = serializers.CharField()
+
+
+class FetchGPSTransactionStatusViewSerializer(DefaultSerializer):
+    gps_transaction_id = serializers.CharField()

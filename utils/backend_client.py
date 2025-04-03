@@ -39,6 +39,7 @@ class FlouciBackendClient:
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
     GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
+    FETCH_GPS_TRANSACTION_STATUS = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/fetch_transaction_status"
 
     # PARTNER APIs
     IS_FLOUCI = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
@@ -166,7 +167,14 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def generate_pos_transaction(
-        merchant_id, webhook_url, id_terminal, serial_number, service_code, amount_in_millimes, payment_method
+        merchant_id,
+        webhook_url,
+        id_terminal,
+        serial_number,
+        service_code,
+        amount_in_millimes,
+        payment_method,
+        gps_transaction_id,
     ):
         data = {
             "merchant_id": merchant_id,
@@ -176,11 +184,23 @@ class FlouciBackendClient:
             "serviceCode": service_code,
             "amount_in_millimes": amount_in_millimes,
             "payment_method": payment_method,
+            "gps_transaction_id": gps_transaction_id,
         }
         response = requests.post(
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
             headers=FlouciBackendClient.HEADERS,
             json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def fetch_associated_gps_transaction(merchant_id, gps_transaction_id):
+        params = {"merchant_id": merchant_id, "gps_transaction_id": gps_transaction_id}
+        response = requests.get(
+            FlouciBackendClient.FETCH_GPS_TRANSACTION_STATUS,
+            headers=FlouciBackendClient.HEADERS,
+            params=params,
         )
         return FlouciBackendClient._process_response(response)
 

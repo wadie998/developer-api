@@ -28,6 +28,7 @@ from partners.serializers import (
     AuthenticateViewSerializer,
     BalanceViewSerializer,
     ConfirmLinkAccountViewSerializer,
+    FetchGPSTransactionStatusViewSerializer,
     FilterHistorySerializer,
     InitiateLinkAccountViewSerializer,
     InitiatePaymentViewSerializer,
@@ -424,12 +425,28 @@ class InitiatePosTransaction(GenericAPIView):
         merchant_id = app.merchant_id
         response = FlouciBackendClient.generate_pos_transaction(
             merchant_id=merchant_id,
-            webhook_url=serializer.validated_data["webhook"],
+            webhook_url=serializer.validated_data.get("webhook"),
             id_terminal=serializer.validated_data["id_terminal"],
             serial_number=serializer.validated_data["serial_number"],
             service_code=serializer.validated_data["service_code"],
             amount_in_millimes=serializer.validated_data["amount_in_millimes"],
             payment_method=serializer.validated_data["payment_method"],
+            gps_transaction_id=serializer.validated_data["gps_transaction_id"],
+        )
+        return Response(response, status=response.get("status_code", 200))
+
+
+@IsValidGenericApi(get=True, post=False)
+class FetchGPSTransactionStatusView(GenericAPIView):
+    permission_classes = (HasValidPartnerAppCredentials,)
+    serializer_class = FetchGPSTransactionStatusViewSerializer
+
+    def get(self, request, serializer):
+        app = request.application
+        merchant_id = app.merchant_id
+        response = FlouciBackendClient.fetch_associated_gps_transaction(
+            merchant_id=merchant_id,
+            gps_transaction_id=serializer.validated_data["gps_transaction_id"],
         )
         return Response(response, status=response.get("status_code", 200))
 

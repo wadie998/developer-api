@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from uuid import UUID
 
 import requests
 from django.urls import reverse
@@ -39,6 +40,7 @@ class FlouciBackendClient:
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
     GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
+    FETCH_PARTNER_TRANSACTION_STATUS = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/fetch_patner_transaction_status"
 
     # PARTNER APIs
     IS_FLOUCI = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
@@ -59,7 +61,7 @@ class FlouciBackendClient:
         else:
             response_json = response.json()
             if response.status_code in success_code:
-                return {"success": True, **response_json}
+                return {"success": True, **response_json, "status_code": response.status_code}
             elif response.status_code == status.HTTP_406_NOT_ACCEPTABLE:
                 return {"success": False, **response_json, "status_code": status.HTTP_406_NOT_ACCEPTABLE}
             else:
@@ -166,21 +168,46 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def generate_pos_transaction(
-        merchant_id, webhook_url, id_terminal, serial_number, service_code, amount_in_millimes, payment_method
+        merchant_id,
+        webhook,
+        id_terminal,
+        serial_number,
+        service_code,
+        amount_in_millimes,
+        payment_method,
+        gps_transaction_id,
     ):
         data = {
             "merchant_id": merchant_id,
-            "webhook_url": webhook_url,
+            "webhook": webhook,
             "idTerminal": id_terminal,
             "serialNumber": serial_number,
             "serviceCode": service_code,
             "amount_in_millimes": amount_in_millimes,
             "payment_method": payment_method,
+            "gps_transaction_id": gps_transaction_id,
         }
         response = requests.post(
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
             headers=FlouciBackendClient.HEADERS,
             json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def fetch_associated_partner_transaction(
+        merchant_id, *, gps_transaction_id: str = None, flouci_transaction_id: UUID = None
+    ):
+        params = {"merchant_id": merchant_id}
+        if flouci_transaction_id:
+            params["transaction_id"] = str(flouci_transaction_id)
+        else:
+            params["gps_transaction_id"] = gps_transaction_id
+        response = requests.get(
+            FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
+            headers=FlouciBackendClient.HEADERS,
+            params=params,
         )
         return FlouciBackendClient._process_response(response)
 

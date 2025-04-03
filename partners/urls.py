@@ -4,6 +4,7 @@ from partners.views import (
     AuthenticateView,
     BalanceView,
     ConfirmLinkAccountView,
+    FetchGPSTransactionStatusView,
     HistoryView,
     InitiateLinkAccountView,
     InitiatePaymentView,
@@ -41,4 +42,10 @@ urlpatterns = [
     path("v1/transactions/initiate_payment", PartnerInitiatePaymentView.as_view(), name="v1_partner_initiate_payment"),
     # External services, POS integration
     path("transactions/init_pos_transaction", InitiatePosTransaction.as_view(), name="init_pos_transaction"),
+    # Fetch GPS transaction status
+    path(
+        "transactions/fetch_gps_transaction_status",
+        FetchGPSTransactionStatusView.as_view(),
+        name="fetch_gps_transaction_status",
+    ),
 ]

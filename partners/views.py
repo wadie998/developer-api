@@ -28,7 +28,7 @@ from partners.serializers import (
     AuthenticateViewSerializer,
     BalanceViewSerializer,
     ConfirmLinkAccountViewSerializer,
-    FetchGPSTransactionStatusViewSerializer,
+    FetchGPSTransactionStatusSerializer,
     FilterHistorySerializer,
     InitiateLinkAccountViewSerializer,
     InitiatePaymentViewSerializer,
@@ -439,7 +439,7 @@ class InitiatePosTransaction(GenericAPIView):
 @IsValidGenericApi(get=True, post=False)
 class FetchGPSTransactionStatusView(GenericAPIView):
     permission_classes = (HasValidPartnerAppCredentials,)
-    serializer_class = FetchGPSTransactionStatusViewSerializer
+    serializer_class = FetchGPSTransactionStatusSerializer
 
     def get(self, request, serializer):
         app = request.application
@@ -449,7 +449,7 @@ class FetchGPSTransactionStatusView(GenericAPIView):
             gps_transaction_id=serializer.validated_data.get("gps_transaction_id"),
             flouci_transaction_id=serializer.validated_data.get("flouci_transaction_id"),
         )
-        return Response(response, status=response.get("status_code", 200))
+        return Response(response, status=response["status_code"])
 
 
 class PartnerSendMoneyView(GenericAPIView):

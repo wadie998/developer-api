@@ -135,16 +135,16 @@ class DevAPIDataApiCatcherSerializer(DefaultSerializer):
 class InitiatePosTransactionSerializer(DefaultSerializer):
     webhook = serializers.URLField(required=False)
     id_terminal = serializers.CharField(max_length=16)
-    serial_number = serializers.CharField()
+    serial_number = serializers.CharField(max_length=36)
     service_code = serializers.CharField(max_length=3, required=False, default="024")
     amount_in_millimes = serializers.IntegerField()
     payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)
-    gps_transaction_id = serializers.CharField()
+    gps_transaction_id = serializers.CharField(max_length=60)
 
 
-class FetchGPSTransactionStatusViewSerializer(DefaultSerializer):
+class FetchGPSTransactionStatusSerializer(DefaultSerializer):
     gps_transaction_id = serializers.CharField(required=False)
-    flouci_transaction_id = serializers.CharField(required=False)
+    flouci_transaction_id = serializers.UUIDField(required=False)
 
     def validate(self, validate_data):
         transaction_id = validate_data.get("flouci_transaction_id")

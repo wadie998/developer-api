@@ -444,7 +444,7 @@ class FetchGPSTransactionStatusView(GenericAPIView):
     def get(self, request, serializer):
         app = request.application
         merchant_id = app.merchant_id
-        response = FlouciBackendClient.fetch_associated_gps_transaction(
+        response = FlouciBackendClient.fetch_associated_partner_transaction(
             merchant_id=merchant_id,
             gps_transaction_id=serializer.validated_data["gps_transaction_id"],
         )

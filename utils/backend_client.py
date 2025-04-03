@@ -39,7 +39,7 @@ class FlouciBackendClient:
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
     GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
-    FETCH_GPS_TRANSACTION_STATUS = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/fetch_transaction_status"
+    FETCH_PARTNER_TRANSACTION_STATUS = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/fetch_patner_transaction_status"
 
     # PARTNER APIs
     IS_FLOUCI = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
@@ -195,10 +195,10 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def fetch_associated_gps_transaction(merchant_id, gps_transaction_id):
+    def fetch_associated_partner_transaction(merchant_id, gps_transaction_id):
         params = {"merchant_id": merchant_id, "gps_transaction_id": gps_transaction_id}
         response = requests.get(
-            FlouciBackendClient.FETCH_GPS_TRANSACTION_STATUS,
+            FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
             headers=FlouciBackendClient.HEADERS,
             params=params,
         )

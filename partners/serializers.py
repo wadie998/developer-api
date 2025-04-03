@@ -143,7 +143,7 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
 
 
 class FetchGPSTransactionStatusSerializer(DefaultSerializer):
-    gps_transaction_id = serializers.CharField(required=False)
+    gps_transaction_id = serializers.CharField(max_length=60, required=False)
     flouci_transaction_id = serializers.UUIDField(required=False)
 
     def validate(self, validate_data):

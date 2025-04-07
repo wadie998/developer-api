@@ -185,7 +185,7 @@ class FlouciBackendClient:
             "serviceCode": service_code,
             "amount_in_millimes": amount_in_millimes,
             "payment_method": payment_method,
-            "gps_transaction_id": gps_transaction_id,
+            "developer_api_tracking_id": gps_transaction_id,
         }
         response = requests.post(
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
@@ -203,7 +203,7 @@ class FlouciBackendClient:
         if flouci_transaction_id:
             params["transaction_id"] = str(flouci_transaction_id)
         else:
-            params["gps_transaction_id"] = gps_transaction_id
+            params["developer_api_tracking_id"] = gps_transaction_id
         response = requests.get(
             FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
             headers=FlouciBackendClient.HEADERS,

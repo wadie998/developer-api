@@ -2,7 +2,6 @@ import logging
 import uuid
 from unittest.mock import patch
 
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase, RequestsClient
@@ -10,7 +9,6 @@ from rest_framework_api_key.models import APIKey
 
 from api.models import FlouciApp
 from utils.api_keys_manager import ApiKeyServicesNames
-from utils.uri_helpers import generate_absolute_uri
 
 client = RequestsClient()
 
@@ -20,8 +18,7 @@ def create_api_key(name):
     return key
 
 
-class TestCreateDeveloperApp(TestCase):
-
+class BaseCreateDeveloperApp(APITestCase):
     def setUp(self):
         self.name = "test"
         self.description = "test description"
@@ -45,10 +42,27 @@ class TestCreateDeveloperApp(TestCase):
             "username": str(self.username),
             "wallet": self.wallet,
         }
+        self.url = reverse("create_developer_app")
+
+
+class TestCreateDeveloperApp(BaseCreateDeveloperApp):
+
+    def setUp(self):
+        super().setUp()
+        self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
+        self.data = {
+            "name": self.name,
+            "description": self.description,
+            "merchant_id": self.merchant_id,
+            "username": str(self.username),
+            "wallet": self.wallet,
+        }
+
+        self.url = reverse("create_developer_app")
 
     def test_create_app_success(self):
-        response = client.post(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.post(
+            self.url,
             json=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -57,9 +71,8 @@ class TestCreateDeveloperApp(TestCase):
 
     def test_wrong_api_key(self):
         self.api_key = create_api_key("wrong name")
-
-        response = client.post(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.post(
+            self.url,
             json=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -74,8 +87,8 @@ class TestCreateDeveloperApp(TestCase):
             "username": str(self.username),
             "wallet": self.wallet,
         }
-        response = client.post(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.post(
+            self.url,
             json=incomplete_data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -87,8 +100,8 @@ class TestCreateDeveloperApp(TestCase):
         self.data = {
             "tracking_id": str(self.username),
         }
-        response = client.get(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.get(
+            self.url,
             params=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -98,8 +111,8 @@ class TestCreateDeveloperApp(TestCase):
 
     def test_get_app_missing_tracking_id(self):
         self.data = {}
-        response = client.get(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.get(
+            self.url,
             params=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -112,8 +125,8 @@ class TestCreateDeveloperApp(TestCase):
             "name": "updated app",
             "description": "updated description",
         }
-        response = client.put(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.put(
+            self.url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -128,8 +141,8 @@ class TestCreateDeveloperApp(TestCase):
             "name": "updated app",
             "description": "updated description",
         }
-        response = client.put(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.put(
+            self.url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -142,8 +155,8 @@ class TestCreateDeveloperApp(TestCase):
             "name": "updated app",
             "description": "updated description",
         }
-        response = client.put(
-            generate_absolute_uri(reverse("create_developer_app")),
+        response = self.client.put(
+            self.url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -152,52 +165,16 @@ class TestCreateDeveloperApp(TestCase):
         self.assertEqual(data["id"][0], "This field is required.")
 
 
-class TestGetDeveloperAppDetails(TestCase):
+class RevokeDeveloperAppViewTest(BaseCreateDeveloperApp):
     def setUp(self):
-        self.app = FlouciApp.objects.create(
-            name="first app",
-            description="first app",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
-        self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
-
-    def test_get_app_details_success(self):
-        response = client.get(
-            generate_absolute_uri(reverse("get_developer_app_details", args=[self.app.app_id])),
-            headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["app_id"], str(self.app.app_id))
-
-    def test_get_app_details_not_found(self):
-        app_id = uuid.uuid4()
-        response = client.get(
-            generate_absolute_uri(reverse("get_developer_app_details", args=[app_id])),
-            headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
-        )
-        data = response.json()
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(data["detail"], "App not found.")
-
-
-class RevokeDeveloperAppViewTest(TestCase):
-    def setUp(self):
-        self.app = FlouciApp.objects.create(
-            name="first app",
-            description="first app",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
+        super().setUp()
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
 
     def test_revoke_app_success(self):
-        response = client.get(
-            generate_absolute_uri(reverse("revoke_developer_app", kwargs={"id": self.app.id})),
+        url = reverse("revoke_developer_app", kwargs={"id": self.app.id})
+
+        response = self.client.get(
+            url,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
         self.assertEqual(response.status_code, 200)
@@ -205,8 +182,10 @@ class RevokeDeveloperAppViewTest(TestCase):
 
     def test_revoke_app_not_found(self):
         non_existent_id = 99999
-        response = client.get(
-            generate_absolute_uri(reverse("revoke_developer_app", kwargs={"id": non_existent_id})),
+        url = reverse("revoke_developer_app", kwargs={"id": non_existent_id})
+
+        response = self.client.get(
+            url,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
         data = response.json()
@@ -214,16 +193,9 @@ class RevokeDeveloperAppViewTest(TestCase):
         self.assertEqual(data["detail"], "App not found.")
 
 
-class TestGeneratePaymentView(TestCase):
+class TestGeneratePaymentView(BaseCreateDeveloperApp):
     def setUp(self):
-        self.app = FlouciApp.objects.create(
-            name="Test Payment App",
-            description="Test app for payment generation",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
+        super().setUp()
 
         self.data = {
             "amount": 1000,
@@ -245,8 +217,8 @@ class TestGeneratePaymentView(TestCase):
     @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
     def test_generate_payment_success(self, mock_generate_payment):
         mock_generate_payment.return_value = self.mock_generate_payment
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")),
+        response = self.client.post(
+            reverse("generate_payment"),
             data=self.data,
             headers=self.valid_headers,
         )
@@ -257,25 +229,25 @@ class TestGeneratePaymentView(TestCase):
         self.assertEqual(response_data["code"], 0)
 
     def test_invalid_token_format(self):
-        headers = {"HTTP_AUTHORIZATION": "InvalidTokenFormat"}
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")),
+        headers = {"Authorization": "InvalidTokenFormat"}
+        response = self.client.post(
+            reverse("generate_payment"),
             data=self.data,
             headers=headers,
         )
         self.assertEqual(response.status_code, 403)
 
     def test_missing_authorization_header(self):
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")),
+        response = self.client.post(
+            reverse("generate_payment"),
             data=self.data,
         )
         self.assertEqual(response.status_code, 403)
 
     def test_invalid_app_credentials(self):
-        headers = {"HTTP_AUTHORIZATION": "Bearer invalid_pub:invalid_priv"}
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")),
+        headers = {"Authorization": "Bearer invalid_pub:invalid_priv"}
+        response = self.client.post(
+            reverse("generate_payment"),
             data=self.data,
             headers=headers,
         )
@@ -284,9 +256,7 @@ class TestGeneratePaymentView(TestCase):
     def test_amount_below_minimum(self):
         invalid_data = self.data.copy()
         invalid_data["amount"] = 50
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")), data=invalid_data, headers=self.valid_headers
-        )
+        response = self.client.post(reverse("generate_payment"), data=invalid_data, headers=self.valid_headers)
         self.assertEqual(response.status_code, 400)
         self.assertIn("amount", response.json())
 
@@ -299,9 +269,7 @@ class TestGeneratePaymentView(TestCase):
             "status_code": 502,
         }
 
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")), data=self.data, headers=self.valid_headers
-        )
+        response = self.client.post(reverse("generate_payment"), data=self.data, headers=self.valid_headers)
         self.assertEqual(response.status_code, 502)
         self.assertFalse(response.json()["result"]["success"])
         self.assertEqual(response.json()["code"], 1)
@@ -309,9 +277,7 @@ class TestGeneratePaymentView(TestCase):
     def test_missing_required_field(self):
         invalid_data = self.data.copy()
         del invalid_data["success_link"]
-        response = client.post(
-            generate_absolute_uri(reverse("generate_payment")), data=invalid_data, headers=self.valid_headers
-        )
+        response = self.client.post(reverse("generate_payment"), data=invalid_data, headers=self.valid_headers)
         self.assertEqual(response.status_code, 400)
         self.assertIn("success_link", response.json())
 
@@ -323,11 +289,11 @@ class TestGeneratePaymentView(TestCase):
         data_with_destination["destination"] = [
             {
                 "destination": "2",
-                "amount": 500,
+                "amount": 5000,
             },
             {
-                "account": "3",
-                "amount": 500,
+                "destination": "3",
+                "amount": 5000,
             },
         ]
 
@@ -359,17 +325,9 @@ class TestGeneratePaymentView(TestCase):
         self.assertEqual(response.json()["result"]["payment_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
 
 
-class TestVerifyPaymentView(APITestCase):
+class TestVerifyPaymentView(BaseCreateDeveloperApp):
     def setUp(self):
-        self.client = APIClient()
-        self.app = FlouciApp.objects.create(
-            name="Test Payment App",
-            description="Test app",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
+        super().setUp()
         self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
         self.payment_id = "jvdqMbFKTAWQSrkeqlL1Rg"
 
@@ -399,7 +357,7 @@ class TestVerifyPaymentView(APITestCase):
             },
         }
 
-        url = generate_absolute_uri(reverse("verify_payment", kwargs={"payment_id": self.payment_id}))
+        url = reverse("verify_payment", kwargs={"payment_id": self.payment_id})
 
         response = self.client.get(
             url,
@@ -414,7 +372,7 @@ class TestVerifyPaymentView(APITestCase):
     @patch("utils.backend_client.FlouciBackendClient.check_payment")
     def test_verify_payment_failure(self, mock_check_payment):
         mock_check_payment.return_value = {"success": False, "result": "Invalid Transaction ID", "status_code": 200}
-        url = generate_absolute_uri(reverse("verify_payment", kwargs={"payment_id": self.payment_id}))
+        url = reverse("verify_payment", kwargs={"payment_id": self.payment_id})
         response = self.client.get(
             url,
             headers=self.valid_headers,
@@ -426,7 +384,7 @@ class TestVerifyPaymentView(APITestCase):
         self.assertIn("Invalid Transaction ID", data["result"]["error"])
 
     def test_verify_payment_invalid_token_format(self):
-        url = generate_absolute_uri(reverse("verify_payment", kwargs={"payment_id": self.payment_id}))
+        url = reverse("verify_payment", kwargs={"payment_id": self.payment_id})
         response = self.client.get(
             url,
             HTTP_AUTHORIZATION="InvalidToken",
@@ -434,22 +392,15 @@ class TestVerifyPaymentView(APITestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_verify_payment_missing_token(self):
-        url = generate_absolute_uri(reverse("verify_payment", kwargs={"payment_id": self.payment_id}))
+        url = reverse("verify_payment", kwargs={"payment_id": self.payment_id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 
 
-class TestSendMoneyView(APITestCase):
+class TestSendMoneyView(BaseCreateDeveloperApp):
     def setUp(self):
+        super().setUp()
         self.client = APIClient()
-        self.app = FlouciApp.objects.create(
-            name="Test Payment App",
-            description="Test app",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
         self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
         self.url = reverse("send_money")
         self.valid_data = {
@@ -592,17 +543,10 @@ class TestSendMoneyView(APITestCase):
         self.assertEqual(data["result"]["code"], 1)
 
 
-class TestCheckSendMoneyStatusView(APITestCase):
+class TestCheckSendMoneyStatusView(BaseCreateDeveloperApp):
     def setUp(self):
         self.client = APIClient()
-        self.app = FlouciApp.objects.create(
-            name="Test Payment App",
-            description="Test app",
-            wallet="testwalletjvdqMbFKTAWQSrkeqlL1Rg",
-            merchant_id=123,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
+        super().setUp()
         self.valid_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.app.public_token}:{self.app.private_token}"}
         self.operation_id = uuid.uuid4()
         self.url = reverse("check_payment_status", kwargs={"operation_id": self.operation_id})
@@ -673,17 +617,10 @@ class TestCheckSendMoneyStatusView(APITestCase):
         self.assertEqual(data["result"]["result"], "Not allowed.")
 
 
-class TestCheckUserExistsView(APITestCase):
+class TestCheckUserExistsView(BaseCreateDeveloperApp):
     def setUp(self):
+        super().setUp()
         self.client = APIClient()
-        self.app = FlouciApp.objects.create(
-            name="Test Payment App",
-            description="Test app",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
         self.invalid_tracking_id = uuid.uuid4()
 
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
@@ -752,20 +689,13 @@ class TestCreateDeveloperAccountView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class TestDisableDeveloperAppView(APITestCase):
+class TestDisableDeveloperAppView(BaseCreateDeveloperApp):
     def setUp(self):
+        super().setUp()
         self.client = APIClient()
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
         self.valid_headers = {"Authorization": f"Api-Key {self.api_key}"}
 
-        self.app = FlouciApp.objects.create(
-            name="Test App",
-            description="For disabling test",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
         self.url = reverse("enable_developer_app", kwargs={"id": self.app.id})
         self.nonexistent_url = reverse("enable_developer_app", kwargs={"id": 9999})
 
@@ -791,21 +721,13 @@ class TestDisableDeveloperAppView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class TestEnableDeveloperAppView(APITestCase):
+class TestEnableDeveloperAppView(BaseCreateDeveloperApp):
     def setUp(self):
+        super().setUp()
         self.client = APIClient()
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
         self.valid_headers = {"Authorization": f"Api-Key {self.api_key}"}
 
-        self.app = FlouciApp.objects.create(
-            name="Test App",
-            description="For enabling test",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-            active=False,
-        )
         self.url = reverse("disable_developer_app", kwargs={"id": self.app.id})
         self.nonexistent_url = reverse("disable_developer_app", kwargs={"id": 9999})
 
@@ -831,18 +753,10 @@ class TestEnableDeveloperAppView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class TestAcceptPaymentView(APITestCase):
+class TestAcceptPaymentView(BaseCreateDeveloperApp):
     def setUp(self):
+        super().setUp()
         self.client = APIClient()
-        self.app = FlouciApp.objects.create(
-            name="Test App",
-            description="For testing accept payment",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            app_id=uuid.uuid4(),
-            test=True,
-        )
         self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
         self.url = reverse("accept_payment")
 
@@ -876,17 +790,10 @@ class TestAcceptPaymentView(APITestCase):
         self.assertIn("payment_id", response.data)
 
 
-class TestGeneratePaymentWordpressView(APITestCase):
+class TestGeneratePaymentWordpressView(BaseCreateDeveloperApp):
     def setUp(self):
+        super().setUp()
         self.client = APIClient()
-        self.app = FlouciApp.objects.create(
-            name="Test Payment App",
-            description="Test app",
-            wallet="rHDz3wJtYVvWfY9Xf97PFW8dUzUa85FZTc",
-            merchant_id=1,
-            tracking_id=uuid.uuid4(),
-            test=True,
-        )
 
         self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
 

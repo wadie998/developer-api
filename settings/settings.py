@@ -36,7 +36,6 @@ ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="https://*.flouci.com").split(",")
 
 ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
-SITE_ID = 1
 # Application definition
 INSTALLED_APPS = []
 if ADMIN_ENABLED:
@@ -60,7 +59,6 @@ INSTALLED_APPS += [
     "drf_spectacular",
     "api",
     "partners",
-    "django.contrib.sites",
 ]
 
 MIDDLEWARE = [

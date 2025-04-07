@@ -71,7 +71,6 @@ class CreateDeveloperAppView(GenericAPIView):
         return response
 
     def post(self, request, serializer):
-        logger.info("CreateDeveloperAppView: ")
         if not request.tracking_id:
             request.tracking_id = serializer.validated_data.get("username")
         if request.tracking_id != serializer.validated_data.get("username"):

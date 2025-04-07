@@ -139,16 +139,16 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     service_code = serializers.CharField(max_length=3, required=False, default="024")
     amount_in_millimes = serializers.IntegerField()
     payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)
-    gps_transaction_id = serializers.CharField(max_length=60)
+    partner_transaction_id = serializers.CharField(max_length=60)
 
 
 class FetchGPSTransactionStatusSerializer(DefaultSerializer):
-    gps_transaction_id = serializers.CharField(max_length=60, required=False)
+    partner_transaction_id = serializers.CharField(max_length=60, required=False)
     flouci_transaction_id = serializers.UUIDField(required=False)
 
     def validate(self, validate_data):
         transaction_id = validate_data.get("flouci_transaction_id")
-        gps_transaction_id = validate_data.get("gps_transaction_id")
-        if (transaction_id and gps_transaction_id) or (not transaction_id and not gps_transaction_id):
-            raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'gps_transaction_id'.")
+        partner_transaction_id = validate_data.get("partner_transaction_id")
+        if (transaction_id and partner_transaction_id) or (not transaction_id and not partner_transaction_id):
+            raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'partner_transaction_id'.")
         return validate_data

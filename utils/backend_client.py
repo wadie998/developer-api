@@ -175,7 +175,7 @@ class FlouciBackendClient:
         service_code,
         amount_in_millimes,
         payment_method,
-        partner_transaction_id,
+        developer_tracking_id,
     ):
         data = {
             "merchant_id": merchant_id,
@@ -184,7 +184,7 @@ class FlouciBackendClient:
             "serviceCode": service_code,
             "amount_in_millimes": amount_in_millimes,
             "payment_method": payment_method,
-            "partner_transaction_id": partner_transaction_id,
+            "developer_tracking_id": developer_tracking_id,
         }
         if webhook:
             data["webhook"] = webhook
@@ -198,13 +198,13 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def fetch_associated_partner_transaction(
-        merchant_id, *, partner_transaction_id: str = None, flouci_transaction_id: UUID = None
+        merchant_id, *, developer_tracking_id: str = None, flouci_transaction_id: UUID = None
     ):
         params = {"merchant_id": merchant_id}
         if flouci_transaction_id:
             params["transaction_id"] = str(flouci_transaction_id)
         else:
-            params["partner_transaction_id"] = partner_transaction_id
+            params["developer_tracking_id"] = developer_tracking_id
         response = requests.get(
             FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
             headers=FlouciBackendClient.HEADERS,

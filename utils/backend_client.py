@@ -65,11 +65,10 @@ class FlouciBackendClient:
             elif response.status_code == status.HTTP_406_NOT_ACCEPTABLE:
                 return {"success": False, **response_json, "status_code": status.HTTP_406_NOT_ACCEPTABLE}
             else:
-                logger.info(f"Request failed with response: {response.text}")
                 return {
                     "success": False,
                     "code": 1,
-                    "message": "Error processing request",
+                    "message": f"{response.text}",
                     "status_code": response.status_code,
                 }
 

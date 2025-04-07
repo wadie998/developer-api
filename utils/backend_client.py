@@ -179,7 +179,6 @@ class FlouciBackendClient:
     ):
         data = {
             "merchant_id": merchant_id,
-            "webhook": webhook,
             "idTerminal": id_terminal,
             "serialNumber": serial_number,
             "serviceCode": service_code,
@@ -187,6 +186,8 @@ class FlouciBackendClient:
             "payment_method": payment_method,
             "partner_transaction_id": partner_transaction_id,
         }
+        if webhook:
+            data["webhook"] = webhook
         response = requests.post(
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
             headers=FlouciBackendClient.HEADERS,

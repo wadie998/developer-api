@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 from unittest.mock import patch
@@ -35,13 +36,6 @@ class BaseCreateDeveloperApp(APITestCase):
             test=True,
         )
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
-        self.data = {
-            "name": self.name,
-            "description": self.description,
-            "merchant_id": self.merchant_id,
-            "username": str(self.username),
-            "wallet": self.wallet,
-        }
         self.url = reverse("create_developer_app")
 
 
@@ -49,7 +43,6 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
 
     def setUp(self):
         super().setUp()
-        self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
         self.data = {
             "name": self.name,
             "description": self.description,
@@ -58,13 +51,12 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
             "wallet": self.wallet,
         }
 
-        self.url = reverse("create_developer_app")
-
     def test_create_app_success(self):
         response = self.client.post(
             self.url,
-            json=self.data,
-            headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
+            data=json.dumps(self.data),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Api-Key {self.api_key}",
         )
         self.assertEqual(response.status_code, 201)
         self.assertIn("name", response.json())

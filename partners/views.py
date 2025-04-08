@@ -1,5 +1,3 @@
-import logging
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
@@ -218,7 +216,6 @@ class BalanceView(GenericAPIView):
         },
     )
     def get(self, request, serializer):
-        logging.info(f"Getting balance for account {request.account.account_tracking_id}")
         account: LinkedAccount = request.account
         response = FlouciBackendClient.get_user_balance(
             tracking_id=account.account_tracking_id,

@@ -4,7 +4,7 @@ library identifier: 'jenkins@master',
                                 remote: 'https://bitbucket.org/kaoun/jenkins.git'
                             ])
 
-genericPythonBuildDeploy    dockerImage: 'kaoun/django-developers-api',
+genericPythonTestBuildDeploy    dockerImage: 'kaoun/django-developers-api',
                                 extraMailingList: 'devops@flouci.com',
                                 deploy_name: 'django-developers-api',
                                 deploy_dev: true,

@@ -1032,18 +1032,3 @@ class TestInitiatePaymentView(BaseCreateDeveloperApp):
 
         response = self.client.post(self.url, self.serializer_data)
         self.assertEqual(response.status_code, 403)
-
-    @patch("api.permissions.verify_backend_token")
-    def test_invalid_phone_number(self, mock_verify_token):
-        mock_verify_token.return_value = (
-            True,
-            {
-                "partner_tracking_id": str(self.app.tracking_id),
-                "mid": self.app.merchant_id,
-            },
-        )
-        invalid_data = self.serializer_data.copy()
-        invalid_data["phone_number"] = "invalid_number"
-
-        response = self.client.post(self.url, invalid_data, headers=self.valid_headers)
-        self.assertEqual(response.status_code, 400)

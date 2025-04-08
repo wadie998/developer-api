@@ -42,6 +42,7 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
 
     def setUp(self):
         super().setUp()
+        self.url = reverse("create_developer_app")
         self.data = {
             "name": self.name,
             "description": self.description,
@@ -51,9 +52,8 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         }
 
     def test_create_app_success(self):
-        url = reverse("create_developer_app")
         response = self.client.post(
-            url,
+            self.url,
             data=json.dumps(self.data),
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Api-Key {self.api_key}",
@@ -62,10 +62,9 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertIn("name", response.json())
 
     def test_wrong_api_key(self):
-        url = reverse("create_developer_app")
         self.api_key = create_api_key("wrong name")
         response = self.client.post(
-            url,
+            self.url,
             json=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -74,7 +73,6 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(response.json()["detail"], "Authentication credentials were not provided.")
 
     def test_missing_required_field(self):
-        url = reverse("create_developer_app")
         incomplete_data = {
             "description": self.description,
             "merchant_id": self.merchant_id,
@@ -82,7 +80,7 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
             "wallet": self.wallet,
         }
         response = self.client.post(
-            url,
+            self.url,
             json=incomplete_data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -94,9 +92,8 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.data = {
             "tracking_id": str(self.username),
         }
-        url = reverse("create_developer_app")
         response = self.client.get(
-            url,
+            self.url,
             params=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -105,10 +102,9 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertIsNotNone(response.json().get("result"))
 
     def test_get_app_missing_tracking_id(self):
-        url = reverse("create_developer_app")
         self.data = {}
         response = self.client.get(
-            url,
+            self.url,
             params=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -116,14 +112,13 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(response.json().get("result"), [])
 
     def test_update_app_success(self):
-        url = reverse("create_developer_app")
         self.data = {
             "id": self.app.id,
             "name": "updated app",
             "description": "updated description",
         }
         response = self.client.put(
-            url,
+            self.url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -133,14 +128,13 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(data["description"], "updated description")
 
     def test_update_app_not_found(self):
-        url = reverse("create_developer_app")
         self.data = {
             "id": 9999,
             "name": "updated app",
             "description": "updated description",
         }
         response = self.client.put(
-            url,
+            self.url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -149,13 +143,12 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(data["detail"], "App not found.")
 
     def test_update_app_field_required(self):
-        url = reverse("create_developer_app")
         self.data = {
             "name": "updated app",
             "description": "updated description",
         }
         response = self.client.put(
-            url,
+            self.url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -192,7 +185,7 @@ class RevokeDeveloperAppViewTest(BaseCreateDeveloperApp):
         self.assertEqual(data["detail"], "App not found.")
 
 
-class TestGeneratePaymentView(BaseCreateDeveloperApp):
+class TestV2GeneratePaymentView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
 
@@ -324,7 +317,7 @@ class TestGeneratePaymentView(BaseCreateDeveloperApp):
         self.assertEqual(response.json()["result"]["payment_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
 
 
-class TestVerifyPaymentView(BaseCreateDeveloperApp):
+class TestV2VerifyPaymentView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
         self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
@@ -396,7 +389,7 @@ class TestVerifyPaymentView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 403)
 
 
-class TestSendMoneyView(BaseCreateDeveloperApp):
+class TestV2SendMoneyView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
         self.client = APIClient()
@@ -542,7 +535,7 @@ class TestSendMoneyView(BaseCreateDeveloperApp):
         self.assertEqual(data["result"]["code"], 1)
 
 
-class TestCheckSendMoneyStatusView(BaseCreateDeveloperApp):
+class TestV2CheckSendMoneyStatusView(BaseCreateDeveloperApp):
     def setUp(self):
         self.client = APIClient()
         super().setUp()
@@ -752,7 +745,7 @@ class TestEnableDeveloperAppView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class TestAcceptPaymentView(BaseCreateDeveloperApp):
+class TestV2AcceptPaymentView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
         self.client = APIClient()
@@ -789,7 +782,7 @@ class TestAcceptPaymentView(BaseCreateDeveloperApp):
         self.assertIn("payment_id", response.data)
 
 
-class TestGeneratePaymentWordpressView(BaseCreateDeveloperApp):
+class TestV2GeneratePaymentWordpressView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
         self.client = APIClient()
@@ -847,3 +840,523 @@ class TestGeneratePaymentWordpressView(BaseCreateDeveloperApp):
     def test_generate_payment_unauthorized(self):
         response = self.client.post(self.url, data=self.valid_payload, format="json")
         self.assertEqual(response.status_code, 403)
+
+
+class TestAcceptPaymentView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
+        self.url = reverse("old_accept_payment")
+
+    def test_accept_payment_success_test_mode(self):
+        data = {
+            "flouci_otp": "F-111111",
+            "payment_id": "pmt-123",
+            "amount": 1000,
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+        response = self.client.post(self.url, data, headers=self.valid_headers, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"]["status"], "SUCCESS")
+
+    def test_accept_payment_failure_test_mode(self):
+        data = {
+            "flouci_otp": "F-000000",
+            "payment_id": "pmt-123",
+            "amount": 1000,
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+        response = self.client.post(self.url, data, headers=self.valid_headers, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"]["status"], "FAILED")
+
+    def test_accept_payment_missing_fields(self):
+        data = {
+            "amount": 1000,
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+        response = self.client.post(self.url, data, headers=self.valid_headers, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("flouci_otp", response.data)
+        self.assertIn("payment_id", response.data)
+
+    def test_accept_payment_invalid_permission(self):
+        data = {
+            "amount": 1000,
+            "app_secret": str(self.app.private_token),
+            "app_token": str(uuid.uuid4()),
+        }
+        response = self.client.post(self.url, data, headers=self.valid_headers, format="json")
+        self.assertEqual(response.status_code, 403)
+
+
+class TestGeneratePaymentView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("old_generate_payment")
+        self.data = {
+            "amount": 1000,
+            "accept_card": True,
+            "session_timeout_secs": 1200,
+            "success_link": "https://example.com/success",
+            "fail_link": "https://example.com/fail",
+            "developer_tracking_id": str(uuid.uuid4()),
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+
+        self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
+        self.mock_generate_payment = {
+            "success": True,
+            "url": "https://flouci.test/pay/jvdqMbFKTAWQSrkeqlL1Rg",
+            "payment_id": "jvdqMbFKTAWQSrkeqlL1Rg",
+            "status_code": 200,
+        }
+
+    @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
+    def test_generate_payment_success(self, mock_generate_payment):
+        mock_generate_payment.return_value = self.mock_generate_payment
+        response = self.client.post(
+            self.url,
+            data=self.data,
+            headers=self.valid_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        response_data = response.json()
+        self.assertTrue(response_data["result"]["success"])
+        self.assertEqual(response_data["result"]["payment_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
+        self.assertEqual(response_data["code"], 0)
+
+    def test_missing_authorization_header(self):
+        response = self.client.post(
+            self.url,
+            data={},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_invalid_app_credentials(self):
+        del self.data["app_secret"]
+        response = self.client.post(
+            self.url,
+            data=self.data,
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_amount_below_minimum(self):
+        invalid_data = self.data.copy()
+        invalid_data["amount"] = 50
+        response = self.client.post(self.url, data=invalid_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("amount", response.json())
+
+    @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
+    def test_backend_failure(self, mock_generate_payment):
+        mock_generate_payment.return_value = {
+            "success": False,
+            "result": "",
+            "non_field_errors": ["Backend is down"],
+            "status_code": 502,
+        }
+
+        response = self.client.post(self.url, data=self.data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 502)
+        self.assertFalse(response.json()["result"]["success"])
+        self.assertEqual(response.json()["code"], 1)
+
+    def test_missing_required_field(self):
+        invalid_data = self.data.copy()
+        del invalid_data["success_link"]
+        response = self.client.post(self.url, data=invalid_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("success_link", response.json())
+
+    @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
+    def test_with_destination(self, mock_generate_payment):
+        mock_generate_payment.return_value = self.mock_generate_payment
+
+        data_with_destination = self.data.copy()
+        data_with_destination["destination"] = [
+            {
+                "destination": "2",
+                "amount": 5000,
+            },
+            {
+                "destination": "3",
+                "amount": 5000,
+            },
+        ]
+
+        response = self.client.post(
+            self.url,
+            data=data_with_destination,
+            headers=self.valid_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["result"]["success"])
+        self.assertEqual(response.json()["result"]["payment_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
+
+    @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
+    def test_pre_authorization(self, mock_generate_payment):
+        mock_generate_payment.return_value = self.mock_generate_payment
+
+        data_with_preauth = self.data.copy()
+        data_with_preauth["pre_authorization"] = True
+
+        response = self.client.post(
+            self.url,
+            data=data_with_preauth,
+            headers=self.valid_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["result"]["success"])
+        self.assertEqual(response.json()["result"]["payment_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
+
+
+class TestGeneratePaymentWordpressView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+
+        self.valid_payload = {
+            "amount": 1000,
+            "accept_card": True,
+            "session_timeout_secs": 1200,
+            "session_timeout": 1200,
+            "success_link": "https://example.com/success",
+            "fail_link": "https://example.com/fail",
+            "developer_tracking_id": str(self.app.tracking_id),
+            "accept_edinar": True,
+            "currency": "TND",
+            "webhook": "https://example.com/webhook",
+            "destination": [],
+            "pre_authorization": False,
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+
+        self.url = reverse("old_generate_payment_wordpress")
+
+    @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
+    def test_generate_payment_success(self, mock_generate_payment):
+        mock_generate_payment.return_value = {
+            "success": True,
+            "url": "https://flouci.test/pay/jvdqMbFKTAWQSrkeqlL1Rg",
+            "payment_id": "jvdqMbFKTAWQSrkeqlL1Rg",
+            "developer_tracking_id": str(self.app.tracking_id),
+            "status_code": 200,
+        }
+
+        response = self.client.post(self.url, data=self.valid_payload, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["result"]["success"])
+        self.assertEqual(response.data["result"]["link"], "https://flouci.test/pay/jvdqMbFKTAWQSrkeqlL1Rg")
+        self.assertEqual(response.data["code"], 0)
+
+    @patch("utils.backend_client.FlouciBackendClient.generate_payment_page")
+    def test_generate_payment_failure(self, mock_generate_payment):
+        mock_generate_payment.return_value = {
+            "success": False,
+            "result": "Invalid merchant ID",
+            "non_field_errors": ["Merchant not authorized"],
+            "status_code": 400,
+        }
+
+        response = self.client.post(self.url, data=self.valid_payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.data["result"]["success"])
+        self.assertEqual(response.data["code"], 1)
+        self.assertIn("error", response.data["result"])
+
+    def test_generate_payment_unauthorized(self):
+        del self.valid_payload["app_token"]
+        response = self.client.post(self.url, data=self.valid_payload, format="json")
+        self.assertEqual(response.status_code, 403)
+
+
+class TestVerifyPaymentView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.payment_id = "jvdqMbFKTAWQSrkeqlL1Rg"
+        self.valid_payload = {
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+
+    @patch("utils.backend_client.FlouciBackendClient.check_payment")
+    def test_verify_payment_success(self, mock_check_payment):
+        mock_check_payment.return_value = {
+            "success": True,
+            "result": {
+                "type": "card",
+                "amount": 7805000.0,
+                "status": "SUCCESS",
+                "details": {
+                    "order_number": "I8kIPuPCRRaTzt3KzF7sfA",
+                    "name": "aaa",
+                    "pan": "450921**1119",
+                    "payment_system": "VISA",
+                    "expiration": "202612",
+                    "approval_code": "199811",
+                    "currency": "788",
+                    "phone_number": "",
+                    "email": "a@flouci.com",
+                    "bank_country_code": "TN",
+                    "destinations": [],
+                },
+                "developer_tracking_id": "70df906e-9a70-4007-9028-0b67318974cd",
+                "status_code": 200,
+            },
+        }
+
+        url = reverse("old_verify_payment", kwargs={"payment_id": self.payment_id})
+
+        response = self.client.get(url, data=self.valid_payload)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["result"]["success"])
+        self.assertEqual(data["result"]["payment_status"], "SUCCESS")
+
+    @patch("utils.backend_client.FlouciBackendClient.check_payment")
+    def test_verify_payment_failure(self, mock_check_payment):
+        mock_check_payment.return_value = {"success": False, "result": "Invalid Transaction ID", "status_code": 200}
+        url = reverse("old_verify_payment", kwargs={"payment_id": self.payment_id})
+        response = self.client.get(url, data=self.valid_payload)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data["result"]["success"])
+        self.assertIn("Invalid Transaction ID", data["result"]["error"])
+
+    def test_verify_payment_invalid_token_format(self):
+        url = reverse("old_verify_payment", kwargs={"payment_id": self.payment_id})
+        del self.valid_payload["app_secret"]
+        response = self.client.get(
+            url,
+            data=self.valid_payload,
+            HTTP_AUTHORIZATION="InvalidToken",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_verify_payment_missing_token(self):
+        url = reverse("old_verify_payment", kwargs={"payment_id": self.payment_id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+
+class TestSendMoneyView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        self.valid_headers = {"Authorization": f"Bearer {self.app.public_token}:{self.app.private_token}"}
+        self.url = reverse("old_send_money")
+        self.valid_data = {
+            "amount": 1000,
+            "destination": "12345",
+            "webhook": "https://example.com/webhook",
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_send_money_status")
+    def test_send_money_success(self, mock_send_money):
+        mock_send_money.return_value = {
+            "success": True,
+            "code": 0,
+            "payment_id": "47fbe6be-9b9a-4060-84ad-cb69500d1865",
+            "message": "Operation initiated successfully. You will receive a webhook with final confirmation.",
+            "status_code": 200,
+        }
+
+        response = self.client.post(
+            self.url,
+            data=self.valid_data,
+            headers=self.valid_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["result"]["success"])
+        self.assertEqual(data["result"]["transaction_id"], "47fbe6be-9b9a-4060-84ad-cb69500d1865")
+        self.assertEqual(
+            data["result"]["message"],
+            "Operation initiated successfully. You will receive a webhook with final confirmation.",
+        )
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_send_money_status")
+    def test_send_money_failure(self, mock_send_money):
+        mock_send_money.return_value = {
+            "success": False,
+            "code": 4,
+            "message": "Insufficient funds.",
+            "status_code": 400,
+        }
+
+        response = self.client.post(
+            self.url,
+            data=self.valid_data,
+            headers=self.valid_headers,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertFalse(data["result"]["success"])
+        self.assertEqual(data["result"]["error"], "Insufficient funds.")
+        self.assertEqual(data["result"]["code"], 4)
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_send_money_status")
+    def test_send_money_missing_required_field(self, mock_send_money):
+        invalid_data = self.valid_data.copy()
+        del invalid_data["amount"]
+
+        response = self.client.post(
+            self.url,
+            data=invalid_data,
+            headers=self.valid_headers,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("amount", response.json())
+
+    def test_send_money_invalid_amount(self):
+        invalid_data = self.valid_data.copy()
+        invalid_data["amount"] = 50
+        response = self.client.post(
+            self.url,
+            data=invalid_data,
+            headers=self.valid_headers,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("amount", response.json())
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_send_money_status")
+    def test_send_money_without_webhook(self, mock_send_money):
+        del self.valid_data["webhook"]
+        mock_send_money.return_value = {
+            "success": True,
+            "message": "Transaction successful",
+            "payment_id": "jvdqMbFKTAWQSrkeqlL1Rg",
+            "status_code": 200,
+        }
+        response = self.client.post(
+            self.url,
+            data=self.valid_data,
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["result"]["success"])
+        self.assertEqual(data["result"]["transaction_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
+        self.assertEqual(data["result"]["message"], "Transaction successful")
+
+    def test_send_money_invalid_token(self):
+        del self.valid_data["app_secret"]
+        response = self.client.post(self.url, data=self.valid_data)
+
+        self.assertEqual(response.status_code, 403)
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_send_money_status")
+    def test_send_money_invalid_reciver(self, mock_send_money):
+        mock_send_money.return_value = {
+            "success": False,
+            "code": 1,
+            "message": "User does not exist.",
+            "status_code": 404,
+        }
+
+        invalid_data = self.valid_data.copy()
+
+        response = self.client.post(
+            self.url,
+            data=invalid_data,
+            headers=self.valid_headers,
+        )
+
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertFalse(data["result"]["success"])
+        self.assertEqual(data["result"]["error"], "User does not exist.")
+        self.assertEqual(data["result"]["code"], 1)
+
+
+class TestCheckSendMoneyStatusView(BaseCreateDeveloperApp):
+    def setUp(self):
+        self.client = APIClient()
+        super().setUp()
+        self.operation_id = uuid.uuid4()
+        self.url = reverse("old_check_payment_status", kwargs={"operation_id": self.operation_id})
+        self.valid_payload = {
+            "app_secret": str(self.app.private_token),
+            "app_token": str(self.app.public_token),
+        }
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_check_send_money_status")
+    def test_check_payment_status_success(self, mock_backend):
+        mock_backend.return_value = {
+            "success": True,
+            "result": {
+                "operation_type": "DEVELOPER_API",
+                "amount": 100.0,
+                "status": "SUCCESS",
+                "details": {
+                    "payment_id": self.operation_id,
+                    "webhook_url": None,
+                    "webhook_sent": False,
+                    "transaction_type": "MERCHANT",
+                    "destination": "20",
+                    "time_created": "2025-03-12T10:38:28.448977Z",
+                    "description": "",
+                },
+            },
+            "status_code": 200,
+        }
+
+        response = self.client.get(self.url, self.valid_payload)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["result"]["success"])
+        self.assertEqual(data["result"]["transaction_status"], "SUCCESS")
+        self.assertEqual(data["result"]["transaction_id"], str(self.operation_id))
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_check_send_money_status")
+    def test_check_payment_status_backend_failure(self, mock_backend):
+        mock_backend.return_value = {
+            "success": False,
+            "message": "Transaction not found",
+            "code": 404,
+            "status_code": 404,
+        }
+
+        response = self.client.get(self.url, self.valid_payload)
+
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertFalse(data["result"]["success"])
+        self.assertEqual(data["result"]["message"], "Transaction not found")
+        self.assertEqual(data["result"]["code"], 404)
+
+    def test_check_payment_status_invalid_token_format(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_check_payment_status_missing_token(self):
+        del self.valid_payload["app_secret"]
+        response = self.client.get(self.url, self.valid_payload)
+        self.assertEqual(response.status_code, 403)
+
+    @patch("utils.backend_client.FlouciBackendClient.developer_check_send_money_status")
+    def test_check_payment_status_user_not_allowed(self, mock_backend):
+        mock_backend.return_value = {"success": False, "result": "Not allowed.", "status_code": 406}
+        response = self.client.get(self.url, self.valid_payload)
+
+        self.assertEqual(response.status_code, 406)
+        data = response.json()
+        logging.info(f"data {data}")
+        self.assertFalse(data["result"]["success"])
+        self.assertEqual(data["result"]["result"], "Not allowed.")

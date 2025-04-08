@@ -451,6 +451,7 @@ class FetchGPSTransactionStatusView(GenericAPIView):
         return Response(response, status=response["status_code"])
 
 
+@IsValidGenericApi()
 class PartnerSendMoneyView(GenericAPIView):
     permission_classes = [IsPartnerAuthenticated]
     serializer_class = SendMoneyViewSerializer

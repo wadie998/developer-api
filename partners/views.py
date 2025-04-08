@@ -25,20 +25,20 @@ from partners.responses_serializers import (
     PartnerInitiatePaymentResponseSerializer,
 )
 from partners.serializers import (
-    AuthenticateViewSerializer,
-    BalanceViewSerializer,
-    ConfirmLinkAccountViewSerializer,
+    AuthenticateSerializer,
+    BalanceSerializer,
+    ConfirmLinkAccountSerializer,
     FetchGPSTransactionStatusSerializer,
     FilterHistorySerializer,
-    InitiateLinkAccountViewSerializer,
+    InitiateLinkAccountSerializer,
     InitiatePaymentViewSerializer,
     InitiatePosTransactionSerializer,
-    IsFlouciViewSerializer,
+    IsFlouciSerializer,
     PaginatedHistorySerializer,
-    PartnerBalanceViewSerializer,
+    PartnerBalanceSerializer,
     PartnerFilterHistorySerializer,
     PartnerInitiatePaymentViewSerializer,
-    RefreshAuthenticateViewSerializer,
+    RefreshAuthenticateSerializer,
     SendMoneyViewSerializer,
 )
 from utils.backend_client import FlouciBackendClient
@@ -49,13 +49,13 @@ from utils.docs_helper import CUSTOM_AUTHENTICATION
 @IsValidGenericApi()
 class InitiateLinkAccountView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
-    serializer_class = InitiateLinkAccountViewSerializer
+    serializer_class = InitiateLinkAccountSerializer
 
     @extend_schema(
         parameters=[
             CUSTOM_AUTHENTICATION,
         ],
-        request=InitiateLinkAccountViewSerializer,
+        request=InitiateLinkAccountSerializer,
         responses={
             200: OpenApiResponse(response=InitiateLinkAccounResponseSerializer, description="Linking Account"),
             202: OpenApiResponse(response=BaseResponseSerializer, description="Account already Linked"),
@@ -65,7 +65,7 @@ class InitiateLinkAccountView(GenericAPIView):
         },
     )
     def post(self, request, serializer):
-        phone_number = serializer.validated_data.get("phone_number")
+        phone_number = serializer.validated_data["phone_number"]
         if LinkedAccount.objects.filter(
             phone_number=phone_number,
             merchant_id=request.application.merchant_id,
@@ -75,11 +75,10 @@ class InitiateLinkAccountView(GenericAPIView):
             phone_number=phone_number, merchant_id=request.application.merchant_id
         )
 
-        status_code = response.get("status_code")
-        # response = response.json()
-        if response.get("success"):
+        status_code = response["status_code"]
+        if response["success"]:
             if response["body"].get("tracking_id"):
-                tracking_id = response["body"].get("tracking_id")
+                tracking_id = response["body"]["tracking_id"]
                 if LinkedAccount.objects.filter(
                     account_tracking_id=tracking_id,
                     merchant_id=request.application.merchant_id,
@@ -104,12 +103,12 @@ class InitiateLinkAccountView(GenericAPIView):
 @IsValidGenericApi()
 class ConfirmLinkAccountView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
-    serializer_class = ConfirmLinkAccountViewSerializer
+    serializer_class = ConfirmLinkAccountSerializer
 
     @extend_schema(
         parameters=[
             CUSTOM_AUTHENTICATION,
-            ConfirmLinkAccountViewSerializer,
+            ConfirmLinkAccountSerializer,
         ],
         responses={
             200: OpenApiResponse(response=ConfirmLinkAccountResponseSerializer, description="Linking Account"),
@@ -118,9 +117,9 @@ class ConfirmLinkAccountView(GenericAPIView):
         },
     )
     def post(self, request, serializer):
-        phone_number = serializer.validated_data.get("phone_number")
-        session_id = serializer.validated_data.get("session_id")
-        otp = serializer.validated_data.get("otp")
+        phone_number = serializer.validated_data["phone_number"]
+        session_id = serializer.validated_data["session_id"]
+        otp = serializer.validated_data["otp"]
 
         response = FlouciBackendClient.confirm_link_account(
             phone_number=phone_number,
@@ -128,10 +127,10 @@ class ConfirmLinkAccountView(GenericAPIView):
             otp=otp,
             merchant_id=request.application.merchant_id,
         )
-        if response.get("success"):
+        if response["success"]:
             account_link, _ = LinkedAccount.objects.get_or_create(
                 phone_number=phone_number,
-                account_tracking_id=response.get("tracking_id"),
+                account_tracking_id=response["tracking_id"],
                 merchant_id=request.application.merchant_id,
             )
             return Response(
@@ -148,37 +147,37 @@ class ConfirmLinkAccountView(GenericAPIView):
 @IsValidGenericApi()
 class IsFlouciView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
-    serializer_class = IsFlouciViewSerializer
+    serializer_class = IsFlouciSerializer
 
     @extend_schema(
         parameters=[
             CUSTOM_AUTHENTICATION,
-            IsFlouciViewSerializer,
+            IsFlouciSerializer,
         ],
         responses={
             200: OpenApiResponse(response=IsFlouciResponseSerializer, description="Check if the user is flouci user"),
         },
     )
     def post(self, request, serializer):
-        phone_number = serializer.validated_data.get("phone_number")
+        phone_number = serializer.validated_data["phone_number"]
         merchant_id = request.application.merchant_id
         response = FlouciBackendClient.is_flouci(
             phone_number=phone_number,
             merchant_id=merchant_id,
         )
-        return Response(data=response, status=response.get("status_code"))
+        return Response(data=response, status=response["status_code"])
 
 
 @IsValidGenericApi()
 class AuthenticateView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials]
-    serializer_class = AuthenticateViewSerializer
+    serializer_class = AuthenticateSerializer
 
     def post(self, request, serializer):
-        application_tracking_id = serializer.validated_data.get("tracking_id")
-        phone_number = serializer.validated_data.get("phone_number")
+        application_tracking_id = serializer.validated_data["tracking_id"]
+        phone_number = serializer.validated_data["phone_number"]
+        merchant_id = request.application.merchant_id
         try:
-            merchant_id = request.application.merchant_id
             linked_account = LinkedAccount.objects.get(
                 partner_tracking_id=application_tracking_id, merchant_id=merchant_id
             )
@@ -186,16 +185,16 @@ class AuthenticateView(GenericAPIView):
             return Response({"success": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
         response = FlouciBackendClient.generate_authentication_token(
             phone_number=phone_number,
-            account_tracking_id=str(linked_account.account_tracking_id),
-            partner_tracking_id=str(linked_account.partner_tracking_id),
+            account_tracking_id=linked_account.account_tracking_id,
+            partner_tracking_id=linked_account.partner_tracking_id,
             merchant_id=merchant_id,
         )
-        return Response(data=response, status=response.get("status_code"))
+        return Response(data=response, status=response["status_code"])
 
 
 class RefreshAuthenticateView(APIView):
     permission_classes = [IsPartnerAuthenticated]
-    serializer_class = RefreshAuthenticateViewSerializer
+    serializer_class = RefreshAuthenticateSerializer
 
     def post(self, request, seriazlier):
         # Logic for refreshing authentication
@@ -205,14 +204,14 @@ class RefreshAuthenticateView(APIView):
 @IsValidGenericApi(post=False, get=True)
 class BalanceView(GenericAPIView):
     permission_classes = [IsPartnerAuthenticated]
-    serializer_class = BalanceViewSerializer
+    serializer_class = BalanceSerializer
 
     @extend_schema(
         parameters=[
             CUSTOM_AUTHENTICATION,
         ],
         responses={
-            200: OpenApiResponse(response=BalanceResponseSerializer, description="Check user alance"),
+            200: OpenApiResponse(response=BalanceResponseSerializer, description="Check user balance"),
             412: OpenApiResponse(response=AccountBalanceNotFoundSerializer, description="Couldn't get account balance"),
         },
     )
@@ -221,19 +220,19 @@ class BalanceView(GenericAPIView):
         response = FlouciBackendClient.get_user_balance(
             tracking_id=account.account_tracking_id,
         )
-        return Response(data=response, status=response.get("status_code"))
+        return Response(data=response, status=response["status_code"])
 
 
 @IsValidGenericApi(post=False, get=True)
 class PartnerBalanceView(GenericAPIView):
     permission_classes = [HasValidPartnerAppCredentials, IsValidPartnerUser]
-    serializer_class = PartnerBalanceViewSerializer
+    serializer_class = PartnerBalanceSerializer
 
     def get(self, request, serializer):
         response = FlouciBackendClient.get_user_balance(
             tracking_id=request.account.account_tracking_id,
         )
-        return Response(data=response, status=response.get("status_code"))
+        return Response(data=response, status=response["status_code"])
 
 
 class HistoryPagination(PageNumberPagination):

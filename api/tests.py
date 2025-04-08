@@ -36,7 +36,6 @@ class BaseCreateDeveloperApp(APITestCase):
             test=True,
         )
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
-        self.url = reverse("create_developer_app")
 
 
 class TestCreateDeveloperApp(BaseCreateDeveloperApp):
@@ -52,8 +51,9 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         }
 
     def test_create_app_success(self):
+        url = reverse("create_developer_app")
         response = self.client.post(
-            self.url,
+            url,
             data=json.dumps(self.data),
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Api-Key {self.api_key}",
@@ -62,9 +62,10 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertIn("name", response.json())
 
     def test_wrong_api_key(self):
+        url = reverse("create_developer_app")
         self.api_key = create_api_key("wrong name")
         response = self.client.post(
-            self.url,
+            url,
             json=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -73,6 +74,7 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(response.json()["detail"], "Authentication credentials were not provided.")
 
     def test_missing_required_field(self):
+        url = reverse("create_developer_app")
         incomplete_data = {
             "description": self.description,
             "merchant_id": self.merchant_id,
@@ -80,7 +82,7 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
             "wallet": self.wallet,
         }
         response = self.client.post(
-            self.url,
+            url,
             json=incomplete_data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -92,8 +94,9 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.data = {
             "tracking_id": str(self.username),
         }
+        url = reverse("create_developer_app")
         response = self.client.get(
-            self.url,
+            url,
             params=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -102,9 +105,10 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertIsNotNone(response.json().get("result"))
 
     def test_get_app_missing_tracking_id(self):
+        url = reverse("create_developer_app")
         self.data = {}
         response = self.client.get(
-            self.url,
+            url,
             params=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -112,13 +116,14 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(response.json().get("result"), [])
 
     def test_update_app_success(self):
+        url = reverse("create_developer_app")
         self.data = {
             "id": self.app.id,
             "name": "updated app",
             "description": "updated description",
         }
         response = self.client.put(
-            self.url,
+            url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -128,13 +133,14 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(data["description"], "updated description")
 
     def test_update_app_not_found(self):
+        url = reverse("create_developer_app")
         self.data = {
             "id": 9999,
             "name": "updated app",
             "description": "updated description",
         }
         response = self.client.put(
-            self.url,
+            url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )
@@ -143,12 +149,13 @@ class TestCreateDeveloperApp(BaseCreateDeveloperApp):
         self.assertEqual(data["detail"], "App not found.")
 
     def test_update_app_field_required(self):
+        url = reverse("create_developer_app")
         self.data = {
             "name": "updated app",
             "description": "updated description",
         }
         response = self.client.put(
-            self.url,
+            url,
             data=self.data,
             headers={"AUTHORIZATION": f"Api-Key {self.api_key}"},
         )

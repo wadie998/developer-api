@@ -86,7 +86,7 @@ class FlouciApp(models.Model):
     gross = models.DecimalField(max_digits=38, decimal_places=0, blank=True, null=True)
     # Keeping this, but it's not used to be removed once front makes changes
     transaction_number = models.BigIntegerField(blank=True, null=True)
-    revoke_number = models.IntegerField(blank=True, null=True)
+    revoke_number = models.IntegerField(default=0)
     last_revoke_date = models.DateField(blank=True, null=True)
     merchant_id = models.BigIntegerField(blank=True, null=True)
     has_partner_access = models.BooleanField(default=False)

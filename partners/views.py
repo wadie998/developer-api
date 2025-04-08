@@ -315,7 +315,7 @@ class PartnerHistoryView(BaseRequestView, ListAPIView):
 
 @IsValidGenericApi()
 class InitiatePaymentView(GenericAPIView):
-    permission_classes = [HasValidPartnerAppCredentials]
+    permission_classes = [IsPartnerAuthenticated]
     serializer_class = InitiatePaymentViewSerializer
 
     # @method_decorator(ratelimit(key="user", rate="1/10s"))

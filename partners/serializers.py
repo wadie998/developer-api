@@ -28,34 +28,34 @@ class DefaultPartnerSerializer(serializers.Serializer):
     tracking_id = serializers.UUIDField()
 
 
-class IsFlouciViewSerializer(DefaultSerializer):
+class IsFlouciSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
 
 
-class InitiateLinkAccountViewSerializer(DefaultSerializer):
+class InitiateLinkAccountSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
 
 
-class ConfirmLinkAccountViewSerializer(DefaultSerializer):
+class ConfirmLinkAccountSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
     session_id = serializers.UUIDField()
     otp = serializers.CharField(max_length=6, min_length=6, validators=[validator_string_is_digit])
 
 
-class AuthenticateViewSerializer(DefaultSerializer):
+class AuthenticateSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
     tracking_id = serializers.UUIDField()
 
 
-class RefreshAuthenticateViewSerializer(DefaultSerializer):
+class RefreshAuthenticateSerializer(DefaultSerializer):
     pass
 
 
-class BalanceViewSerializer(DefaultSerializer):
+class BalanceSerializer(DefaultSerializer):
     pass
 
 
-class PartnerBalanceViewSerializer(DefaultPartnerSerializer):
+class PartnerBalanceSerializer(DefaultPartnerSerializer):
     pass
 
 
@@ -101,13 +101,13 @@ class PartnerFilterHistorySerializer(DefaultPartnerSerializer, BaseRequestViewSe
 
 
 class InitiatePaymentViewSerializer(DefaultSerializer):
-    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
 
 
 class PartnerInitiatePaymentViewSerializer(DefaultPartnerSerializer):
-    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
 

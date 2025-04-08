@@ -137,7 +137,7 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     id_terminal = serializers.CharField(max_length=16)
     serial_number = serializers.CharField(max_length=36)
     service_code = serializers.CharField(max_length=3, required=False, default="024")
-    amount_in_millimes = serializers.IntegerField()
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)
     developer_tracking_id = serializers.CharField(max_length=60)
 

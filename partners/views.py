@@ -192,6 +192,7 @@ class AuthenticateView(GenericAPIView):
         return Response(data=response, status=response["status_code"])
 
 
+@IsValidGenericApi()
 class RefreshAuthenticateView(APIView):
     permission_classes = [IsPartnerAuthenticated]
     serializer_class = RefreshAuthenticateSerializer

@@ -101,13 +101,13 @@ class PartnerFilterHistorySerializer(DefaultPartnerSerializer, BaseRequestViewSe
 
 
 class InitiatePaymentViewSerializer(DefaultSerializer):
-    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
 
 
 class PartnerInitiatePaymentViewSerializer(DefaultPartnerSerializer):
-    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
 

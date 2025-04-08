@@ -145,10 +145,13 @@ class IsPartnerAuthenticated(BasePermission):
         if not token or not token.startswith("Bearer "):
             return False
         token = token.split(" ")[1]  # Extract the token part after "Bearer "
+        logging.info(f"Token: {token}")
         verified, data = verify_backend_token(token, is_token_partner=True)
+        logging.info(f"Verified: {verified}")
         if not verified:
             return False
         try:
+            logging.info(f"Data: {data}")
             linked_account = LinkedAccount.objects.get(
                 partner_tracking_id=data.get("partner_tracking_id"), merchant_id=data.get("mid")
             )

@@ -1,3 +1,4 @@
+import logging
 import uuid
 from unittest.mock import patch
 
@@ -703,3 +704,346 @@ class TestFetchGPSTransactionStatusView(BaseCreateDeveloperApp):
         response = self.client.get(self.url, self.serializer_data, headers=self.valid_headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn("Transaction not found", response.data["message"])
+
+
+class TestBalanceView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("partner_balance")
+        self.partner_tracking_id = str(uuid.uuid4())
+        self.account_tracking_id = str(uuid.uuid4())
+        self.merchant_id = 111
+        self.token = "mock.jwt.token"
+        self.valid_headers = {"Authorization": f"Bearer {self.token}"}
+        self.linked_account = LinkedAccount.objects.create(
+            phone_number=self.phone_number,
+            partner_tracking_id=self.partner_tracking_id,
+            account_tracking_id=self.account_tracking_id,
+            merchant_id=self.merchant_id,
+        )
+
+    @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
+    @patch("api.permissions.verify_backend_token")
+    def test_balance_success(self, mock_verify_token, mock_get_balance):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": self.partner_tracking_id,
+                "mid": self.merchant_id,
+            },
+        )
+        mock_get_balance.return_value = {
+            "success": True,
+            "balance": 1000,
+            "status_code": 200,
+        }
+        params = {
+            "phone_number": self.phone_number,
+            "tracking_id": self.partner_tracking_id,
+        }
+        response = self.client.get(self.url, data=params, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data.get("success"))
+        self.assertEqual(response.data.get("balance"), 1000)
+
+    @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
+    @patch("api.permissions.verify_backend_token")
+    def test_invalid_linked_account(self, mock_verify_token, mock_get_balance):
+        mock_verify_token.return_value = (
+            False,
+            {
+                "partner_tracking_id": self.partner_tracking_id,
+                "mid": self.merchant_id,
+            },
+        )
+        mock_get_balance.return_value = {
+            "success": True,
+            "balance": 1000,
+            "status_code": 200,
+        }
+
+        param = {"phone_number": "2543", "tracking_id": self.partner_tracking_id}
+        response = self.client.get(self.url, data=param, headers=self.valid_headers)
+        logging.info(f"Response: {response.json()}")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["detail"], "Authentication credentials were not provided.")
+
+    @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
+    @patch("api.permissions.verify_backend_token")
+    def test_invalid_authorization_token(self, mock_verify_token, mock_get_balance):
+        mock_verify_token.return_value = (False, None)
+        mock_get_balance.return_value = {
+            "success": True,
+            "balance": 1000,
+            "status_code": 200,
+        }
+        invalid_token = "Bearer invalid_token"
+        headers = {"Authorization": invalid_token}
+        param = {"phone_number": self.phone_number, "tracking_id": self.partner_tracking_id}
+        response = self.client.get(self.url, data=param, headers=headers)
+        self.assertEqual(response.status_code, 403)
+        mock_verify_token.assert_called_once_with("invalid_token", is_token_partner=True)
+
+
+class TestHistoryView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("partner_history")
+        self.token = "mock.jwt.token"
+        self.valid_headers = {"Authorization": f"Bearer {self.token}"}
+        self.linked_account = LinkedAccount.objects.create(
+            phone_number=self.phone_number,
+            partner_tracking_id=self.app.tracking_id,
+            merchant_id=self.app.merchant_id,
+            account_tracking_id=self.app.tracking_id,
+        )
+
+    @patch("api.permissions.verify_backend_token")
+    def test_history_empty_results(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+
+        param = {
+            "phone_number": self.phone_number,
+            "tracking_id": self.app.tracking_id,
+        }
+        response = self.client.get(self.url, param, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["results"], [])
+        self.assertEqual(response.data["count"], 0)
+        mock_verify_token.assert_called_once_with(self.token, is_token_partner=True)
+
+    @patch("api.permissions.verify_backend_token")
+    def test_history_success(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+
+        param = {
+            "phone_number": self.phone_number,
+            "tracking_id": self.app.tracking_id,
+        }
+        PartnerTransaction.objects.create(
+            operation_type=SendMoneyServiceOperationTypes.P2P,
+            sender=self.linked_account,
+            receiver=self.linked_account,
+            amount_in_millimes=100000,
+            operation_payload={"amount": 100.0},
+            operation_status=RequestStatus.APPROVED,
+        )
+        response = self.client.get(self.url, param, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data["results"])
+        self.assertEqual(response.data["count"], 1)
+
+    def test_history_missing_authorization(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+    @patch("api.permissions.verify_backend_token")
+    def test_history_empty_results_no_transactions(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+
+        param = {
+            "phone_number": self.phone_number,
+            "tracking_id": self.app.tracking_id,
+        }
+
+        PartnerTransaction.objects.all().delete()
+
+        response = self.client.get(self.url, param, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["results"], [])
+        self.assertEqual(response.data["count"], 0)
+
+    @patch("api.permissions.verify_backend_token")
+    def test_history_date_range_filter(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+
+        param = {
+            "phone_number": self.phone_number,
+            "tracking_id": str(self.app.tracking_id),
+            "from": "2025-04-01T00:00:00Z",
+            "to": "2025-04-07T23:59:59Z",
+        }
+
+        PartnerTransaction.objects.create(
+            sender=self.linked_account,
+            receiver=self.linked_account,
+            operation_id=str(uuid.uuid4()),
+            time_created=timezone.now(),
+            operation_payload={},
+            operation_type=SendMoneyServiceOperationTypes.P2P,
+            amount_in_millimes=1020,
+            operation_status=RequestStatus.APPROVED,
+        )
+
+        response = self.client.get(self.url, param, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.data["results"]), 0)
+
+    @patch("api.permissions.verify_backend_token")
+    def test_history_invalid_size(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+
+        param = {
+            "phone_number": self.phone_number,
+            "tracking_id": str(self.app.tracking_id),
+            "size": 10001,
+        }
+
+        response = self.client.get(self.url, param, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("size", response.data)
+        self.assertEqual(response.data["size"][0], "Ensure this value is less than or equal to 10000.")
+
+
+class TestInitiatePaymentView(BaseCreateDeveloperApp):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("partner_initiate_payment")
+        self.token = "mock.jwt.token"
+        self.valid_headers = {"Authorization": f"Bearer {self.token}"}
+        self.linked_account = LinkedAccount.objects.create(
+            phone_number=self.phone_number,
+            partner_tracking_id=self.app.tracking_id,
+            merchant_id=self.app.merchant_id,
+            account_tracking_id=self.app.tracking_id,
+        )
+        self.serializer_data = {
+            "amount_in_millimes": 5000,
+            "product": "005",
+            "phone_number": self.phone_number,
+            "tracking_id": self.app.tracking_id,
+        }
+
+    @patch("utils.backend_client.FlouciBackendClient.send_money")
+    @patch("api.permissions.verify_backend_token")
+    def test_successful_payment(self, mock_verify_token, mock_send_money):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+        mock_send_money.return_value = {
+            "success": True,
+            "hash": "ezqrstdfyukglihjokk",
+            "blockchain_ref": "147582265886625",
+            "status_code": 200,
+        }
+
+        response = self.client.post(self.url, self.serializer_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data.get("success"))
+        self.assertEqual(response.data.get("blockchain_ref"), "147582265886625")
+        mock_verify_token.assert_called_once_with(self.token, is_token_partner=True)
+
+    @patch("utils.backend_client.FlouciBackendClient.send_money")
+    @patch("api.permissions.verify_backend_token")
+    def test_wallet_not_active(self, mock_verify_token, mock_send_money):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+        mock_send_money.return_value = {
+            "success": False,
+            "message": "error: status_code 400 code None",
+            "http_status_code": "400",
+            "code": None,
+            "status_code": 400,
+        }
+
+        response = self.client.post(self.url, self.serializer_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.data.get("success"))
+        self.assertEqual(response.data.get("http_status_code"), "400")
+
+    @patch("api.permissions.verify_backend_token")
+    def test_invalid_amount(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+        self.serializer_data["amount_in_millimes"] = 50
+
+        response = self.client.post(self.url, self.serializer_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("amount_in_millimes", response.data)
+        self.assertEqual(response.data["amount_in_millimes"][0], "Ensure this value is greater than or equal to 1000.")
+
+    @patch("utils.backend_client.FlouciBackendClient.send_money")
+    @patch("api.permissions.verify_backend_token")
+    def test_transaction_blocked_due_to_limits(self, mock_verify_token, mock_send_money):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+        mock_send_money.return_value = {
+            "success": False,
+            "message": "Transaction blocked due to exceeding limits",
+            "code": 451,
+            "status_code": 451,
+        }
+
+        response = self.client.post(self.url, self.serializer_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 451)
+
+    @patch("api.permissions.verify_backend_token")
+    def test_missing_authentication(self, mock_verify_token):
+        mock_verify_token.return_value = (False, None)
+
+        response = self.client.post(self.url, self.serializer_data)
+        self.assertEqual(response.status_code, 403)
+
+    @patch("api.permissions.verify_backend_token")
+    def test_invalid_phone_number(self, mock_verify_token):
+        mock_verify_token.return_value = (
+            True,
+            {
+                "partner_tracking_id": str(self.app.tracking_id),
+                "mid": self.app.merchant_id,
+            },
+        )
+        invalid_data = self.serializer_data.copy()
+        invalid_data["phone_number"] = "invalid_number"
+
+        response = self.client.post(self.url, invalid_data, headers=self.valid_headers)
+        self.assertEqual(response.status_code, 400)

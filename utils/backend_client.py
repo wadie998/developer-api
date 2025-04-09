@@ -9,9 +9,10 @@ from rest_framework import status
 
 from api.enum import TransactionsTypes
 from settings.settings import (
+    DEVELOPER_API_INTERNAL_ADDRESS,
     FLOUCI_BACKEND_API_ADDRESS,
     FLOUCI_BACKEND_API_KEY,
-    FLOUCI_BACKEND_INTERNAL_API_KEY, DEVELOPER_API_INTERNAL_ADDRESS,
+    FLOUCI_BACKEND_INTERNAL_API_KEY,
 )
 from utils.dataapi_client import convert_millimes_to_dinars
 

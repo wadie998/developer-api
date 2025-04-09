@@ -9,10 +9,9 @@ from rest_framework import status
 
 from api.enum import TransactionsTypes
 from settings.settings import (
-    DEVELOPERS_API_WEBHOOK_DOMAIN,
     FLOUCI_BACKEND_API_ADDRESS,
     FLOUCI_BACKEND_API_KEY,
-    FLOUCI_BACKEND_INTERNAL_API_KEY,
+    FLOUCI_BACKEND_INTERNAL_API_KEY, DEVELOPER_API_INTERNAL_ADDRESS,
 )
 from utils.dataapi_client import convert_millimes_to_dinars
 
@@ -284,7 +283,7 @@ class FlouciBackendClient:
             "transaction_type": TransactionsTypes.P2P.value if operation.receiver else TransactionsTypes.MERCHANT.value,
             "account_tracking_id": str(operation.sender.account_tracking_id),
             "amount_in_millimes": operation.amount_in_millimes,
-            "webhook": DEVELOPERS_API_WEBHOOK_DOMAIN + reverse("internal_send_money_catcher"),
+            "webhook": DEVELOPER_API_INTERNAL_ADDRESS + reverse("internal_send_money_catcher"),
         }
         logger.info(f"Data send_money {data}")
         if merchant_id:

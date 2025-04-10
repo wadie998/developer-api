@@ -1,6 +1,7 @@
 import logging
 
 import requests
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ from utils.decorators import IsValidGenericApi
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(exclude=True)
 @IsValidGenericApi()
 class SendMoneyDeveloperApiCatcher(GenericAPIView):
     permission_classes = (HasValidDataApiSignature,)

@@ -73,7 +73,7 @@ class CreateDeveloperAppView(GenericAPIView):
     def post(self, request, serializer):
         if not request.tracking_id:
             request.tracking_id = serializer.validated_data.get("username")
-        if request.tracking_id != serializer.validated_data.get("username"):
+        elif request.tracking_id and not serializer.validated_data.get("username"):
             return Response(
                 {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )

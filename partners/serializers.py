@@ -1,4 +1,5 @@
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from api.enum import (
@@ -27,34 +28,34 @@ class DefaultPartnerSerializer(serializers.Serializer):
     tracking_id = serializers.UUIDField()
 
 
-class IsFlouciViewSerializer(DefaultSerializer):
+class IsFlouciSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
 
 
-class InitiateLinkAccountViewSerializer(DefaultSerializer):
+class InitiateLinkAccountSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
 
 
-class ConfirmLinkAccountViewSerializer(DefaultSerializer):
+class ConfirmLinkAccountSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
     session_id = serializers.UUIDField()
     otp = serializers.CharField(max_length=6, min_length=6, validators=[validator_string_is_digit])
 
 
-class AuthenticateViewSerializer(DefaultSerializer):
+class AuthenticateSerializer(DefaultSerializer):
     phone_number = serializers.CharField(max_length=8, min_length=8, validators=[validator_string_is_phone_number])
     tracking_id = serializers.UUIDField()
 
 
-class RefreshAuthenticateViewSerializer(DefaultSerializer):
+class RefreshAuthenticateSerializer(DefaultSerializer):
     pass
 
 
-class BalanceViewSerializer(DefaultSerializer):
+class BalanceSerializer(DefaultSerializer):
     pass
 
 
-class PartnerBalanceViewSerializer(DefaultPartnerSerializer):
+class PartnerBalanceSerializer(DefaultPartnerSerializer):
     pass
 
 
@@ -68,12 +69,13 @@ class PaginatedHistorySerializer(serializers.ModelSerializer):
         model = PartnerTransaction
         fields = ["operation_id", "sender", "receiver", "status", "time_created", "payload"]
 
+    @extend_schema_field(serializers.JSONField())  # Explicitly specify the schema type
     def get_payload(self, obj):
         payload = obj.operation_payload or {}
         return {
             "blockchain_ref": obj.blockchain_ref[:6] if obj.blockchain_ref else None,
             "operation_type": obj.operation_type,
-            "product": payload.get("product"),
+            "product": payload.get("product", ""),
         }
 
 
@@ -99,13 +101,13 @@ class PartnerFilterHistorySerializer(DefaultPartnerSerializer, BaseRequestViewSe
 
 
 class InitiatePaymentViewSerializer(DefaultSerializer):
-    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
 
 
 class PartnerInitiatePaymentViewSerializer(DefaultPartnerSerializer):
-    amount_in_millimes = serializers.IntegerField(required=False, min_value=1000)
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     product = serializers.ChoiceField(choices=PartnerProducts.get_choices())
     webhook = serializers.URLField(required=False)
 
@@ -131,9 +133,22 @@ class DevAPIDataApiCatcherSerializer(DefaultSerializer):
 
 
 class InitiatePosTransactionSerializer(DefaultSerializer):
-    webhook = serializers.URLField()
+    webhook = serializers.URLField(required=False)
     id_terminal = serializers.CharField(max_length=16)
-    serial_number = serializers.CharField()
+    serial_number = serializers.CharField(max_length=36)
     service_code = serializers.CharField(max_length=3, required=False, default="024")
-    amount_in_millimes = serializers.IntegerField()
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
     payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)
+    developer_tracking_id = serializers.CharField(max_length=60)
+
+
+class FetchGPSTransactionStatusSerializer(DefaultSerializer):
+    developer_tracking_id = serializers.CharField(max_length=60, required=False)
+    flouci_transaction_id = serializers.UUIDField(required=False)
+
+    def validate(self, validate_data):
+        transaction_id = validate_data.get("flouci_transaction_id")
+        developer_tracking_id = validate_data.get("developer_tracking_id")
+        if (transaction_id and developer_tracking_id) or (not transaction_id and not developer_tracking_id):
+            raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'developer_tracking_id'.")
+        return validate_data

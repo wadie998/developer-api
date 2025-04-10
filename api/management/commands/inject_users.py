@@ -1,3 +1,4 @@
+from time import sleep
 from uuid import UUID
 
 from django.core.management.base import BaseCommand
@@ -5,7 +6,7 @@ from django.db import connections, transaction
 
 from api.models import FlouciApp
 from utils.backend_client import FlouciBackendClient
-from time import sleep
+
 
 class Command(BaseCommand):
     help = "Migrate users and their apps from the old database to the new database"

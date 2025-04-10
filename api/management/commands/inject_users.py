@@ -5,7 +5,7 @@ from django.db import connections, transaction
 
 from api.models import FlouciApp
 from utils.backend_client import FlouciBackendClient
-
+from time import sleep
 
 class Command(BaseCommand):
     help = "Migrate users and their apps from the old database to the new database"
@@ -20,6 +20,7 @@ class Command(BaseCommand):
                     return wallet_tracking_cache[wallet]
 
                 result = FlouciBackendClient.fetch_associated_tracking_id(wallet)
+                sleep(0.5)
                 tracking_id = result.get("tracking_id")
                 wallet_tracking_cache[wallet] = tracking_id
             return tracking_id

@@ -4,6 +4,7 @@ from partners.views import (
     AuthenticateView,
     BalanceView,
     ConfirmLinkAccountView,
+    FetchGPSTransactionStatusView,
     HistoryView,
     InitiateLinkAccountView,
     InitiatePaymentView,
@@ -18,7 +19,6 @@ from partners.views import (
 from partners.webhook_catchers import SendMoneyDeveloperApiCatcher
 
 urlpatterns = [
-    # path("partners/accounts/is_flouci", IsFlouciView.as_view(), name="partner_is_flouci"),
     path("accounts/initiate_link_account", InitiateLinkAccountView.as_view(), name="partner_initiate_link_account"),
     path("accounts/confirm_link_account", ConfirmLinkAccountView.as_view(), name="partner_confirm_link_account"),
     # ENDPOINTS USED BY AUTHENTICATING THE CLIENT WITH PARTNER FIRST
@@ -41,4 +41,10 @@ urlpatterns = [
     path("v1/transactions/initiate_payment", PartnerInitiatePaymentView.as_view(), name="v1_partner_initiate_payment"),
     # External services, POS integration
     path("transactions/init_pos_transaction", InitiatePosTransaction.as_view(), name="init_pos_transaction"),
+    # Fetch GPS transaction status
+    path(
+        "transactions/fetch_gps_transaction_status",
+        FetchGPSTransactionStatusView.as_view(),
+        name="fetch_gps_transaction_status",
+    ),
 ]

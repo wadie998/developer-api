@@ -1,3 +1,4 @@
+from time import sleep
 from uuid import UUID
 
 from django.core.management.base import BaseCommand
@@ -20,6 +21,7 @@ class Command(BaseCommand):
                     return wallet_tracking_cache[wallet]
 
                 result = FlouciBackendClient.fetch_associated_tracking_id(wallet)
+                sleep(0.5)
                 tracking_id = result.get("tracking_id")
                 wallet_tracking_cache[wallet] = tracking_id
             return tracking_id

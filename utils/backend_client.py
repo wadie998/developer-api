@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from uuid import UUID
 
 import requests
 from django.urls import reverse
@@ -8,10 +9,10 @@ from rest_framework import status
 
 from api.enum import TransactionsTypes
 from settings.settings import (
+    DEVELOPER_API_INTERNAL_ADDRESS,
     FLOUCI_BACKEND_API_ADDRESS,
     FLOUCI_BACKEND_API_KEY,
     FLOUCI_BACKEND_INTERNAL_API_KEY,
-    PROJECT_DOMAIN,
 )
 from utils.dataapi_client import convert_millimes_to_dinars
 
@@ -39,6 +40,7 @@ class FlouciBackendClient:
     CHECK_SEND_MONEY_STATUS_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/check_send_money_status"
     FETCH_TRACKING_ID_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api_internal/fetch_associated_tracking_id"
     GENERATE_EXTERNAL_POS_TRANSACTION = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/generate_external_pos_transaction"
+    FETCH_PARTNER_TRANSACTION_STATUS = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/fetch_patner_transaction_status"
 
     # PARTNER APIs
     IS_FLOUCI = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/is_flouci"
@@ -59,15 +61,14 @@ class FlouciBackendClient:
         else:
             response_json = response.json()
             if response.status_code in success_code:
-                return {"success": True, **response_json}
+                return {"success": True, **response_json, "status_code": response.status_code}
             elif response.status_code == status.HTTP_406_NOT_ACCEPTABLE:
                 return {"success": False, **response_json, "status_code": status.HTTP_406_NOT_ACCEPTABLE}
             else:
-                logger.info(f"Request failed with response: {response.text}")
                 return {
                     "success": False,
                     "code": 1,
-                    "message": "Error processing request",
+                    "message": f"{response.text}",
                     "status_code": response.status_code,
                 }
 
@@ -166,21 +167,47 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def generate_pos_transaction(
-        merchant_id, webhook_url, id_terminal, serial_number, service_code, amount_in_millimes, payment_method
+        merchant_id,
+        webhook,
+        id_terminal,
+        serial_number,
+        service_code,
+        amount_in_millimes,
+        payment_method,
+        developer_tracking_id,
     ):
         data = {
             "merchant_id": merchant_id,
-            "webhook_url": webhook_url,
             "idTerminal": id_terminal,
             "serialNumber": serial_number,
             "serviceCode": service_code,
             "amount_in_millimes": amount_in_millimes,
             "payment_method": payment_method,
+            "developer_tracking_id": developer_tracking_id,
         }
+        if webhook:
+            data["webhook"] = webhook
         response = requests.post(
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
             headers=FlouciBackendClient.HEADERS,
             json=data,
+        )
+        return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def fetch_associated_partner_transaction(
+        merchant_id, *, developer_tracking_id: str = None, flouci_transaction_id: UUID = None
+    ):
+        params = {"merchant_id": merchant_id}
+        if flouci_transaction_id:
+            params["transaction_id"] = str(flouci_transaction_id)
+        else:
+            params["developer_tracking_id"] = developer_tracking_id
+        response = requests.get(
+            FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
+            headers=FlouciBackendClient.HEADERS,
+            params=params,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -257,7 +284,7 @@ class FlouciBackendClient:
             "transaction_type": TransactionsTypes.P2P.value if operation.receiver else TransactionsTypes.MERCHANT.value,
             "account_tracking_id": str(operation.sender.account_tracking_id),
             "amount_in_millimes": operation.amount_in_millimes,
-            "webhook": PROJECT_DOMAIN + reverse("partner_send_money_catcher"),
+            "webhook": DEVELOPER_API_INTERNAL_ADDRESS + reverse("internal_send_money_catcher"),
         }
         logger.info(f"Data send_money {data}")
         if merchant_id:

@@ -84,8 +84,6 @@ class CreateDeveloperAppView(GenericAPIView):
             tracking_id=request.tracking_id,
         )
         data = app.get_app_details()
-        # TODO: check with front if this is needed
-        data["app"]["id"] = str(app.app_id)
         return Response(data, status=status.HTTP_201_CREATED)
 
     def put(self, request, serializer):

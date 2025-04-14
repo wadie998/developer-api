@@ -6,9 +6,10 @@ from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
 from api.models import FlouciApp
-from api.permissions import IsFlouciAuthenticated
+from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
     CreateDeveloperAppSerializer,
+    DefaultSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
     UpdateDeveloperAppSerializer,
@@ -263,6 +264,22 @@ class GetDeveloperAppOrdersView(GenericAPIView):
             "result": [],
             "code": 0,
             "message": "metrics for day",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@IsValidGenericApi(get=True, post=False)
+class GetAppInfo(GenericAPIView):
+    permission_classes = (TokenPermission,)
+    serializer_class = DefaultSerializer
+
+    def get(self, request, serializer):
+        app = request.application
+        response_data = {
+            "result": app.get_app_info(),
+            "code": 0,
             "name": "developers",
             "version": DJANGO_SERVICE_VERSION,
         }

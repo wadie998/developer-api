@@ -53,7 +53,7 @@ class CreateDeveloperAccountView(GenericAPIView):
             )
         FlouciApp.objects.create(
             tracking_id=request.tracking_id,
-            name="TEST APP",
+            name="Test APP",
             description="This is your test app",
             wallet="Test wallet",
             test=True,

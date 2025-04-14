@@ -187,3 +187,27 @@ class HasValidDataApiSignature(BasePermission):
             return True
         logger.warning("A request with wrong api signature is calling data api webhook catcher")
         return False
+
+
+class TokenPermission(BasePermission):
+    """
+    Allows access to only authenticated Flouci users with their personal or business account,
+    to use in API endpoint, just add this line
+    permission_classes = (TokenPermission, )
+    in the beginning of the class
+    """
+
+    def has_permission(self, request, view):
+        token = request.META.get("HTTP_TOKEN")
+        if not token:
+            return False
+        try:
+            uuid.UUID(token)
+        except ValueError:
+            return False
+        try:
+            app = FlouciApp.objects.filter(public_token=token).first()
+        except ObjectDoesNotExist:
+            return False
+        request.application = app
+        return True

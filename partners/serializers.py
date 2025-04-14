@@ -142,13 +142,13 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     developer_tracking_id = serializers.CharField(max_length=60)
 
 
-class FetchGPSTransactionStatusSerializer(DefaultSerializer):
+class FetchPOSTransactionStatusSerializer(DefaultSerializer):
     developer_tracking_id = serializers.CharField(max_length=60, required=False)
     flouci_transaction_id = serializers.UUIDField(required=False)
 
     def validate(self, validate_data):
         transaction_id = validate_data.get("flouci_transaction_id")
         developer_tracking_id = validate_data.get("developer_tracking_id")
-        if (transaction_id and developer_tracking_id) or (not transaction_id and not developer_tracking_id):
+        if not transaction_id and not developer_tracking_id:
             raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'developer_tracking_id'.")
         return validate_data

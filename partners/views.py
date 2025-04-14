@@ -28,7 +28,7 @@ from partners.serializers import (
     AuthenticateSerializer,
     BalanceSerializer,
     ConfirmLinkAccountSerializer,
-    FetchGPSTransactionStatusSerializer,
+    FetchPOSTransactionStatusSerializer,
     FilterHistorySerializer,
     InitiateLinkAccountSerializer,
     InitiatePaymentViewSerializer,
@@ -437,9 +437,9 @@ class InitiatePosTransaction(GenericAPIView):
 
 
 @IsValidGenericApi(get=True, post=False)
-class FetchGPSTransactionStatusView(GenericAPIView):
+class FetchPOSTransactionStatusView(GenericAPIView):
     permission_classes = (HasValidPartnerAppCredentials,)
-    serializer_class = FetchGPSTransactionStatusSerializer
+    serializer_class = FetchPOSTransactionStatusSerializer
 
     def get(self, request, serializer):
         app = request.application

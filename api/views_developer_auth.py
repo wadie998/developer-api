@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from api.models import FlouciApp
 from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
+    AppCredsSerializer,
     CreateDeveloperAppSerializer,
     DefaultSerializer,
     DeveloperAppSerializer,
@@ -280,6 +281,36 @@ class GetAppInfo(GenericAPIView):
         response_data = {
             "result": app.get_app_info(),
             "code": 0,
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@IsValidGenericApi()
+class PostAppInfo(GenericAPIView):
+    serializer_class = AppCredsSerializer
+
+    def post(self, request, serializer):
+        app_token = serializer.validated_data.get("app_token")
+        app_secret = serializer.validated_data.get("app_secret")
+        try:
+            app = FlouciApp.objects.get(public_token=app_token, private_token=app_secret)
+        except FlouciApp.DoesNotExist:
+            return Response(
+                {"name": "developers", "version": DJANGO_SERVICE_VERSION, "message": "app not found", "code": 3},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        code = 0
+        if not app.active:
+            code = 1
+            logger.warning("Warning: App is disabled")
+        if app.test:
+            code = 2
+            logger.warning("Warning: App is a test app")
+        response_data = {
+            "result": app.get_app_info(),
+            "code": code,
             "name": "developers",
             "version": DJANGO_SERVICE_VERSION,
         }

@@ -304,10 +304,10 @@ class PostAppInfo(GenericAPIView):
         code = 0
         if not app.active:
             code = 1
-            logger.warning("Warning: App is disabled")
+            logger.warning(f"Warning: App is disabled {app.public_token}")
         if app.test:
             code = 2
-            logger.warning("Warning: App is a test app")
+            logger.warning(f"Warning: App is a test app {app.public_token}")
         response_data = {
             "result": app.get_app_info(),
             "code": code,

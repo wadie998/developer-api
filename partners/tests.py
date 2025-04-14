@@ -632,7 +632,7 @@ class TestInitiatePosTransaction(BaseCreateDeveloperApp):
 class TestFetchPOSTransactionStatusView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
-        self.url = reverse("fetch_pos_transaction_status")
+        self.url = reverse("get_pos_transaction_status")
         self.token = f"{self.app.public_token}:{self.app.private_token}"
         self.valid_headers = {"Authorization": f"Bearer {self.token}"}
 

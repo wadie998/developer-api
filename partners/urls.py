@@ -43,8 +43,8 @@ urlpatterns = [
     path("transactions/init_pos_transaction", InitiatePosTransaction.as_view(), name="init_pos_transaction"),
     # Fetch POS transaction status
     path(
-        "transactions/fetch_pos_transaction_status",
+        "transactions/get_pos_transaction_status",
         FetchPOSTransactionStatusView.as_view(),
-        name="fetch_pos_transaction_status",
+        name="get_pos_transaction_status",
     ),
 ]

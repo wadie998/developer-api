@@ -220,3 +220,4 @@ DEVELOPER_API_INTERNAL_ADDRESS = config("DEVELOPER_API_INTERNAL_ADDRESS", defaul
 # GCS
 GCS_BUCKET_NAME = config("GCS_BUCKET_NAME", default="kaoun-flouci-developers-api-internal")
 GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="developers-api-app-images")
+GCLOUD_SERVICE_ACCOUNT_CREDENTIALS_FILE_PATH = config("GCLOUD_SERVICE_ACCOUNT_CREDENTIALS_FILE_PATH", default="")

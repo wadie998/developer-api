@@ -146,16 +146,12 @@ class ImageUpdate(GenericAPIView):
         new_image = serializer.validated_data["new_image"]
         app: FlouciApp = serializer.validated_data["app"]
         gcs_client = GCSClient()
-        image_url = gcs_client.save_image(
-            img_b64=new_image, image_name=str(app.id), folder="apps"  # using UUID for unique image names
-        )
+        image_url = gcs_client.save_image(img_b64=new_image, image_name=str(app.id), folder="dev")
         if not image_url:
             return Response(
                 {"code": 1, "message": "Failed to upload image", "result": None},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        # Save new image URL to the app
         app.image_url = image_url
         app.save(update_fields=["image_url"])
         response_data = {

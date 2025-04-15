@@ -219,7 +219,9 @@ class FlouciBackendClient:
             "merchant_id": merchant_id,
         }
         response = requests.post(
-            FlouciBackendClient.INITIATE_LINK_ACCOUNT, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+            FlouciBackendClient.INITIATE_LINK_ACCOUNT,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -231,7 +233,9 @@ class FlouciBackendClient:
             "merchant_id": merchant_id,
         }
         response = requests.post(
-            FlouciBackendClient.IS_FLOUCI, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+            FlouciBackendClient.IS_FLOUCI,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -245,7 +249,9 @@ class FlouciBackendClient:
             "merchant_id": merchant_id,
         }
         response = requests.post(
-            FlouciBackendClient.CONFIRM_LINK_ACCOUNT, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+            FlouciBackendClient.CONFIRM_LINK_ACCOUNT,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -259,7 +265,9 @@ class FlouciBackendClient:
             "merchant_id": merchant_id,
         }
         response = requests.post(
-            FlouciBackendClient.PARTNER_AUTHENTICATE, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+            FlouciBackendClient.PARTNER_AUTHENTICATE,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -270,7 +278,9 @@ class FlouciBackendClient:
             "account_tracking_id": str(tracking_id),
         }
         response = requests.post(
-            FlouciBackendClient.GET_BALANCE, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+            FlouciBackendClient.GET_BALANCE,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -292,7 +302,9 @@ class FlouciBackendClient:
         if receiver:
             data["receiver"] = receiver
         response = requests.post(
-            FlouciBackendClient.SEND_MONEY, headers=FlouciBackendClient.HEADERS, json=data, verify=False
+            FlouciBackendClient.SEND_MONEY,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -323,5 +335,9 @@ class FlouciBackendClient:
             "wallet": wallet,
         }
         headers = {"Content-Type": "application/json", "Authorization": "Api-Key " + FLOUCI_BACKEND_INTERNAL_API_KEY}
-        response = requests.get(FlouciBackendClient.FETCH_TRACKING_ID_URL, headers=headers, params=params, verify=False)
+        response = requests.get(
+            FlouciBackendClient.FETCH_TRACKING_ID_URL,
+            headers=headers,
+            params=params,
+        )
         return FlouciBackendClient._process_response(response)

@@ -118,6 +118,16 @@ class FlouciApp(models.Model):
             "image_url": self.image_url,
         }
 
+    def get_app_info(self):
+        return {
+            "app_id": str(self.app_id),
+            "app_name": self.name,
+            "account": self.wallet,
+            "description": self.description,
+            "valid": self.active,
+            "test": self.test,
+        }
+
     def revoke_keys(self):
         self.private_token = uuid.uuid4()
         self.revoke_number += 1

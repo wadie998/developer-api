@@ -3,9 +3,11 @@ from django.urls import path
 from api.views_developer_auth import (
     CreateDeveloperAppView,
     EnableOrDisableDeveloperAppView,
+    GetAppInfo,
     GetDeveloperAppDetailsView,
     GetDeveloperAppMetricsView,
     GetDeveloperAppOrdersView,
+    PostAppInfo,
     RevokeDeveloperAppView,
 )
 from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
@@ -59,6 +61,9 @@ urlpatterns = [
     # urls with backend authentication
     path("internal/checkuserexists/<uuid:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
     path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),
+    # Data api calls these endpoints
+    path("app/info", GetAppInfo.as_view(), name="get_app_info"),
+    path("app/getInfo", PostAppInfo.as_view(), name="post_app_info"),
     # urls with either jhipster or backend authentication
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),

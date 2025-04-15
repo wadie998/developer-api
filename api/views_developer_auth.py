@@ -6,9 +6,11 @@ from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
 from api.models import FlouciApp
-from api.permissions import IsFlouciAuthenticated
+from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
+    AppCredsSerializer,
     CreateDeveloperAppSerializer,
+    DefaultSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
     UpdateDeveloperAppSerializer,
@@ -263,6 +265,53 @@ class GetDeveloperAppOrdersView(GenericAPIView):
             "result": [],
             "code": 0,
             "message": "metrics for day",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi(get=True, post=False)
+class GetAppInfo(GenericAPIView):
+    permission_classes = (TokenPermission,)
+    serializer_class = DefaultSerializer
+
+    def get(self, request, serializer):
+        app = request.application
+        response_data = {
+            "result": app.get_app_info(),
+            "code": 0,
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
+class PostAppInfo(GenericAPIView):
+    serializer_class = AppCredsSerializer
+
+    # TODO: Depricate this view after removed from data api..
+    def post(self, request, serializer):
+        app_token = serializer.validated_data["app_token"]
+        app_secret = serializer.validated_data["app_secret"]
+        try:
+            app = FlouciApp.objects.get(public_token=app_token, private_token=app_secret)
+        except FlouciApp.DoesNotExist:
+            return Response(
+                {"name": "developers", "version": DJANGO_SERVICE_VERSION, "message": "app not found", "code": 3},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        code = 0
+        if not app.active:
+            code = 1
+        if app.test:
+            code = 2
+        response_data = {
+            "result": app.get_app_info(),
+            "code": code,
             "name": "developers",
             "version": DJANGO_SERVICE_VERSION,
         }

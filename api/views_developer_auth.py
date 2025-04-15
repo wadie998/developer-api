@@ -295,8 +295,8 @@ class PostAppInfo(GenericAPIView):
 
     # TODO: Depricate this view after removed from data api..
     def post(self, request, serializer):
-        app_token = serializer.validated_data.get("app_token")
-        app_secret = serializer.validated_data.get("app_secret")
+        app_token = serializer.validated_data["app_token"]
+        app_secret = serializer.validated_data["app_secret"]
         try:
             app = FlouciApp.objects.get(public_token=app_token, private_token=app_secret)
         except FlouciApp.DoesNotExist:
@@ -307,10 +307,8 @@ class PostAppInfo(GenericAPIView):
         code = 0
         if not app.active:
             code = 1
-            logger.warning(f"Warning: App is disabled {app.public_token}")
         if app.test:
             code = 2
-            logger.warning(f"Warning: App is a test app {app.public_token}")
         response_data = {
             "result": app.get_app_info(),
             "code": code,

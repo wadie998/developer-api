@@ -394,7 +394,7 @@ class PartnerInitiatePaymentView(GenericAPIView):
 
         with transaction.atomic():
             operation = PartnerTransaction.objects.create(
-                operation_type=SendMoneyServiceOperationTypes.PAYMENT,
+                operation_type=SendMoneyServiceOperationTypes.PAYMENT.value,
                 sender=account,
                 operation_payload={
                     "merchant_id": merchant_id,

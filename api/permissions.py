@@ -190,8 +190,9 @@ class HasValidDataApiSignature(BasePermission):
 
 
 class TokenPermission(BasePermission):
+    # TODO: Modify this in data api to use the above permission...
     """
-    Allows access to only authenticated Flouci users with their personal or business account,
+    Allows access to only authenticated Flouci app with their public token,
     to use in API endpoint, just add this line
     permission_classes = (TokenPermission, )
     in the beginning of the class
@@ -206,8 +207,8 @@ class TokenPermission(BasePermission):
         except ValueError:
             return False
         try:
-            app = FlouciApp.objects.filter(public_token=token).first()
-        except ObjectDoesNotExist:
+            app = FlouciApp.objects.get(public_token=token)
+        except FlouciApp.DoesNotExist:
             return False
         request.application = app
         return True

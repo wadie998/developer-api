@@ -216,3 +216,7 @@ DATA_API_USERNAME = config("DATA_API_USERNAME", default="")
 # WEBHOOK FROM SEND MONEY
 CASH_IO_VERIFICATION_TOKEN = config("CASH_IO_VERIFICATION_TOKEN", default="")
 DEVELOPER_API_INTERNAL_ADDRESS = config("DEVELOPER_API_INTERNAL_ADDRESS", default="")
+
+# GCS
+GCS_BUCKET_NAME = config("GCS_BUCKET_NAME", default="kaoun-flouci-developers-api-internal")
+GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="developers-api-app-images")

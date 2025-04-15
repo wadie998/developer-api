@@ -11,11 +11,13 @@ from api.serializers import (
     CreateDeveloperAppSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
+    ImageUpdateSerializer,
     UpdateDeveloperAppSerializer,
 )
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
+from utils.gcp_client import GCSClient
 from utils.pagination_helper import generate_pagination_headers
 
 logger = logging.getLogger(__name__)
@@ -132,6 +134,38 @@ class GetDeveloperAppDetailsView(ListCreateAPIView):
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(data=apps.get_app_details(), status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
+class ImageUpdate(GenericAPIView):
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
+    serializer_class = ImageUpdateSerializer
+
+    def post(self, request, serializer):
+        new_image = serializer.validated_data["new_image"]
+        app: FlouciApp = serializer.validated_data["app"]
+        gcs_client = GCSClient()
+        image_url = gcs_client.save_image(
+            img_b64=new_image, image_name=str(app.id), folder="apps"  # using UUID for unique image names
+        )
+        if not image_url:
+            return Response(
+                {"code": 1, "message": "Failed to upload image", "result": None},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Save new image URL to the app
+        app.image_url = image_url
+        app.save(update_fields=["image_url"])
+        response_data = {
+            "result": image_url,
+            "code": 0,
+            "message": "Image successfully updated",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)

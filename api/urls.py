@@ -6,6 +6,7 @@ from api.views_developer_auth import (
     GetDeveloperAppDetailsView,
     GetDeveloperAppMetricsView,
     GetDeveloperAppOrdersView,
+    ImageUpdate,
     RevokeDeveloperAppView,
 )
 from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
@@ -60,6 +61,7 @@ urlpatterns = [
     path("internal/checkuserexists/<uuid:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
     path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),
     # urls with either jhipster or backend authentication
+    path("app/image_update", ImageUpdate.as_view(), name="image_update"),
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),
     path("apps/<uuid:id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),

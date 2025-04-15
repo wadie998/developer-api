@@ -1,9 +1,12 @@
 import base64
+import re
 
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
+from api.constant import BASE64_IMAGE_REGEX
 from api.enum import Currency
+from api.models import FlouciApp
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -103,6 +106,24 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
             raise serializers.ValidationError("Image size must be less than 3 MB.")
 
         return ContentFile(img_data, name=f"temp.{ext}")
+
+
+class ImageUpdateSerializer(DefaultSerializer):
+    app_id = serializers.UUIDField()
+    new_image = serializers.CharField(max_length=1000)
+
+    def validate_new_image(self, value):
+        if not re.match(BASE64_IMAGE_REGEX, value):
+            raise serializers.ValidationError("Invalid image format.")
+        return value
+
+    def validate(self, attrs):
+        try:
+            app = FlouciApp.objects.get(id=attrs["app_id"])
+        except FlouciApp.DoesNotExist:
+            raise serializers.ValidationError("App does not exist")
+        attrs["app"] = app
+        return attrs
 
 
 class UpdateDeveloperAppSerializer(DefaultSerializer):

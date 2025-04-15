@@ -24,6 +24,7 @@ class PartnerTransactionAdmin(admin.ModelAdmin):
         "time_created",
         "time_modified",
     )
+    raw_id_fields = ["sender", "receiver"]
     search_fields = ("operation_id", "operation_type", "blockchain_ref")
     list_filter = ("operation_type", "operation_status", "time_created", "time_modified")
     readonly_fields = ("time_created", "time_modified")

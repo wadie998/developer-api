@@ -271,6 +271,7 @@ class GetDeveloperAppOrdersView(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+@extend_schema(exclude=True)
 @IsValidGenericApi(get=True, post=False)
 class GetAppInfo(GenericAPIView):
     permission_classes = (TokenPermission,)
@@ -287,6 +288,7 @@ class GetAppInfo(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+@extend_schema(exclude=True)
 @IsValidGenericApi()
 class PostAppInfo(GenericAPIView):
     serializer_class = AppCredsSerializer

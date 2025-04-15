@@ -293,6 +293,7 @@ class GetAppInfo(GenericAPIView):
 class PostAppInfo(GenericAPIView):
     serializer_class = AppCredsSerializer
 
+    # TODO: Depricate this view after removed from data api..
     def post(self, request, serializer):
         app_token = serializer.validated_data.get("app_token")
         app_secret = serializer.validated_data.get("app_secret")

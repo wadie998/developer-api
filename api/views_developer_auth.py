@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from api.models import FlouciApp
 from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
-    AppCredsSerializer,
+    AppInfoSerializer,
     CreateDeveloperAppSerializer,
     DefaultSerializer,
     DeveloperAppSerializer,
@@ -291,12 +291,12 @@ class GetAppInfo(GenericAPIView):
 @extend_schema(exclude=True)
 @IsValidGenericApi()
 class PostAppInfo(GenericAPIView):
-    serializer_class = AppCredsSerializer
+    serializer_class = AppInfoSerializer
 
     # TODO: Depricate this view after removed from data api..
     def post(self, request, serializer):
-        app_token = serializer.validated_data["app_token"]
-        app_secret = serializer.validated_data["app_secret"]
+        app_token = serializer.validated_data["public_token"]
+        app_secret = serializer.validated_data["private_token"]
         try:
             app = FlouciApp.objects.get(public_token=app_token, private_token=app_secret)
         except FlouciApp.DoesNotExist:

@@ -358,8 +358,8 @@ class TestV2VerifyPaymentView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["payment_status"], "SUCCESS")
+        self.assertTrue(data["success"])
+        self.assertEqual(data["result"]["status"], "SUCCESS")
 
     @patch("utils.backend_client.FlouciBackendClient.check_payment")
     def test_verify_payment_failure(self, mock_check_payment):
@@ -372,8 +372,8 @@ class TestV2VerifyPaymentView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertFalse(data["result"]["success"])
-        self.assertIn("Invalid Transaction ID", data["result"]["error"])
+        self.assertFalse(data["success"])
+        self.assertIn("Invalid Transaction ID", data["result"])
 
     def test_verify_payment_invalid_token_format(self):
         url = reverse("verify_payment", kwargs={"payment_id": self.payment_id})
@@ -420,7 +420,7 @@ class TestV2SendMoneyView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["transaction_id"], "47fbe6be-9b9a-4060-84ad-cb69500d1865")
+        self.assertEqual(data["result"]["payment_id"], "47fbe6be-9b9a-4060-84ad-cb69500d1865")
         self.assertEqual(
             data["result"]["message"],
             "Operation initiated successfully. You will receive a webhook with final confirmation.",
@@ -488,10 +488,9 @@ class TestV2SendMoneyView(BaseCreateDeveloperApp):
         }
 
         mock_send_money.return_value = {
-            "success": True,
-            "message": "Transaction successful",
-            "payment_id": "jvdqMbFKTAWQSrkeqlL1Rg",
-            "status_code": 200,
+            "success": False,
+            "message": "Missing webhook",
+            "status_code": 400,
         }
 
         response = self.client.post(
@@ -500,11 +499,9 @@ class TestV2SendMoneyView(BaseCreateDeveloperApp):
             headers=self.valid_headers,
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["transaction_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
-        self.assertEqual(data["result"]["message"], "Transaction successful")
+        self.assertEqual(data["webhook"][0], "This field is required.")
 
     def test_send_money_invalid_token(self):
         response = self.client.post(self.url, data=self.valid_data, headers={"Authorization": "Bearer invalid_token"})
@@ -568,9 +565,9 @@ class TestV2CheckSendMoneyStatusView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["transaction_status"], "SUCCESS")
-        self.assertEqual(data["result"]["transaction_id"], str(self.operation_id))
+        self.assertTrue(data["success"])
+        self.assertEqual(data["result"]["status"], "SUCCESS")
+        self.assertEqual(data["result"]["details"]["payment_id"], str(self.operation_id))
 
     @patch("utils.backend_client.FlouciBackendClient.developer_check_send_money_status")
     def test_check_payment_status_backend_failure(self, mock_backend):
@@ -585,9 +582,9 @@ class TestV2CheckSendMoneyStatusView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 404)
         data = response.json()
-        self.assertFalse(data["result"]["success"])
-        self.assertEqual(data["result"]["message"], "Transaction not found")
-        self.assertEqual(data["result"]["code"], 404)
+        self.assertFalse(data["success"])
+        self.assertEqual(data["message"], "Transaction not found")
+        self.assertEqual(data["status_code"], 404)
 
     def test_check_payment_status_invalid_token_format(self):
         response = self.client.get(self.url, HTTP_AUTHORIZATION="InvalidToken")
@@ -605,8 +602,8 @@ class TestV2CheckSendMoneyStatusView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 406)
         data = response.json()
         logging.info(f"data {data}")
-        self.assertFalse(data["result"]["success"])
-        self.assertEqual(data["result"]["result"], "Not allowed.")
+        self.assertFalse(data["success"])
+        self.assertEqual(data["result"], "Not allowed.")
 
 
 class TestCheckUserExistsView(BaseCreateDeveloperApp):
@@ -1120,8 +1117,8 @@ class TestVerifyPaymentView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["payment_status"], "SUCCESS")
+        self.assertTrue(data["success"])
+        self.assertEqual(data["result"]["status"], "SUCCESS")
 
     @patch("utils.backend_client.FlouciBackendClient.check_payment")
     def test_verify_payment_failure(self, mock_check_payment):
@@ -1131,8 +1128,8 @@ class TestVerifyPaymentView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertFalse(data["result"]["success"])
-        self.assertIn("Invalid Transaction ID", data["result"]["error"])
+        self.assertFalse(data["success"])
+        self.assertIn("Invalid Transaction ID", data["result"])
 
     def test_verify_payment_invalid_token_format(self):
         url = reverse("old_verify_payment", kwargs={"payment_id": self.payment_id})
@@ -1183,7 +1180,7 @@ class TestSendMoneyView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["transaction_id"], "47fbe6be-9b9a-4060-84ad-cb69500d1865")
+        self.assertEqual(data["result"]["payment_id"], "47fbe6be-9b9a-4060-84ad-cb69500d1865")
         self.assertEqual(
             data["result"]["message"],
             "Operation initiated successfully. You will receive a webhook with final confirmation.",
@@ -1239,20 +1236,17 @@ class TestSendMoneyView(BaseCreateDeveloperApp):
     def test_send_money_without_webhook(self, mock_send_money):
         del self.valid_data["webhook"]
         mock_send_money.return_value = {
-            "success": True,
-            "message": "Transaction successful",
-            "payment_id": "jvdqMbFKTAWQSrkeqlL1Rg",
-            "status_code": 200,
+            "success": False,
+            "message": "Missing webhook",
+            "status_code": 400,
         }
         response = self.client.post(
             self.url,
             data=self.valid_data,
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["transaction_id"], "jvdqMbFKTAWQSrkeqlL1Rg")
-        self.assertEqual(data["result"]["message"], "Transaction successful")
+        self.assertEqual(data["webhook"][0], "This field is required.")
 
     def test_send_money_invalid_token(self):
         del self.valid_data["app_secret"]
@@ -1320,9 +1314,9 @@ class TestCheckSendMoneyStatusView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertTrue(data["result"]["success"])
-        self.assertEqual(data["result"]["transaction_status"], "SUCCESS")
-        self.assertEqual(data["result"]["transaction_id"], str(self.operation_id))
+        self.assertTrue(data["success"])
+        self.assertEqual(data["result"]["status"], "SUCCESS")
+        self.assertEqual(data["result"]["details"]["payment_id"], str(self.operation_id))
 
     @patch("utils.backend_client.FlouciBackendClient.developer_check_send_money_status")
     def test_check_payment_status_backend_failure(self, mock_backend):
@@ -1337,9 +1331,9 @@ class TestCheckSendMoneyStatusView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 404)
         data = response.json()
-        self.assertFalse(data["result"]["success"])
-        self.assertEqual(data["result"]["message"], "Transaction not found")
-        self.assertEqual(data["result"]["code"], 404)
+        self.assertFalse(data["success"])
+        self.assertEqual(data["message"], "Transaction not found")
+        self.assertEqual(data["status_code"], 404)
 
     def test_check_payment_status_invalid_token_format(self):
         response = self.client.get(self.url)
@@ -1357,6 +1351,5 @@ class TestCheckSendMoneyStatusView(BaseCreateDeveloperApp):
 
         self.assertEqual(response.status_code, 406)
         data = response.json()
-        logging.info(f"data {data}")
-        self.assertFalse(data["result"]["success"])
-        self.assertEqual(data["result"]["result"], "Not allowed.")
+        self.assertFalse(data["success"])
+        self.assertEqual(data["result"], "Not allowed.")

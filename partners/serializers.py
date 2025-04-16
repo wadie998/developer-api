@@ -81,13 +81,12 @@ class PaginatedHistorySerializer(serializers.ModelSerializer):
 
 class BaseRequestViewSerializer(serializers.Serializer):
     from_date = serializers.DateTimeField(
-        source="from",
         input_formats=["%Y-%m-%dT%H:%M:%SZ"],
         default=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0),
     )
-    to_date = serializers.DateTimeField(source="to", input_formats=["%Y-%m-%dT%H:%M:%SZ"], default=timezone.now)
+    to_date = serializers.DateTimeField(input_formats=["%Y-%m-%dT%H:%M:%SZ"], default=timezone.now)
     operation_type = serializers.ChoiceField(choices=SendMoneyServiceOperationTypes.get_choices(), required=False)
-    operation_status = serializers.ChoiceField(choices=RequestStatus.get_choices(), required=False)
+    operation_status = serializers.ChoiceField(choices=RequestStatus.get_choices(), default=RequestStatus.APPROVED)
 
 
 class FilterHistorySerializer(BaseRequestViewSerializer):

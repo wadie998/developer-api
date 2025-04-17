@@ -90,11 +90,10 @@ class BaseAppCredentialPermission(BasePermission):
                 active=True,
             )
             if self.requires_partner_access:
-                if not application.partner_access:
+                if not application.has_partner_access:
                     return False
         except ObjectDoesNotExist:
             return False
-
         request.application = application
         return True
 

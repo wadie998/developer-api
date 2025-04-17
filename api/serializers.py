@@ -33,13 +33,13 @@ class DestinationSerializer(DefaultSerializer):
 
 
 class GeneratePaymentSerializer(DefaultSerializer):
-    amount = serializers.IntegerField(min_value=100, max_value=5000000)
+    amount = serializers.IntegerField(min_value=100, max_value=2000000)
     accept_card = serializers.BooleanField()
-    session_timeout_secs = serializers.IntegerField(min_value=300, default=1200)
-    session_timeout = serializers.IntegerField(min_value=300, default=1200)
+    session_timeout_secs = serializers.IntegerField(default=1200)
+    session_timeout = serializers.IntegerField(default=1200)
     success_link = serializers.URLField()
     fail_link = serializers.URLField()
-    developer_tracking_id = serializers.CharField(max_length=40)
+    developer_tracking_id = serializers.CharField(min_length=10, max_length=50)
     accept_edinar = serializers.BooleanField(required=False)
     currency = serializers.ChoiceField(choices=Currency.get_choices(), default=Currency.TND.value)
     webhook = serializers.URLField(required=False)
@@ -139,10 +139,10 @@ class UpdateDeveloperAppSerializer(DefaultSerializer):
 
 class BaseSendMoneySerializer(DefaultSerializer):
     amount = serializers.IntegerField(
-        min_value=100, max_value=5000000
+        min_value=100, max_value=2000000
     )  # To verify with Anis, Should we consider packs/limits
     destination = serializers.CharField(max_length=35)
-    webhook = serializers.URLField(required=False)
+    webhook = serializers.URLField()
 
     def validate(self, data):
         data["amount_in_millimes"] = data["amount"]

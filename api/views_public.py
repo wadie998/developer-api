@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -216,22 +218,14 @@ class BaseVerifyPaymentView(GenericAPIView):
         )
         if response.get("success"):
             data = {
-                "result": {
-                    "payment_status": response["result"].get("status"),
-                    "payment_id": payment_id,
-                    "success": True,
-                },
+                **response,
                 "name": "developers",
                 "code": 0,
                 "version": DJANGO_SERVICE_VERSION,
             }
         else:
             data = {
-                "result": {
-                    "success": False,
-                    "error": response.get("result"),
-                    "details": response.get("non_field_errors"),
-                },
+                **response,
                 "name": "developers",
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
@@ -335,12 +329,15 @@ class BaseSendMoneyView(GenericAPIView):
             webhook=validated_data.get("webhook"),
             sender_id=request.application.merchant_id,
         )
+        status_code = response.get("status_code")
         if response["success"]:
             data = {
                 "result": {
+                    "code": 0,
                     "success": True,
                     "message": response.get("message"),
-                    "transaction_id": response.get("payment_id"),
+                    "payment_id": response.get("payment_id"),
+                    "status": f"{HTTPStatus(status_code).phrase}",
                 },
                 "name": "developers",
                 "code": 0,
@@ -451,28 +448,25 @@ class BaseCheckSendMoneyStatusView(GenericAPIView):
         sender_id = request.application.merchant_id
         operation_id = serializer.validated_data["operation_id"]
         response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
+        status_code = response.get("status_code")
 
         if response["success"]:
             data = {
-                "result": {
-                    "transaction_status": response["result"].get("status"),
-                    "transaction_id": operation_id,
-                    "success": True,
-                },
-                "name": "check_send_money_status",
+                "success": True,
+                **response,
+                "httpStatus": f"{HTTPStatus(status_code).phrase}",
                 "code": 0,
                 "version": DJANGO_SERVICE_VERSION,
             }
         else:
             data = {
-                "result": {
-                    **response,
-                },
-                "name": "check_send_money_status",
+                "success": False,
+                **response,
+                "httpStatus": f"{HTTPStatus(status_code).phrase}",
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
             }
-        return Response(data=data, status=response.get("status_code"))
+        return Response(data=data, status=status_code)
 
 
 @extend_schema(
@@ -575,7 +569,7 @@ class BaseAcceptPayment(GenericAPIView):
         accept_payment_data["destination"] = app.wallet
 
         response = DataApiClient.accept_payment(data=accept_payment_data)
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(response, status=response.get("status_code"))
 
 
 @IsValidGenericApi()

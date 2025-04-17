@@ -22,6 +22,11 @@ class AppCredsSerializer(DefaultSerializer):
     app_secret = serializers.UUIDField()
 
 
+class AppInfoSerializer(DefaultSerializer):
+    public_token = serializers.UUIDField()
+    private_token = serializers.UUIDField()
+
+
 class DestinationSerializer(DefaultSerializer):
     amount = serializers.IntegerField(min_value=1)
     destination = serializers.CharField(max_length=255)

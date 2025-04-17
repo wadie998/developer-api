@@ -1,12 +1,8 @@
-import base64
-import re
-
-from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from api.constant import BASE64_IMAGE_REGEX
 from api.enum import Currency
 from api.models import FlouciApp
+from utils.validators import validate_base64_image
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -87,40 +83,19 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
     merchant_id = serializers.CharField(max_length=255)
     username = serializers.CharField()
     wallet = serializers.CharField(max_length=255)
-    imageBase64 = serializers.CharField(required=False)
+    imageBase64 = serializers.CharField(required=False, validators=[validate_base64_image])
 
     def validate(self, data):
         data["tracking_id"] = data["username"]
         image_b64 = data.get("imageBase64")
         if image_b64:
-            data["app_image"] = self._decode_base64_image(image_b64)
-
+            data["app_image"] = image_b64
         return data
-
-    def _decode_base64_image(self, image_b64):
-        MAX_IMAGE_SIZE = 3 * 1024 * 1024  # 3 MB
-        """Helper function to decode base64 image."""
-        try:
-            header, encoded = image_b64.split(";base64,")
-            ext = header.rsplit("/", 1)[-1]  # Extract file extension
-            img_data = base64.b64decode(encoded)
-        except (ValueError, TypeError, base64.binascii.Error):
-            raise serializers.ValidationError("Invalid base64 image string.")
-
-        if len(img_data) > MAX_IMAGE_SIZE:
-            raise serializers.ValidationError("Image size must be less than 3 MB.")
-
-        return ContentFile(img_data, name=f"temp.{ext}")
 
 
 class ImageUpdateSerializer(DefaultSerializer):
     app_id = serializers.UUIDField()
     new_image = serializers.CharField()
-
-    def validate_new_image(self, value):
-        if not re.match(BASE64_IMAGE_REGEX, value):
-            raise serializers.ValidationError("Invalid image format.")
-        return value
 
     def validate(self, attrs):
         try:

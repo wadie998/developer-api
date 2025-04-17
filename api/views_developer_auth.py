@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
+from api.constant import APP_NUMBER_LIMIT
 from api.models import FlouciApp
 from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
@@ -19,7 +20,7 @@ from api.serializers import (
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
-from utils.gcp_client import GCSClient
+from utils.gcs_client import GCSClient
 from utils.pagination_helper import generate_pagination_headers
 
 logger = logging.getLogger(__name__)
@@ -80,13 +81,32 @@ class CreateDeveloperAppView(GenericAPIView):
             return Response(
                 {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
+        list_of_apps = FlouciApp.objects.filter(tracking_id=request.tracking_id)
+        if list_of_apps.count() > APP_NUMBER_LIMIT:
+            # TODO: This should be added to limiter
+            return Response(
+                {"success": False, "details": "App limit reached.", "code": 2},
+                status=status.HTTP_412_PRECONDITION_FAILED,
+            )
+        if list_of_apps.filter(name=serializer.validated_data.get("name")).exists():
+            return Response(
+                {"success": False, "details": "App name already exists."}, status=status.HTTP_412_PRECONDITION_FAILED
+            )
         app = FlouciApp.objects.create(
             name=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
             wallet=serializer.validated_data.get("wallet"),
-            merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
+            merchant_id=serializer.validated_data.get("merchant_id"),
             tracking_id=request.tracking_id,
         )
+        new_image = serializer.validated_data.get("app_image")
+        if new_image:
+            gcs_client = GCSClient()
+            image_url = gcs_client.save_image(img_b64=new_image, image_name=str(app.app_id))
+            if not image_url:
+                logger.warning(f"Failed to upload image for app {app.app_id}")
+            app.image_url = image_url
+            app.save(update_fields=["image_url"])
         data = app.get_app_details()
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -148,7 +168,7 @@ class ImageUpdate(GenericAPIView):
         new_image = serializer.validated_data["new_image"]
         app: FlouciApp = serializer.validated_data["app"]
         gcs_client = GCSClient()
-        image_url = gcs_client.save_image(img_b64=new_image, image_name=str(app.id), folder="dev")
+        image_url = gcs_client.save_image(img_b64=new_image, image_name=str(app.app_id))
         if not image_url:
             return Response(
                 {"code": 1, "message": "Failed to upload image", "result": None},

@@ -8,13 +8,14 @@ from settings.settings import (
     GCS_BASE_DIR_NAME,
     GCS_BUCKET_NAME,
     GCS_FOLDER_NAME,
+    MINIO_IMAGES_PREFIX,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class GCSClient:
-    MINIO_IMAGES_PREFIX = "devapi_img_"
+    MINIO_IMAGES_PREFIX = MINIO_IMAGES_PREFIX
     GCS_BUCKET = GCS_BUCKET_NAME
     GCS_FOLDER = GCS_FOLDER_NAME
     GCS_DIR = GCS_BASE_DIR_NAME

@@ -218,11 +218,12 @@ CASH_IO_VERIFICATION_TOKEN = config("CASH_IO_VERIFICATION_TOKEN", default="")
 DEVELOPER_API_INTERNAL_ADDRESS = config("DEVELOPER_API_INTERNAL_ADDRESS", default="")
 
 # GCS
-GCS_BUCKET_NAME = config("GCS_BUCKET_NAME", default="kaoun-flouci-developers-api-internal")
-GCS_FOLDER_NAME = config("GCS_FOLDER_NAME", default="dev")
-GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="developers-api-app-images")
+GCS_BUCKET_NAME = config("GCS_BUCKET_NAME", default="")
+GCS_FOLDER_NAME = config("GCS_FOLDER_NAME", default="")
+GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="")
 # File Path
 if ENV:
     GCS_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
 else:
     GCS_ACCOUNT_CREDENTIALS_FILE_PATH = config("GCS_ACCOUNT_CREDENTIALS_FILE_PATH", default="./gcloud-credentials.json")
+MINIO_IMAGES_PREFIX = config("MINIO_IMAGES_PREFIX", default="")

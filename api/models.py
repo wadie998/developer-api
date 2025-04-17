@@ -73,7 +73,7 @@ class FlouciApp(models.Model):
     app_id = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
-    tracking_id = models.UUIDField(blank=True, null=True, editable=False)
+    tracking_id = models.UUIDField(blank=True, null=True)
     wallet = models.CharField(max_length=35)
     status = models.CharField(choices=AppStatus.choices, default=AppStatus.VERIFIED, max_length=20)
     active = models.BooleanField(default=True)

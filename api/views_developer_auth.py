@@ -79,18 +79,19 @@ class CreateDeveloperAppView(GenericAPIView):
             request.tracking_id = serializer.validated_data.get("username")
         elif request.tracking_id and not serializer.validated_data.get("username"):
             return Response(
-                {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
+                {"success": False, "message": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
         list_of_apps = FlouciApp.objects.filter(tracking_id=request.tracking_id)
         if list_of_apps.count() > APP_NUMBER_LIMIT:
             # TODO: This should be added to limiter
             return Response(
-                {"success": False, "details": "App limit reached.", "code": 2},
+                {"success": False, "message": "App limit reached.", "code": 2},
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
         if list_of_apps.filter(name=serializer.validated_data.get("name")).exists():
             return Response(
-                {"success": False, "details": "App name already exists."}, status=status.HTTP_412_PRECONDITION_FAILED
+                {"success": False, "message": "App name already exists.", "code": 1},
+                status=status.HTTP_412_PRECONDITION_FAILED,
             )
         app = FlouciApp.objects.create(
             name=serializer.validated_data.get("name"),

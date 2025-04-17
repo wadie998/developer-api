@@ -42,12 +42,13 @@ class DataApiClient:
                 "sender": transaction_result.get("account"),
                 "transaction_id": transaction_result.get("hash"),
             }
-            return {"result": payment_response, "code": 0}
+            return {"result": payment_response, "code": 0, "status_code": response.status_code}
         else:
             return {
                 "result": {"status": "FAILED"},
                 "code": response_data.get("code", 1),
                 "message": response_data.get("message", "Payment failed"),
+                "status_code": response.status_code,
             }
 
 

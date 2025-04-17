@@ -83,15 +83,17 @@ class BaseAppCredentialPermission(BasePermission):
             return False
 
         try:
+
             application = FlouciApp.objects.get(
                 public_token=public_token,
                 private_token=private_token,
                 active=True,
-                has_partner_access=self.requires_partner_access,
             )
+            if self.requires_partner_access:
+                if not application.has_partner_access:
+                    return False
         except ObjectDoesNotExist:
             return False
-
         request.application = application
         return True
 

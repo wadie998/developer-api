@@ -56,7 +56,6 @@ class CreateDeveloperAppView(GenericAPIView):
         response = Response(
             {
                 # TODO: fix response in the new webapp
-                **app_list,
                 "result": app_list,
                 "code": 200,
                 "name": "developers",

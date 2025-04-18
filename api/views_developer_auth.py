@@ -100,10 +100,14 @@ class CreateDeveloperAppView(GenericAPIView):
             merchant_id=serializer.validated_data.get("merchant_id"),
             tracking_id=request.tracking_id,
         )
-        new_image = serializer.validated_data.get("app_image")
-        if new_image:
-            gcs_client = GCSClient()
-            image_url = gcs_client.save_image(img_b64=new_image, image_name=str(app.app_id))
+        image_info = serializer.validated_data.get("image_info")
+        if image_info:
+            image_url = GCSClient().save_image(
+                image_b64=image_info["image_data"],
+                image_name=str(app.app_id),
+                extension=image_info["extension"],
+                content_type=image_info["content_type"],
+            )
             if not image_url:
                 logger.warning(f"Failed to upload image for app {app.app_id}")
             app.image_url = image_url
@@ -166,10 +170,14 @@ class ImageUpdate(GenericAPIView):
     serializer_class = ImageUpdateSerializer
 
     def post(self, request, serializer):
-        new_image = serializer.validated_data["new_image"]
+        image_info = serializer.validated_data["image_info"]
         app: FlouciApp = serializer.validated_data["app"]
-        gcs_client = GCSClient()
-        image_url = gcs_client.save_image(img_b64=new_image, image_name=str(app.app_id))
+        image_url = GCSClient().save_image(
+            image_b64=image_info["image_data"],
+            image_name=str(app.app_id),
+            extension=image_info["extension"],
+            content_type=image_info["content_type"],
+        )
         if not image_url:
             return Response(
                 {"code": 1, "message": "Failed to upload image", "result": None},

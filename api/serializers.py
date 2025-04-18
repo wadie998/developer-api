@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from api.enum import Currency
 from api.models import FlouciApp
+from utils.image_helper import extract_base64_image_data
 from utils.validators import validate_base64_image
 
 
@@ -85,17 +86,33 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
     wallet = serializers.CharField(max_length=255)
     imageBase64 = serializers.CharField(required=False, validators=[validate_base64_image])
 
+    def validate_imageBase64(self, value):
+        image_data, extension, content_type = extract_base64_image_data(value)
+        return {
+            "image_data": image_data,
+            "extension": extension,
+            "content_type": content_type,
+        }
+
     def validate(self, data):
         data["tracking_id"] = data["username"]
-        image_b64 = data.get("imageBase64")
-        if image_b64:
-            data["app_image"] = image_b64
+        image_info = data.get("imageBase64")
+        if image_info:
+            data["image_info"] = image_info
         return data
 
 
 class ImageUpdateSerializer(DefaultSerializer):
     app_id = serializers.UUIDField()
-    new_image = serializers.CharField()
+    new_image = serializers.CharField(validators=[validate_base64_image])
+
+    def validate_new_image(self, value):
+        image_data, extension, content_type = extract_base64_image_data(value)
+        return {
+            "image_data": image_data,
+            "extension": extension,
+            "content_type": content_type,
+        }
 
     def validate(self, attrs):
         try:
@@ -103,6 +120,8 @@ class ImageUpdateSerializer(DefaultSerializer):
         except FlouciApp.DoesNotExist:
             raise serializers.ValidationError("App does not exist")
         attrs["app"] = app
+        attrs["image_info"] = attrs["new_image"]
+
         return attrs
 
 

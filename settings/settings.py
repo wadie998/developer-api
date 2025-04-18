@@ -225,5 +225,7 @@ GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="")
 if ENV:
     GCS_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
 else:
-    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = config("GCS_ACCOUNT_CREDENTIALS_FILE_PATH", default="./gcloud-credentials.json")
+    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = config(
+        "GCS_ACCOUNT_CREDENTIALS_FILE_PATH", default="./gcloud-credentials.example.json"
+    )
 MINIO_IMAGES_PREFIX = config("MINIO_IMAGES_PREFIX", default="")

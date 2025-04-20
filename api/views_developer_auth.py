@@ -88,16 +88,17 @@ class CreateDeveloperAppView(GenericAPIView):
                 {"success": False, "message": "App limit reached.", "code": 2},
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
-        if list_of_apps.filter(name=serializer.validated_data.get("name")).exists():
+        app_name = serializer.validated_data["name"]
+        if list_of_apps.filter(name=app_name).exists():
             return Response(
                 {"success": False, "message": "App name already exists.", "code": 1},
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
         app = FlouciApp.objects.create(
-            name=serializer.validated_data.get("name"),
+            name=app_name,
             description=serializer.validated_data.get("description"),
-            wallet=serializer.validated_data.get("wallet"),
-            merchant_id=serializer.validated_data.get("merchant_id"),
+            wallet=serializer.validated_data["wallet"],
+            merchant_id=serializer.validated_data["merchant_id"],
             tracking_id=request.tracking_id,
         )
         image_info = serializer.validated_data.get("image_info")

@@ -14,6 +14,25 @@ class DefaultSerializer(serializers.Serializer):
         pass
 
 
+class Base64ImageField(serializers.CharField):
+    """
+    Custom field for validating and processing base64 encoded images.
+    """
+
+    def __init__(self, **kwargs):
+        # Add the base64 image validator
+        kwargs["validators"] = kwargs.get("validators", []) + [validate_base64_image]
+        super().__init__(**kwargs)
+
+    def validate(self, value):
+        image_data, extension, content_type = extract_base64_image_data(value)
+        return {
+            "image_data": image_data,
+            "extension": extension,
+            "content_type": content_type,
+        }
+
+
 class AppCredsSerializer(DefaultSerializer):
     app_token = serializers.UUIDField()
     app_secret = serializers.UUIDField()
@@ -84,15 +103,7 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
     merchant_id = serializers.CharField(max_length=255)
     username = serializers.CharField()
     wallet = serializers.CharField(max_length=255)
-    imageBase64 = serializers.CharField(required=False, validators=[validate_base64_image])
-
-    def validate_imageBase64(self, value):
-        image_data, extension, content_type = extract_base64_image_data(value)
-        return {
-            "image_data": image_data,
-            "extension": extension,
-            "content_type": content_type,
-        }
+    imageBase64 = Base64ImageField(required=False)
 
     def validate(self, data):
         data["tracking_id"] = data["username"]
@@ -104,15 +115,7 @@ class CreateDeveloperAppSerializer(DefaultSerializer):
 
 class ImageUpdateSerializer(DefaultSerializer):
     app_id = serializers.UUIDField()
-    new_image = serializers.CharField(validators=[validate_base64_image])
-
-    def validate_new_image(self, value):
-        image_data, extension, content_type = extract_base64_image_data(value)
-        return {
-            "image_data": image_data,
-            "extension": extension,
-            "content_type": content_type,
-        }
+    new_image = Base64ImageField()
 
     def validate(self, attrs):
         try:

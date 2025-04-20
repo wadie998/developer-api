@@ -20,7 +20,6 @@ from api.serializers import (
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
-from utils.gcs_client import GCSClient
 from utils.pagination_helper import generate_pagination_headers
 
 logger = logging.getLogger(__name__)
@@ -103,16 +102,7 @@ class CreateDeveloperAppView(GenericAPIView):
         )
         image_info = serializer.validated_data.get("image_info")
         if image_info:
-            image_url = GCSClient().save_image(
-                image_b64=image_info["image_data"],
-                image_name=str(app.app_id),
-                extension=image_info["extension"],
-                content_type=image_info["content_type"],
-            )
-            if not image_url:
-                logger.warning(f"Failed to upload image for app {app.app_id}")
-            app.image_url = image_url
-            app.save(update_fields=["image_url"])
+            app.update_image(image_info)
         data = app.get_app_details()
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -173,19 +163,13 @@ class ImageUpdate(GenericAPIView):
     def post(self, request, serializer):
         image_info = serializer.validated_data["image_info"]
         app: FlouciApp = serializer.validated_data["app"]
-        image_url = GCSClient().save_image(
-            image_b64=image_info["image_data"],
-            image_name=str(app.app_id),
-            extension=image_info["extension"],
-            content_type=image_info["content_type"],
-        )
+        app.update_image(image_info)
+        image_url = app.image_url
         if not image_url:
             return Response(
                 {"code": 1, "message": "Failed to upload image", "result": None},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        app.image_url = image_url
-        app.save(update_fields=["image_url"])
         response_data = {
             "result": image_url,
             "code": 0,

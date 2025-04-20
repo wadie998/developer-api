@@ -24,6 +24,14 @@ class AppInfoSerializer(DefaultSerializer):
     private_token = serializers.UUIDField()
 
 
+class PartnerConnectedAppsSerializer(DefaultSerializer):
+    pass
+
+
+class UpdateConnectedAppsSerializer(DefaultSerializer):
+    public_token = serializers.UUIDField()
+
+
 class DestinationSerializer(DefaultSerializer):
     amount = serializers.IntegerField(min_value=1)
     destination = serializers.CharField(max_length=255)

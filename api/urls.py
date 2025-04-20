@@ -7,6 +7,7 @@ from api.views_developer_auth import (
     GetDeveloperAppDetailsView,
     GetDeveloperAppMetricsView,
     GetDeveloperAppOrdersView,
+    PartnerConnectedApps,
     PostAppInfo,
     RevokeDeveloperAppView,
 )
@@ -79,6 +80,8 @@ urlpatterns = [
         EnableOrDisableDeveloperAppView.as_view(enable_or_disable=True),
         name="disable_developer_app",
     ),
+    # Partner connected Apps
+    path("partners/apps", PartnerConnectedApps.as_view(), name="partner_connected_apps"),
     # Depricated views
     path("metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_internal_metrics"),
     path("orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_internal_orders"),

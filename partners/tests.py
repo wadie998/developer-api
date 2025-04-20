@@ -40,9 +40,7 @@ class InitiateLinkAccountViewTest(BaseCreateDeveloperApp):
 
     def create_linked_account(self, phone_number, tracking_id):
         return LinkedAccount.objects.create(
-            phone_number=phone_number,
-            account_tracking_id=tracking_id,
-            merchant_id=111,
+            phone_number=phone_number, account_tracking_id=tracking_id, merchant_id=111, public_token=self.public_token
         )
 
     @patch("utils.backend_client.FlouciBackendClient.initiate_link_account")
@@ -229,6 +227,7 @@ class TestAuthenticateView(BaseCreateDeveloperApp):
             account_tracking_id=uuid.uuid4(),
             merchant_id=self.app.merchant_id,
             phone_number=self.phone_number,
+            public_token=self.public_token,
         )
 
     @patch("utils.backend_client.FlouciBackendClient.generate_authentication_token")
@@ -319,6 +318,7 @@ class TestRefreshAuthenticateView(BaseCreateDeveloperApp):
             partner_tracking_id=self.partner_tracking_id,
             account_tracking_id=self.account_tracking_id,
             merchant_id=self.merchant_id,
+            public_token=self.public_token,
         )
         self.token = f"{self.app.public_token}:{self.app.private_token}"
         self.valid_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.token}"}
@@ -338,6 +338,7 @@ class TestPartnerBalanceView(BaseCreateDeveloperApp):
             partner_tracking_id=self.partner_tracking_id,
             account_tracking_id=self.account_tracking_id,
             merchant_id=self.merchant_id,
+            public_token=self.public_token,
         )
 
     @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
@@ -411,6 +412,7 @@ class TestPartnerHistoryView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            public_token=self.public_token,
         )
         self.token = f"{self.app.public_token}:{self.app.private_token}"
         self.valid_headers = {"Authorization": f"Bearer {self.token}"}
@@ -525,6 +527,7 @@ class TestPartnerInitiatePaymentView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            public_token=self.public_token,
         )
         self.serializer_data = {
             "amount_in_millimes": 5000,
@@ -720,6 +723,7 @@ class TestBalanceView(BaseCreateDeveloperApp):
             partner_tracking_id=self.partner_tracking_id,
             account_tracking_id=self.account_tracking_id,
             merchant_id=self.merchant_id,
+            public_token=self.public_token,
         )
 
     @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
@@ -796,6 +800,7 @@ class TestHistoryView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            public_token=self.public_token,
         )
 
     @patch("api.permissions.verify_backend_token")
@@ -936,6 +941,7 @@ class TestInitiatePaymentView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            public_token=self.public_token,
         )
         self.serializer_data = {
             "amount_in_millimes": 5000,

@@ -87,7 +87,6 @@ class InitiateLinkAccountView(GenericAPIView):
                     public_token=request.application.public_token,
                     is_active=True,  # in case the account is inactive, you can re-allow via the partner.
                 ).exists():
-                    print("what")
                     return Response(
                         {"success": False, "message": "Account already linked."}, status=status.HTTP_202_ACCEPTED
                     )

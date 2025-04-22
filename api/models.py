@@ -150,5 +150,6 @@ class FlouciApp(models.Model):
         )
         if not image_url:
             logger.warning(f"Failed to upload image for app {self.app_id}")
+            return
         self.image_url = image_url
         self.save(update_fields=["image_url"])

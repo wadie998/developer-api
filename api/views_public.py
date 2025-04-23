@@ -328,13 +328,13 @@ class BaseSendMoneyView(GenericAPIView):
                     "result": {
                         "success": False,
                         "error": "Can't send money through test App",
-                        "code": 406,
+                        "code": 400,
                     },
                     "name": "developers",
                     "code": 1,
                     "version": DJANGO_SERVICE_VERSION,
                 },
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+                status=status.HTTP_400_BAD_REQUEST,
             )
         validated_data = serializer.validated_data
 

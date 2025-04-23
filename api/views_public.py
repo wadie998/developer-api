@@ -321,13 +321,28 @@ class BaseSendMoneyView(GenericAPIView):
     permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
+        application: FlouciApp = request.application
+        if application.test:
+            return Response(
+                data={
+                    "result": {
+                        "success": False,
+                        "error": "Can't send money through test App",
+                        "code": 406,
+                    },
+                    "name": "developers",
+                    "code": 1,
+                    "version": DJANGO_SERVICE_VERSION,
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         validated_data = serializer.validated_data
 
         response = FlouciBackendClient.developer_send_money_status(
             amount_in_millimes=validated_data.get("amount_in_millimes"),
             receiver=validated_data.get("destination"),
             webhook=validated_data.get("webhook"),
-            sender_id=request.application.merchant_id,
+            sender_id=application.merchant_id,
         )
         status_code = response.get("status_code")
         if response["success"]:

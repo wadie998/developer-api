@@ -33,7 +33,7 @@ class BaseCreateDeveloperApp(APITestCase):
             wallet=self.wallet,
             merchant_id=self.merchant_id,
             tracking_id=self.username,
-            test=True,
+            test=False,
         )
         self.api_key = create_api_key(ApiKeyServicesNames.BACKEND)
 
@@ -750,6 +750,8 @@ class TestV2AcceptPaymentView(BaseCreateDeveloperApp):
         self.url = reverse("accept_payment")
 
     def test_accept_payment_success_test_mode(self):
+        self.app.test = True
+        self.app.save()
         data = {
             "flouci_otp": "F-111111",
             "payment_id": "pmt-123",
@@ -760,6 +762,8 @@ class TestV2AcceptPaymentView(BaseCreateDeveloperApp):
         self.assertEqual(response.json()["result"]["status"], "SUCCESS")
 
     def test_accept_payment_failure_test_mode(self):
+        self.app.test = True
+        self.app.save()
         data = {
             "flouci_otp": "F-000000",
             "payment_id": "pmt-123",
@@ -847,6 +851,8 @@ class TestAcceptPaymentView(BaseCreateDeveloperApp):
         self.url = reverse("old_accept_payment")
 
     def test_accept_payment_success_test_mode(self):
+        self.app.test = True
+        self.app.save()
         data = {
             "flouci_otp": "F-111111",
             "payment_id": "pmt-123",
@@ -859,6 +865,8 @@ class TestAcceptPaymentView(BaseCreateDeveloperApp):
         self.assertEqual(response.json()["result"]["status"], "SUCCESS")
 
     def test_accept_payment_failure_test_mode(self):
+        self.app.test = True
+        self.app.save()
         data = {
             "flouci_otp": "F-000000",
             "payment_id": "pmt-123",

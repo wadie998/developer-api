@@ -25,6 +25,13 @@ DJANGO_SERVICE_VERSION = "Flouci v1.0.0"
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
+# File Path
+if ENV:
+    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
+else:
+    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = config(
+        "GCS_ACCOUNT_CREDENTIALS_FILE_PATH", default="./gcloud-credentials.example.json"
+    )
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
 
@@ -221,11 +228,4 @@ DEVELOPER_API_INTERNAL_ADDRESS = config("DEVELOPER_API_INTERNAL_ADDRESS", defaul
 GCS_BUCKET_NAME = config("GCS_BUCKET_NAME", default="")
 GCS_FOLDER_NAME = config("GCS_FOLDER_NAME", default="")
 GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="")
-# File Path
-if ENV:
-    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
-else:
-    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = config(
-        "GCS_ACCOUNT_CREDENTIALS_FILE_PATH", default="./gcloud-credentials.example.json"
-    )
 MINIO_IMAGES_PREFIX = config("MINIO_IMAGES_PREFIX", default="")

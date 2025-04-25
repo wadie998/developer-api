@@ -8,7 +8,6 @@ from settings.settings import (
     GCS_BASE_DIR_NAME,
     GCS_BUCKET_NAME,
     GCS_FOLDER_NAME,
-    MINIO_IMAGES_PREFIX,
 )
 
 logger = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class GCSClient:
     GOOGLE_CLOUD_STORAGE_BASE_URL = "https://storage.googleapis.com"
-    MINIO_IMAGES_PREFIX = MINIO_IMAGES_PREFIX
+    MINIO_IMAGES_PREFIX = "app_id_"
     GCS_BUCKET = GCS_BUCKET_NAME
     GCS_FOLDER = GCS_FOLDER_NAME
     GCS_DIR = GCS_BASE_DIR_NAME

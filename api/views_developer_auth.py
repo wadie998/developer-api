@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
+from api.constant import APP_NUMBER_LIMIT
 from api.models import FlouciApp
 from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
@@ -13,6 +14,7 @@ from api.serializers import (
     DefaultSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
+    ImageUpdateSerializer,
     PartnerConnectedAppsSerializer,
     UpdateConnectedAppsSerializer,
     UpdateDeveloperAppSerializer,
@@ -80,15 +82,31 @@ class CreateDeveloperAppView(GenericAPIView):
             request.tracking_id = serializer.validated_data.get("username")
         elif request.tracking_id and not serializer.validated_data.get("username"):
             return Response(
-                {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
+                {"success": False, "message": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
+            )
+        list_of_apps = FlouciApp.objects.filter(tracking_id=request.tracking_id)
+        if list_of_apps.count() > APP_NUMBER_LIMIT:
+            # TODO: This should be added to limiter
+            return Response(
+                {"success": False, "message": "App limit reached.", "code": 2},
+                status=status.HTTP_412_PRECONDITION_FAILED,
+            )
+        app_name = serializer.validated_data["name"]
+        if list_of_apps.filter(name=app_name).exists():
+            return Response(
+                {"success": False, "message": "App name already exists.", "code": 1},
+                status=status.HTTP_412_PRECONDITION_FAILED,
             )
         app = FlouciApp.objects.create(
-            name=serializer.validated_data.get("name"),
+            name=app_name,
             description=serializer.validated_data.get("description"),
-            wallet=serializer.validated_data.get("wallet"),
-            merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
+            wallet=serializer.validated_data["wallet"],
+            merchant_id=serializer.validated_data["merchant_id"],
             tracking_id=request.tracking_id,
         )
+        image_info = serializer.validated_data.get("image_info")
+        if image_info:
+            app.update_image(image_info)
         data = app.get_app_details()
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -138,6 +156,32 @@ class GetDeveloperAppDetailsView(ListCreateAPIView):
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(data=apps.get_app_details(), status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
+class ImageUpdate(GenericAPIView):
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
+    serializer_class = ImageUpdateSerializer
+
+    def post(self, request, serializer):
+        image_info = serializer.validated_data["image_info"]
+        app: FlouciApp = serializer.validated_data["app"]
+        app.update_image(image_info)
+        image_url = app.image_url
+        if not image_url:
+            return Response(
+                {"code": 1, "message": "Failed to upload image", "result": None},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        response_data = {
+            "result": image_url,
+            "code": 0,
+            "message": "Image successfully updated",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)

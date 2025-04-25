@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 
 from settings.configs.elastic_apm_config import ELASTIC_APM_CONFIG
-from settings.configs.env import BASE_DIR, config
+from settings.configs.env import BASE_DIR, ENV, config
 from settings.configs.logging_config import LOGGING
 from settings.configs.sqlite_config import SQLITE3_CONFIG
 
@@ -25,6 +25,13 @@ DJANGO_SERVICE_VERSION = "1.0.0"
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
+# File Path
+if ENV:
+    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = "/run/secrets/gcloud-credentials.json"
+else:
+    GCS_ACCOUNT_CREDENTIALS_FILE_PATH = config(
+        "GCS_ACCOUNT_CREDENTIALS_FILE_PATH", default="./gcloud-credentials.example.json"
+    )
 # Logs Notification
 GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK = config("GC_LOGS_CRONJOBS_CHANNEL_WEBHOOK", default="")
 
@@ -216,3 +223,8 @@ DATA_API_USERNAME = config("DATA_API_USERNAME", default="")
 # WEBHOOK FROM SEND MONEY
 CASH_IO_VERIFICATION_TOKEN = config("CASH_IO_VERIFICATION_TOKEN", default="")
 DEVELOPER_API_INTERNAL_ADDRESS = config("DEVELOPER_API_INTERNAL_ADDRESS", default="")
+
+# GCS
+GCS_BUCKET_NAME = config("GCS_BUCKET_NAME", default="")
+GCS_FOLDER_NAME = config("GCS_FOLDER_NAME", default="")
+GCS_BASE_DIR_NAME = config("GCS_BASE_DIR_NAME", default="")

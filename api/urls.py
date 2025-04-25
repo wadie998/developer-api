@@ -7,6 +7,7 @@ from api.views_developer_auth import (
     GetDeveloperAppDetailsView,
     GetDeveloperAppMetricsView,
     GetDeveloperAppOrdersView,
+    ImageUpdate,
     PostAppInfo,
     RevokeDeveloperAppView,
 )
@@ -65,6 +66,7 @@ urlpatterns = [
     path("app/info", GetAppInfo.as_view(), name="get_app_info"),
     path("app/getInfo", PostAppInfo.as_view(), name="post_app_info"),
     # urls with either jhipster or backend authentication
+    path("app/image_update", ImageUpdate.as_view(), name="image_update"),
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),
     path("apps/<uuid:id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),

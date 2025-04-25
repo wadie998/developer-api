@@ -1,7 +1,12 @@
+import logging
 import uuid
 from datetime import datetime
 
 from django.db import models
+
+from utils.gcs_client import GCSClient
+
+logger = logging.getLogger(__name__)
 
 
 class App(models.Model):
@@ -133,3 +138,18 @@ class FlouciApp(models.Model):
         self.revoke_number += 1
         self.last_revoke_date = datetime.now()
         self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
+
+    def update_image(self, image_info):
+        if not image_info:
+            return
+        image_url = GCSClient().save_image(
+            image_b64=image_info["image_data"],
+            image_name=str(self.app_id),
+            extension=image_info["extension"],
+            content_type=image_info["content_type"],
+        )
+        if not image_url:
+            logger.warning(f"Failed to upload image for app {self.app_id}")
+            return
+        self.image_url = image_url
+        self.save(update_fields=["image_url"])

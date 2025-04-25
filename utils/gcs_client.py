@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class GCSClient:
     GOOGLE_CLOUD_STORAGE_BASE_URL = "https://storage.googleapis.com"
-    MINIO_IMAGES_PREFIX = "app_id_"
+    IMAGES_PREFIX = "id_"
     GCS_BUCKET = GCS_BUCKET_NAME
     GCS_FOLDER = GCS_FOLDER_NAME
     GCS_DIR = GCS_BASE_DIR_NAME
@@ -23,10 +23,9 @@ class GCSClient:
 
     @classmethod
     def save_image(cls, image_b64: str, image_name: str, extension: str, content_type: str) -> str | None:
-        logger.info(f"Uploading image {image_name} to bucket {cls.GCS_BUCKET} in folder {cls.GCS_FOLDER}")
         try:
             image_bytes = base64.b64decode(image_b64)
-            path = f"{cls.GCS_FOLDER}/{cls.GCS_DIR}/{cls.MINIO_IMAGES_PREFIX}{image_name}.{extension}"
+            path = f"{cls.GCS_FOLDER}/{cls.GCS_DIR}/{cls.IMAGES_PREFIX}{image_name}.{extension}"
             bucket = cls.gcp_client.bucket(cls.GCS_BUCKET)
             blob = bucket.blob(path)
             blob.cache_control = "no-cache"

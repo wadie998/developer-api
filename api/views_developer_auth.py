@@ -409,7 +409,6 @@ class PartnerConnectedApps(GenericAPIView):
         # TODO add the app itself to the linked account, and dissociate one app,
         # instead of all apps of a merchant
         try:
-            print(public_token)
             linked_account = LinkedAccount.objects.get(
                 app__public_token=public_token, account_tracking_id=request.tracking_id
             )

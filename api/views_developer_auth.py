@@ -385,7 +385,6 @@ class PartnerConnectedApps(GenericAPIView):
         linked_accounts = LinkedAccount.objects.filter(account_tracking_id=request.tracking_id)
         result = []
         for account in linked_accounts:
-            # partner_application = FlouciApp.objects.filter(merchant_id=account.merchant_id).first()
             result.append(
                 {
                     "merchant_id": account.merchant_id,

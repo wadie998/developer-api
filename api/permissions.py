@@ -126,7 +126,10 @@ class IsValidPartnerUser(BasePermission):
         merchant_id = request.application.merchant_id
         try:
             account = LinkedAccount.objects.get(
-                phone_number=phone_number, partner_tracking_id=application_tracking_id, merchant_id=merchant_id
+                phone_number=phone_number,
+                partner_tracking_id=application_tracking_id,
+                merchant_id=merchant_id,
+                is_active=True,
             )
             request.account = account
             return True

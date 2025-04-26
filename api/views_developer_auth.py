@@ -15,8 +15,11 @@ from api.serializers import (
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
     ImageUpdateSerializer,
+    PartnerConnectedAppsSerializer,
+    UpdateConnectedAppsSerializer,
     UpdateDeveloperAppSerializer,
 )
+from partners.models import LinkedAccount
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
@@ -361,3 +364,56 @@ class PostAppInfo(GenericAPIView):
             "version": DJANGO_SERVICE_VERSION,
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi(post=False, get=True, put=True)
+class PartnerConnectedApps(GenericAPIView):
+    """
+    {result: [], code: 0, name: "data", version: "4.4.91"}
+    """
+
+    permission_classes = (IsFlouciAuthenticated,)
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return PartnerConnectedAppsSerializer
+        else:
+            return UpdateConnectedAppsSerializer
+
+    def get(self, request, serializer):
+        linked_accounts = LinkedAccount.objects.filter(account_tracking_id=request.tracking_id)
+        result = []
+        for account in linked_accounts:
+            result.append(
+                {
+                    "merchant_id": account.merchant_id,
+                    "partner_name": account.app.name,
+                    "partner_description": account.app.description,
+                    "image_url": account.app.image_url,
+                    "is_active": account.is_active,
+                    "public_token": account.app.public_token,
+                }
+            )
+        response_data = {
+            "result": result,
+            "code": 0,
+            "message": "connected apps",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def put(self, request, serializer):
+        public_token = serializer.validated_data.get("public_token")
+        # TODO add the app itself to the linked account, and dissociate one app,
+        # instead of all apps of a merchant
+        try:
+            linked_account = LinkedAccount.objects.get(
+                app__public_token=public_token, account_tracking_id=request.tracking_id
+            )
+            linked_account.is_active = not linked_account.is_active
+            linked_account.save(update_fields=["is_active"])
+            return Response({"success": True, "is_active": linked_account.is_active}, status=status.HTTP_200_OK)
+        except LinkedAccount.DoesNotExist:
+            return Response({"success": False, "message": "Invalid reference."}, status=status.HTTP_400_BAD_REQUEST)

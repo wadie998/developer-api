@@ -8,11 +8,13 @@ from api.enum import RequestStatus, SendMoneyServiceOperationTypes
 class LinkedAccount(models.Model):
     id = models.BigAutoField(primary_key=True, serialize=False)
     partner_tracking_id = models.UUIDField(default=uuid.uuid4, editable=False)  # The mapping id given to the partner
-    account_tracking_id = models.UUIDField()
+    account_tracking_id = models.UUIDField()  # the backend tracking_id
     phone_number = models.CharField(unique=False, null=False, max_length=15)
     merchant_id = models.CharField(max_length=255)
     time_created = models.DateTimeField(auto_now_add=True)  # Time the link between the accounts was done.
     time_modified = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    app = models.ForeignKey("api.flouciapp", on_delete=models.PROTECT, blank=True, null=True)
 
     class Meta:
         verbose_name = "Linked Account"

@@ -20,7 +20,7 @@ from settings.configs.sqlite_config import SQLITE3_CONFIG
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-DJANGO_SERVICE_VERSION = "Flouci v1.0.0"
+DJANGO_SERVICE_VERSION = "1.0.0"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")

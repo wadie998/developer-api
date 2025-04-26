@@ -385,15 +385,15 @@ class PartnerConnectedApps(GenericAPIView):
         linked_accounts = LinkedAccount.objects.filter(account_tracking_id=request.tracking_id)
         result = []
         for account in linked_accounts:
-            partner_application = FlouciApp.objects.filter(merchant_id=account.merchant_id).first()
+            # partner_application = FlouciApp.objects.filter(merchant_id=account.merchant_id).first()
             result.append(
                 {
                     "merchant_id": account.merchant_id,
-                    "partner_name": partner_application.name,
-                    "partner_description": partner_application.description,
-                    "image_url": partner_application.image_url,
+                    "partner_name": account.app.name,
+                    "partner_description": account.app.description,
+                    "image_url": account.app.image_url,
                     "is_active": account.is_active,
-                    "public_token": account.public_token,
+                    "public_token": account.app.public_token,
                 }
             )
         response_data = {
@@ -410,11 +410,12 @@ class PartnerConnectedApps(GenericAPIView):
         # TODO add the app itself to the linked account, and dissociate one app,
         # instead of all apps of a merchant
         try:
+            print(public_token)
             linked_account = LinkedAccount.objects.get(
-                public_token=public_token, account_tracking_id=request.tracking_id
+                app__public_token=public_token, account_tracking_id=request.tracking_id
             )
             linked_account.is_active = not linked_account.is_active
             linked_account.save(update_fields=["is_active"])
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True, "is_active": linked_account.is_active}, status=status.HTTP_200_OK)
         except LinkedAccount.DoesNotExist:
             return Response({"success": False, "message": "Invalid reference."}, status=status.HTTP_400_BAD_REQUEST)

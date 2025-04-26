@@ -69,7 +69,7 @@ class InitiateLinkAccountView(GenericAPIView):
         if LinkedAccount.objects.filter(
             phone_number=phone_number,
             merchant_id=request.application.merchant_id,
-            public_token=request.application.public_token,
+            app=request.application,
             is_active=True,  # check this so that in case the account is inactive, you can re-allow via the partner.
         ).exists():
             return Response({"success": False, "message": "Account already linked."}, status=status.HTTP_202_ACCEPTED)
@@ -84,7 +84,7 @@ class InitiateLinkAccountView(GenericAPIView):
                 if LinkedAccount.objects.filter(
                     account_tracking_id=tracking_id,
                     merchant_id=request.application.merchant_id,
-                    public_token=request.application.public_token,
+                    app=request.application,
                     is_active=True,  # in case the account is inactive, you can re-allow via the partner.
                 ).exists():
                     return Response(
@@ -136,7 +136,7 @@ class ConfirmLinkAccountView(GenericAPIView):
                 phone_number=phone_number,
                 account_tracking_id=response["tracking_id"],
                 merchant_id=request.application.merchant_id,
-                public_token=request.application.public_token,
+                app=request.application,
             )
             if not linked_account.is_active:
                 linked_account.is_active = True

@@ -14,7 +14,7 @@ class LinkedAccount(models.Model):
     time_created = models.DateTimeField(auto_now_add=True)  # Time the link between the accounts was done.
     time_modified = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    public_token = models.UUIDField(blank=True, null=True)  # FlouciApp public_token to better track the apps connected
+    app = models.ForeignKey("api.flouciapp", on_delete=models.PROTECT, blank=True, null=True)
 
     class Meta:
         verbose_name = "Linked Account"

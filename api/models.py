@@ -100,6 +100,9 @@ class FlouciApp(models.Model):
     class Meta:
         db_table = "flouciapp"
 
+    def __str__(self):
+        return f"{self.name} - {self.merchant_id}"
+
     def get_app_details(self):
         return {
             "id": self.id,

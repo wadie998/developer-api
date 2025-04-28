@@ -81,11 +81,10 @@ class PaginatedHistorySerializer(serializers.ModelSerializer):
 
 class BaseRequestViewSerializer(serializers.Serializer):
     from_date = serializers.DateTimeField(
-        source="from",
         input_formats=["%Y-%m-%dT%H:%M:%SZ"],
         default=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0),
     )
-    to_date = serializers.DateTimeField(source="to", input_formats=["%Y-%m-%dT%H:%M:%SZ"], default=timezone.now)
+    to_date = serializers.DateTimeField(input_formats=["%Y-%m-%dT%H:%M:%SZ"], default=timezone.now)
     operation_type = serializers.ChoiceField(choices=SendMoneyServiceOperationTypes.get_choices(), required=False)
     operation_status = serializers.ChoiceField(choices=RequestStatus.get_choices(), default=RequestStatus.APPROVED)
 
@@ -142,13 +141,13 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     developer_tracking_id = serializers.CharField(max_length=60)
 
 
-class FetchGPSTransactionStatusSerializer(DefaultSerializer):
+class FetchPOSTransactionStatusSerializer(DefaultSerializer):
     developer_tracking_id = serializers.CharField(max_length=60, required=False)
     flouci_transaction_id = serializers.UUIDField(required=False)
 
     def validate(self, validate_data):
         transaction_id = validate_data.get("flouci_transaction_id")
         developer_tracking_id = validate_data.get("developer_tracking_id")
-        if (transaction_id and developer_tracking_id) or (not transaction_id and not developer_tracking_id):
+        if not transaction_id and not developer_tracking_id:
             raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'developer_tracking_id'.")
         return validate_data

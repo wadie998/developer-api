@@ -5,18 +5,24 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
+from api.constant import APP_NUMBER_LIMIT
 from api.models import FlouciApp
-from api.permissions import IsFlouciAuthenticated
+from api.permissions import IsFlouciAuthenticated, TokenPermission
 from api.serializers import (
+    AppInfoSerializer,
     CreateDeveloperAppSerializer,
+    DefaultSerializer,
     DeveloperAppSerializer,
     GetDeveloperAppSerializer,
+    ImageUpdateSerializer,
+    PartnerConnectedAppsSerializer,
+    UpdateConnectedAppsSerializer,
     UpdateDeveloperAppSerializer,
 )
+from partners.models import LinkedAccount
 from settings.settings import DJANGO_SERVICE_VERSION
 from utils.api_keys_manager import HasBackendApiKey
 from utils.decorators import IsValidGenericApi
-from utils.model_helper import user_exists_by_tracking_id
 from utils.pagination_helper import generate_pagination_headers
 
 logger = logging.getLogger(__name__)
@@ -54,6 +60,7 @@ class CreateDeveloperAppView(GenericAPIView):
 
         response = Response(
             {
+                # TODO: fix response in the new webapp
                 "result": app_list,
                 "code": 200,
                 "name": "developers",
@@ -75,20 +82,32 @@ class CreateDeveloperAppView(GenericAPIView):
             request.tracking_id = serializer.validated_data.get("username")
         elif request.tracking_id and not serializer.validated_data.get("username"):
             return Response(
-                {"success": False, "details": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
+                {"success": False, "message": "User not found."}, status=status.HTTP_412_PRECONDITION_FAILED
             )
-        user_exists = user_exists_by_tracking_id(request.tracking_id)
-        if not user_exists:
-            return Response({"success": False, "details": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        list_of_apps = FlouciApp.objects.filter(tracking_id=request.tracking_id)
+        if list_of_apps.count() > APP_NUMBER_LIMIT:
+            # TODO: This should be added to limiter
+            return Response(
+                {"success": False, "message": "App limit reached.", "code": 2},
+                status=status.HTTP_412_PRECONDITION_FAILED,
+            )
+        app_name = serializer.validated_data["name"]
+        if list_of_apps.filter(name=app_name).exists():
+            return Response(
+                {"success": False, "message": "App name already exists.", "code": 1},
+                status=status.HTTP_412_PRECONDITION_FAILED,
+            )
         app = FlouciApp.objects.create(
-            name=serializer.validated_data.get("name"),
+            name=app_name,
             description=serializer.validated_data.get("description"),
-            wallet=serializer.validated_data.get("wallet"),
-            merchant_id=serializer.validated_data.get("merchant_id"),  # You might want to customize this
+            wallet=serializer.validated_data["wallet"],
+            merchant_id=serializer.validated_data["merchant_id"],
             tracking_id=request.tracking_id,
         )
+        image_info = serializer.validated_data.get("image_info")
+        if image_info:
+            app.update_image(image_info)
         data = app.get_app_details()
-        data["success"] = True
         return Response(data, status=status.HTTP_201_CREATED)
 
     def put(self, request, serializer):
@@ -137,6 +156,32 @@ class GetDeveloperAppDetailsView(ListCreateAPIView):
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(data=apps.get_app_details(), status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
+class ImageUpdate(GenericAPIView):
+    permission_classes = (HasBackendApiKey | IsFlouciAuthenticated,)
+    serializer_class = ImageUpdateSerializer
+
+    def post(self, request, serializer):
+        image_info = serializer.validated_data["image_info"]
+        app: FlouciApp = serializer.validated_data["app"]
+        app.update_image(image_info)
+        image_url = app.image_url
+        if not image_url:
+            return Response(
+                {"code": 1, "message": "Failed to upload image", "result": None},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        response_data = {
+            "result": image_url,
+            "code": 0,
+            "message": "Image successfully updated",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(exclude=True)
@@ -272,3 +317,103 @@ class GetDeveloperAppOrdersView(GenericAPIView):
             "version": DJANGO_SERVICE_VERSION,
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi(get=True, post=False)
+class GetAppInfo(GenericAPIView):
+    permission_classes = (TokenPermission,)
+    serializer_class = DefaultSerializer
+
+    def get(self, request, serializer):
+        app = request.application
+        response_data = {
+            "result": app.get_app_info(),
+            "code": 0,
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi()
+class PostAppInfo(GenericAPIView):
+    serializer_class = AppInfoSerializer
+
+    # TODO: Depricate this view after removed from data api..
+    def post(self, request, serializer):
+        app_token = serializer.validated_data["public_token"]
+        app_secret = serializer.validated_data["private_token"]
+        try:
+            app = FlouciApp.objects.get(public_token=app_token, private_token=app_secret)
+        except FlouciApp.DoesNotExist:
+            return Response(
+                {"name": "developers", "version": DJANGO_SERVICE_VERSION, "message": "app not found", "code": 3},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        code = 0
+        if not app.active:
+            code = 1
+        if app.test:
+            code = 2
+        response_data = {
+            "result": app.get_app_info(),
+            "code": code,
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(exclude=True)
+@IsValidGenericApi(post=False, get=True, put=True)
+class PartnerConnectedApps(GenericAPIView):
+    """
+    {result: [], code: 0, name: "data", version: "4.4.91"}
+    """
+
+    permission_classes = (IsFlouciAuthenticated,)
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return PartnerConnectedAppsSerializer
+        else:
+            return UpdateConnectedAppsSerializer
+
+    def get(self, request, serializer):
+        linked_accounts = LinkedAccount.objects.filter(account_tracking_id=request.tracking_id)
+        result = []
+        for account in linked_accounts:
+            result.append(
+                {
+                    "merchant_id": account.merchant_id,
+                    "partner_name": account.app.name,
+                    "partner_description": account.app.description,
+                    "image_url": account.app.image_url,
+                    "is_active": account.is_active,
+                    "public_token": account.app.public_token,
+                }
+            )
+        response_data = {
+            "result": result,
+            "code": 0,
+            "message": "connected apps",
+            "name": "developers",
+            "version": DJANGO_SERVICE_VERSION,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def put(self, request, serializer):
+        public_token = serializer.validated_data.get("public_token")
+        # TODO add the app itself to the linked account, and dissociate one app,
+        # instead of all apps of a merchant
+        try:
+            linked_account = LinkedAccount.objects.get(
+                app__public_token=public_token, account_tracking_id=request.tracking_id
+            )
+            linked_account.is_active = not linked_account.is_active
+            linked_account.save(update_fields=["is_active"])
+            return Response({"success": True, "is_active": linked_account.is_active}, status=status.HTTP_200_OK)
+        except LinkedAccount.DoesNotExist:
+            return Response({"success": False, "message": "Invalid reference."}, status=status.HTTP_400_BAD_REQUEST)

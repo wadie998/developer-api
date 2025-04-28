@@ -1,7 +1,12 @@
+import logging
 import uuid
 from datetime import datetime
 
 from django.db import models
+
+from utils.gcs_client import GCSClient
+
+logger = logging.getLogger(__name__)
 
 
 class App(models.Model):
@@ -73,7 +78,7 @@ class FlouciApp(models.Model):
     app_id = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     private_token = models.UUIDField(unique=True, default=uuid.uuid4, max_length=36, blank=True, null=True)
-    tracking_id = models.UUIDField(blank=True, null=True, editable=False)
+    tracking_id = models.UUIDField(blank=True, null=True)
     wallet = models.CharField(max_length=35)
     status = models.CharField(choices=AppStatus.choices, default=AppStatus.VERIFIED, max_length=20)
     active = models.BooleanField(default=True)
@@ -94,6 +99,9 @@ class FlouciApp(models.Model):
 
     class Meta:
         db_table = "flouciapp"
+
+    def __str__(self):
+        return f"{self.name} - {self.merchant_id}"
 
     def get_app_details(self):
         return {
@@ -118,8 +126,33 @@ class FlouciApp(models.Model):
             "image_url": self.image_url,
         }
 
+    def get_app_info(self):
+        return {
+            "app_id": str(self.app_id),
+            "app_name": self.name,
+            "account": self.wallet,
+            "description": self.description,
+            "valid": self.active,
+            "test": self.test,
+        }
+
     def revoke_keys(self):
         self.private_token = uuid.uuid4()
         self.revoke_number += 1
         self.last_revoke_date = datetime.now()
         self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
+
+    def update_image(self, image_info):
+        if not image_info:
+            return
+        image_url = GCSClient().save_image(
+            image_b64=image_info["image_data"],
+            image_name=str(self.app_id),
+            extension=image_info["extension"],
+            content_type=image_info["content_type"],
+        )
+        if not image_url:
+            logger.warning(f"Failed to upload image for app {self.app_id}")
+            return
+        self.image_url = image_url
+        self.save(update_fields=["image_url"])

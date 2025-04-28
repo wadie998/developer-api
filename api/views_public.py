@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -216,22 +218,14 @@ class BaseVerifyPaymentView(GenericAPIView):
         )
         if response.get("success"):
             data = {
-                "result": {
-                    "payment_status": response["result"].get("status"),
-                    "payment_id": payment_id,
-                    "success": True,
-                },
+                **response,
                 "name": "developers",
                 "code": 0,
                 "version": DJANGO_SERVICE_VERSION,
             }
         else:
             data = {
-                "result": {
-                    "success": False,
-                    "error": response.get("result"),
-                    "details": response.get("non_field_errors"),
-                },
+                **response,
                 "name": "developers",
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
@@ -327,20 +321,38 @@ class BaseSendMoneyView(GenericAPIView):
     permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
+        application: FlouciApp = request.application
+        if application.test:
+            return Response(
+                data={
+                    "result": {
+                        "success": False,
+                        "error": "Can't send money through test App",
+                        "code": 406,
+                    },
+                    "name": "developers",
+                    "code": 1,
+                    "version": DJANGO_SERVICE_VERSION,
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         validated_data = serializer.validated_data
 
         response = FlouciBackendClient.developer_send_money_status(
             amount_in_millimes=validated_data.get("amount_in_millimes"),
             receiver=validated_data.get("destination"),
             webhook=validated_data.get("webhook"),
-            sender_id=request.application.merchant_id,
+            sender_id=application.merchant_id,
         )
+        status_code = response.get("status_code")
         if response["success"]:
             data = {
                 "result": {
+                    "code": 0,
                     "success": True,
                     "message": response.get("message"),
-                    "transaction_id": response.get("payment_id"),
+                    "payment_id": response.get("payment_id"),
+                    "status": f"{HTTPStatus(status_code).phrase}",
                 },
                 "name": "developers",
                 "code": 0,
@@ -451,28 +463,25 @@ class BaseCheckSendMoneyStatusView(GenericAPIView):
         sender_id = request.application.merchant_id
         operation_id = serializer.validated_data["operation_id"]
         response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
+        status_code = response.get("status_code")
 
         if response["success"]:
             data = {
-                "result": {
-                    "transaction_status": response["result"].get("status"),
-                    "transaction_id": operation_id,
-                    "success": True,
-                },
-                "name": "check_send_money_status",
+                "success": True,
+                **response,
+                "httpStatus": f"{HTTPStatus(status_code).phrase}",
                 "code": 0,
                 "version": DJANGO_SERVICE_VERSION,
             }
         else:
             data = {
-                "result": {
-                    **response,
-                },
-                "name": "check_send_money_status",
+                "success": False,
+                **response,
+                "httpStatus": f"{HTTPStatus(status_code).phrase}",
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
             }
-        return Response(data=data, status=response.get("status_code"))
+        return Response(data=data, status=status_code)
 
 
 @extend_schema(
@@ -564,7 +573,7 @@ class CheckSendMoneyStatusView(BaseCheckSendMoneyStatusView):
 class BaseAcceptPayment(GenericAPIView):
     def post(self, request, serializer):
         accept_payment_data = serializer.validated_data
-        app = request.application
+        app: FlouciApp = request.application
         if app.test:
             flouci_otp = serializer.validated_data["flouci_otp"]
             if flouci_otp == "F-111111":
@@ -573,9 +582,10 @@ class BaseAcceptPayment(GenericAPIView):
                 return Response({"result": {"status": "FAILED"}, "code": 0}, status=status.HTTP_200_OK)
         accept_payment_data["app_id"] = app.app_id
         accept_payment_data["destination"] = app.wallet
+        accept_payment_data["app_token"] = app.public_token
 
         response = DataApiClient.accept_payment(data=accept_payment_data)
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(response, status=response.get("status_code"))
 
 
 @IsValidGenericApi()

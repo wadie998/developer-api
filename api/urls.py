@@ -3,9 +3,13 @@ from django.urls import path
 from api.views_developer_auth import (
     CreateDeveloperAppView,
     EnableOrDisableDeveloperAppView,
+    GetAppInfo,
     GetDeveloperAppDetailsView,
     GetDeveloperAppMetricsView,
     GetDeveloperAppOrdersView,
+    ImageUpdate,
+    PartnerConnectedApps,
+    PostAppInfo,
     RevokeDeveloperAppView,
 )
 from api.views_internal import CheckUserExistsView, CreateDeveloperAccountView
@@ -59,7 +63,11 @@ urlpatterns = [
     # urls with backend authentication
     path("internal/checkuserexists/<uuid:tracking_id>", CheckUserExistsView.as_view(), name="check_user_exists"),
     path("internal/register", CreateDeveloperAccountView.as_view(), name="create_developer_account"),
+    # Data api calls these endpoints
+    path("app/info", GetAppInfo.as_view(), name="get_app_info"),
+    path("app/getInfo", PostAppInfo.as_view(), name="post_app_info"),
     # urls with either jhipster or backend authentication
+    path("app/image_update", ImageUpdate.as_view(), name="image_update"),
     path("apps", CreateDeveloperAppView.as_view(), name="create_developer_app"),
     path("internal/apps", CreateDeveloperAppView.as_view(), name="create_developer_app_internal"),
     path("apps/<uuid:id>", GetDeveloperAppDetailsView.as_view(), name="get_developer_app_details"),
@@ -74,6 +82,8 @@ urlpatterns = [
         EnableOrDisableDeveloperAppView.as_view(enable_or_disable=True),
         name="disable_developer_app",
     ),
+    # Partner connected Apps
+    path("partners/apps", PartnerConnectedApps.as_view(), name="partner_connected_apps"),
     # Depricated views
     path("metrics/<uuid:app_id>", GetDeveloperAppMetricsView.as_view(), name="get_internal_metrics"),
     path("orders/<uuid:app_id>", GetDeveloperAppOrdersView.as_view(), name="get_internal_orders"),

@@ -40,9 +40,7 @@ class InitiateLinkAccountViewTest(BaseCreateDeveloperApp):
 
     def create_linked_account(self, phone_number, tracking_id):
         return LinkedAccount.objects.create(
-            phone_number=phone_number,
-            account_tracking_id=tracking_id,
-            merchant_id=111,
+            phone_number=phone_number, account_tracking_id=tracking_id, merchant_id=111, app=self.app
         )
 
     @patch("utils.backend_client.FlouciBackendClient.initiate_link_account")
@@ -229,6 +227,7 @@ class TestAuthenticateView(BaseCreateDeveloperApp):
             account_tracking_id=uuid.uuid4(),
             merchant_id=self.app.merchant_id,
             phone_number=self.phone_number,
+            app=self.app,
         )
 
     @patch("utils.backend_client.FlouciBackendClient.generate_authentication_token")
@@ -319,6 +318,7 @@ class TestRefreshAuthenticateView(BaseCreateDeveloperApp):
             partner_tracking_id=self.partner_tracking_id,
             account_tracking_id=self.account_tracking_id,
             merchant_id=self.merchant_id,
+            app=self.app,
         )
         self.token = f"{self.app.public_token}:{self.app.private_token}"
         self.valid_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.token}"}
@@ -338,6 +338,7 @@ class TestPartnerBalanceView(BaseCreateDeveloperApp):
             partner_tracking_id=self.partner_tracking_id,
             account_tracking_id=self.account_tracking_id,
             merchant_id=self.merchant_id,
+            app=self.app,
         )
 
     @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
@@ -411,6 +412,7 @@ class TestPartnerHistoryView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            app=self.app,
         )
         self.token = f"{self.app.public_token}:{self.app.private_token}"
         self.valid_headers = {"Authorization": f"Bearer {self.token}"}
@@ -525,6 +527,7 @@ class TestPartnerInitiatePaymentView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            app=self.app,
         )
         self.serializer_data = {
             "amount_in_millimes": 5000,
@@ -594,7 +597,7 @@ class TestInitiatePosTransaction(BaseCreateDeveloperApp):
             "serial_number": "21141",
             "payment_method": "card",
             "amount_in_millimes": 5000,
-            "gps_transaction_id": "gps123",
+            "flouci_transaction_id": "pos123",
             "developer_tracking_id": self.app.tracking_id,
         }
 
@@ -629,15 +632,15 @@ class TestInitiatePosTransaction(BaseCreateDeveloperApp):
         self.assertEqual(response.data["amount_in_millimes"][0], "Ensure this value is greater than or equal to 1000.")
 
 
-class TestFetchGPSTransactionStatusView(BaseCreateDeveloperApp):
+class TestFetchPOSTransactionStatusView(BaseCreateDeveloperApp):
     def setUp(self):
         super().setUp()
-        self.url = reverse("fetch_gps_transaction_status")
+        self.url = reverse("get_pos_transaction_status")
         self.token = f"{self.app.public_token}:{self.app.private_token}"
         self.valid_headers = {"Authorization": f"Bearer {self.token}"}
 
     @patch("utils.backend_client.FlouciBackendClient.fetch_associated_partner_transaction")
-    def test_fetch_gps_transaction_status_success(self, mock_fetch_status):
+    def test_fetch_pos_transaction_status_success(self, mock_fetch_status):
         mock_fetch_status.return_value = {
             "success": True,
             "developer_tracking_id": None,
@@ -652,7 +655,7 @@ class TestFetchGPSTransactionStatusView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 200)
 
     @patch("utils.backend_client.FlouciBackendClient.fetch_associated_partner_transaction")
-    def test_fetch_gps_transaction_with_developer_tracking_id(self, mock_fetch_status):
+    def test_fetch_pos_transaction_with_developer_tracking_id(self, mock_fetch_status):
         mock_fetch_status.return_value = {
             "success": True,
             "developer_tracking_id": "c5886d4f-b426-4724-8f33-218a8c1455f4",
@@ -667,7 +670,7 @@ class TestFetchGPSTransactionStatusView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 200)
 
     @patch("utils.backend_client.FlouciBackendClient.fetch_associated_partner_transaction")
-    def test_fetch_gps_transaction_with_both_field(self, mock_fetch_status):
+    def test_fetch_pos_transaction_with_both_field(self, mock_fetch_status):
         mock_fetch_status.return_value = {
             "success": True,
             "developer_tracking_id": "c5886d4f-b426-4724-8f33-218a8c1455f4",
@@ -684,7 +687,7 @@ class TestFetchGPSTransactionStatusView(BaseCreateDeveloperApp):
         self.assertEqual(response.status_code, 200)
 
     @patch("utils.backend_client.FlouciBackendClient.fetch_associated_partner_transaction")
-    def test_fetch_gps_transaction_not_allowed(self, mock_fetch_status):
+    def test_fetch_pos_transaction_not_allowed(self, mock_fetch_status):
         mock_fetch_status.return_value = {"success": False, "status_code": 406, "message": "Not allowed."}
         self.serializer_data = {
             "flouci_transaction_id": uuid.uuid4(),
@@ -695,7 +698,7 @@ class TestFetchGPSTransactionStatusView(BaseCreateDeveloperApp):
         self.assertIn("Not allowed.", response.data["message"])
 
     @patch("utils.backend_client.FlouciBackendClient.fetch_associated_partner_transaction")
-    def test_fetch_gps_transaction_not_found(self, mock_fetch_status):
+    def test_fetch_pos_transaction_not_found(self, mock_fetch_status):
         mock_fetch_status.return_value = {"success": False, "status_code": 404, "message": "Transaction not found"}
         self.serializer_data = {
             "flouci_transaction_id": uuid.uuid4(),
@@ -720,6 +723,7 @@ class TestBalanceView(BaseCreateDeveloperApp):
             partner_tracking_id=self.partner_tracking_id,
             account_tracking_id=self.account_tracking_id,
             merchant_id=self.merchant_id,
+            app=self.app,
         )
 
     @patch("utils.backend_client.FlouciBackendClient.get_user_balance")
@@ -796,6 +800,7 @@ class TestHistoryView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            app=self.app,
         )
 
     @patch("api.permissions.verify_backend_token")
@@ -936,6 +941,7 @@ class TestInitiatePaymentView(BaseCreateDeveloperApp):
             partner_tracking_id=self.app.tracking_id,
             merchant_id=self.app.merchant_id,
             account_tracking_id=self.app.tracking_id,
+            app=self.app,
         )
         self.serializer_data = {
             "amount_in_millimes": 5000,

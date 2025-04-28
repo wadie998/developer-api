@@ -28,7 +28,7 @@ from partners.serializers import (
     AuthenticateSerializer,
     BalanceSerializer,
     ConfirmLinkAccountSerializer,
-    FetchGPSTransactionStatusSerializer,
+    FetchPOSTransactionStatusSerializer,
     FilterHistorySerializer,
     InitiateLinkAccountSerializer,
     InitiatePaymentViewSerializer,
@@ -69,6 +69,8 @@ class InitiateLinkAccountView(GenericAPIView):
         if LinkedAccount.objects.filter(
             phone_number=phone_number,
             merchant_id=request.application.merchant_id,
+            app=request.application,
+            is_active=True,  # check this so that in case the account is inactive, you can re-allow via the partner.
         ).exists():
             return Response({"success": False, "message": "Account already linked."}, status=status.HTTP_202_ACCEPTED)
         response = FlouciBackendClient.initiate_link_account(
@@ -82,6 +84,8 @@ class InitiateLinkAccountView(GenericAPIView):
                 if LinkedAccount.objects.filter(
                     account_tracking_id=tracking_id,
                     merchant_id=request.application.merchant_id,
+                    app=request.application,
+                    is_active=True,  # in case the account is inactive, you can re-allow via the partner.
                 ).exists():
                     return Response(
                         {"success": False, "message": "Account already linked."}, status=status.HTTP_202_ACCEPTED
@@ -128,15 +132,20 @@ class ConfirmLinkAccountView(GenericAPIView):
             merchant_id=request.application.merchant_id,
         )
         if response["success"]:
-            account_link, _ = LinkedAccount.objects.get_or_create(
+            linked_account, _ = LinkedAccount.objects.get_or_create(
                 phone_number=phone_number,
                 account_tracking_id=response["tracking_id"],
                 merchant_id=request.application.merchant_id,
+                app=request.application,
             )
+            if not linked_account.is_active:
+                linked_account.is_active = True
+                linked_account.save(update_fields=["is_active"])
+
             return Response(
                 data={
                     "success": True,
-                    "tracking_id": str(account_link.partner_tracking_id),
+                    "tracking_id": str(linked_account.partner_tracking_id),
                 },
                 status=response.get("status_code"),
             )
@@ -179,7 +188,7 @@ class AuthenticateView(GenericAPIView):
         merchant_id = request.application.merchant_id
         try:
             linked_account = LinkedAccount.objects.get(
-                partner_tracking_id=application_tracking_id, merchant_id=merchant_id
+                partner_tracking_id=application_tracking_id, merchant_id=merchant_id, is_active=True
             )
         except ObjectDoesNotExist:
             return Response({"success": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -394,7 +403,7 @@ class PartnerInitiatePaymentView(GenericAPIView):
 
         with transaction.atomic():
             operation = PartnerTransaction.objects.create(
-                operation_type=SendMoneyServiceOperationTypes.PAYMENT,
+                operation_type=SendMoneyServiceOperationTypes.PAYMENT.value,
                 sender=account,
                 operation_payload={
                     "merchant_id": merchant_id,
@@ -437,9 +446,9 @@ class InitiatePosTransaction(GenericAPIView):
 
 
 @IsValidGenericApi(get=True, post=False)
-class FetchGPSTransactionStatusView(GenericAPIView):
+class FetchPOSTransactionStatusView(GenericAPIView):
     permission_classes = (HasValidPartnerAppCredentials,)
-    serializer_class = FetchGPSTransactionStatusSerializer
+    serializer_class = FetchPOSTransactionStatusSerializer
 
     def get(self, request, serializer):
         app = request.application

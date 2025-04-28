@@ -22,3 +22,5 @@ staticfiles
 
 # locust
 locustfile.py
+
+gcloud-credentials.json

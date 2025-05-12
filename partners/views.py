@@ -458,7 +458,7 @@ class FetchPOSTransactionStatusView(GenericAPIView):
         if ENV != "PROD":
             # Mock response for testing purposes
             response_map = {
-                "0001-0002-0099": {
+                "040b4cb8-92b8-4824-b59f-de1fbbb8c37w": {
                     "success": True,
                     "transactions": [
                         {
@@ -471,8 +471,9 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                             "currency": "TND",
                         }
                     ],
+                    "status_code": 200,
                 },
-                "0002-0001-0099": {
+                "040b4cb8-92b8-4824-b59f-de1fbbb8c37c": {
                     "success": True,
                     "transactions": [
                         {
@@ -485,8 +486,9 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                             "currency": "TND",
                         }
                     ],
+                    "status_code": 200,
                 },
-                "0099-0001-0002": {
+                "040b4cb8-92b8-4824-b59f-de1fbbb8c37d": {
                     "success": True,
                     "transactions": [
                         {
@@ -499,9 +501,10 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                             "currency": "TND",
                         }
                     ],
+                    "status_code": 200,
                 },
             }
-            if developer_tracking_id in response_map:
+            if developer_tracking_id and developer_tracking_id in response_map:
                 return Response(response_map[developer_tracking_id], status=200)
         response = FlouciBackendClient.fetch_associated_partner_transaction(
             merchant_id=merchant_id,

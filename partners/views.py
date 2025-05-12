@@ -41,6 +41,7 @@ from partners.serializers import (
     RefreshAuthenticateSerializer,
     SendMoneyViewSerializer,
 )
+from settings.settings import ENV
 from utils.backend_client import FlouciBackendClient
 from utils.decorators import IsValidGenericApi
 from utils.docs_helper import CUSTOM_AUTHENTICATION
@@ -453,6 +454,55 @@ class FetchPOSTransactionStatusView(GenericAPIView):
     def get(self, request, serializer):
         app = request.application
         merchant_id = app.merchant_id
+        developer_tracking_id = serializer.validated_data.get("developer_tracking_id")
+        if ENV != "PROD":
+            # Mock response for testing purposes
+            response_map = {
+                "0001-0002-0099": {
+                    "success": True,
+                    "transactions": [
+                        {
+                            "developer_tracking_id": developer_tracking_id,
+                            "flouci_transaction_id": "lm71c259-0a19-4ch1-b192",
+                            "payment_status": "PS",
+                            "payment_method": "wallet",
+                            "payment_details": {"wallet_id": "rDFL1234fa56789"},
+                            "amount_in_millimes": 145000,
+                            "currency": "TND",
+                        }
+                    ],
+                },
+                "0002-0001-0099": {
+                    "success": True,
+                    "transactions": [
+                        {
+                            "developer_tracking_id": developer_tracking_id,
+                            "flouci_transaction_id": "4bd8-bb77c299-a485-8f14",
+                            "payment_status": "PS",
+                            "payment_method": "card",
+                            "payment_details": {"pan": 12345, "expiration": "202415"},
+                            "amount_in_millimes": 145000,
+                            "currency": "TND",
+                        }
+                    ],
+                },
+                "0099-0001-0002": {
+                    "success": True,
+                    "transactions": [
+                        {
+                            "developer_tracking_id": developer_tracking_id,
+                            "flouci_transaction_id": "bb77c299-8f14-4bd8-a485",
+                            "payment_status": "PS",
+                            "payment_method": "check",
+                            "payment_details": {"cheque_number": 1002345, "bank_code": "24"},
+                            "amount_in_millimes": 145000,
+                            "currency": "TND",
+                        }
+                    ],
+                },
+            }
+            if developer_tracking_id in response_map:
+                return Response(response_map[developer_tracking_id], status=200)
         response = FlouciBackendClient.fetch_associated_partner_transaction(
             merchant_id=merchant_id,
             developer_tracking_id=serializer.validated_data.get("developer_tracking_id"),

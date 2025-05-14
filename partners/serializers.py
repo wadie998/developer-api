@@ -142,7 +142,7 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     serial_number = serializers.CharField(max_length=36)
     service_code = serializers.CharField(max_length=3, required=False, default="024")
     is_multi_payment = serializers.BooleanField(default=False)
-    payments = MultiPaymentItemSerializer(many=True, required=False)
+    payment_segments = MultiPaymentItemSerializer(many=True, required=False)
 
     # Fallback for single payment
     amount_in_millimes = serializers.IntegerField(min_value=1000, required=False)
@@ -154,8 +154,8 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
 
     def validate(self, data):
         if data.get("is_multi_payment"):
-            if not data.get("payments"):
-                raise serializers.ValidationError("Payments must be provided for multi-payment.")
+            if not data.get("payment_segments"):
+                raise serializers.ValidationError("payment_segments must be provided for multi-payment.")
         else:
             required_fields = ["amount_in_millimes", "payment_method", "developer_tracking_id"]
             missing = [f for f in required_fields if not data.get(f)]

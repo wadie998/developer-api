@@ -436,15 +436,16 @@ class InitiatePosTransaction(GenericAPIView):
         id_terminal = serializer.validated_data["id_terminal"]
         serial_number = serializer.validated_data["serial_number"]
         service_code = serializer.validated_data.get("service_code", "024")
+        webhook = serializer.validated_data.get("webhook")
         is_multi_payment = serializer.validated_data.get("is_multi_payment")
 
         if is_multi_payment:
             # Handle multiple payments
             responses = []
-            for payment in serializer.validated_data["payments"]:
+            for payment in serializer.validated_data["payment_segments"]:
                 resp = FlouciBackendClient.generate_pos_transaction(
                     merchant_id=merchant_id,
-                    webhook=payment.get("webhook"),
+                    webhook=webhook,
                     id_terminal=id_terminal,
                     serial_number=serial_number,
                     service_code=service_code,
@@ -453,12 +454,12 @@ class InitiatePosTransaction(GenericAPIView):
                     developer_tracking_id=payment["developer_tracking_id"],
                 )
                 responses.append(resp)
-            return Response({"multi_transaction_responses": responses}, status=status.HTTP_201_CREATED)
+            return Response(responses, status=status.HTTP_201_CREATED)
         else:
             # Handle single payment
             response = FlouciBackendClient.generate_pos_transaction(
                 merchant_id=merchant_id,
-                webhook=serializer.validated_data.get("webhook"),
+                webhook=webhook,
                 id_terminal=id_terminal,
                 serial_number=serial_number,
                 service_code=service_code,

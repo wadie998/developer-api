@@ -433,17 +433,40 @@ class InitiatePosTransaction(GenericAPIView):
     def post(self, request, serializer):
         app = request.application
         merchant_id = app.merchant_id
-        response = FlouciBackendClient.generate_pos_transaction(
-            merchant_id=merchant_id,
-            webhook=serializer.validated_data.get("webhook"),
-            id_terminal=serializer.validated_data["id_terminal"],
-            serial_number=serializer.validated_data["serial_number"],
-            service_code=serializer.validated_data["service_code"],
-            amount_in_millimes=serializer.validated_data["amount_in_millimes"],
-            payment_method=serializer.validated_data["payment_method"],
-            developer_tracking_id=serializer.validated_data["developer_tracking_id"],
-        )
-        return Response(response, status=response.get("status_code", 200))
+        id_terminal = serializer.validated_data["id_terminal"]
+        serial_number = serializer.validated_data["serial_number"]
+        service_code = serializer.validated_data.get("service_code", "024")
+        is_multi_payment = serializer.validated_data.get("is_multi_payment")
+
+        if is_multi_payment:
+            # Handle multiple payments
+            responses = []
+            for payment in serializer.validated_data["payments"]:
+                resp = FlouciBackendClient.generate_pos_transaction(
+                    merchant_id=merchant_id,
+                    webhook=payment.get("webhook"),
+                    id_terminal=id_terminal,
+                    serial_number=serial_number,
+                    service_code=service_code,
+                    amount_in_millimes=payment["amount_in_millimes"],
+                    payment_method=payment["payment_method"],
+                    developer_tracking_id=payment["developer_tracking_id"],
+                )
+                responses.append(resp)
+            return Response({"multi_transaction_responses": responses}, status=status.HTTP_201_CREATED)
+        else:
+            # Handle single payment
+            response = FlouciBackendClient.generate_pos_transaction(
+                merchant_id=merchant_id,
+                webhook=serializer.validated_data.get("webhook"),
+                id_terminal=id_terminal,
+                serial_number=serial_number,
+                service_code=service_code,
+                amount_in_millimes=serializer.validated_data["amount_in_millimes"],
+                payment_method=serializer.validated_data["payment_method"],
+                developer_tracking_id=serializer.validated_data["developer_tracking_id"],
+            )
+            return Response(response, status=response.get("status_code", 200))
 
 
 @IsValidGenericApi(get=True, post=False)

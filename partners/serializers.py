@@ -142,6 +142,7 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     serial_number = serializers.CharField(max_length=36)
     service_code = serializers.CharField(max_length=3, required=False, default="024")
     is_multi_payment = serializers.BooleanField(default=False)
+    parent_payment_id = serializers.CharField(max_length=60, required=False)
     payment_segments = MultiPaymentItemSerializer(many=True, required=False)
 
     # Fallback for single payment

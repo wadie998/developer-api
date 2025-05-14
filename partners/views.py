@@ -438,6 +438,7 @@ class InitiatePosTransaction(GenericAPIView):
         service_code = serializer.validated_data.get("service_code", "024")
         webhook = serializer.validated_data.get("webhook")
         is_multi_payment = serializer.validated_data.get("is_multi_payment")
+        parent_payment_id = serializer.validated_data.get("parent_payment_id")
 
         if is_multi_payment:
             # Handle multiple payments
@@ -452,6 +453,7 @@ class InitiatePosTransaction(GenericAPIView):
                     amount_in_millimes=payment["amount_in_millimes"],
                     payment_method=payment["payment_method"],
                     developer_tracking_id=payment["developer_tracking_id"],
+                    parent_payment_id=parent_payment_id,
                 )
                 responses.append(resp)
             return Response(responses, status=status.HTTP_201_CREATED)

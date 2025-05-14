@@ -158,7 +158,7 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
                 raise serializers.ValidationError("payment_segments must be provided for multi-payment.")
         else:
             required_fields = ["amount_in_millimes", "payment_method", "developer_tracking_id"]
-            missing = [f for f in required_fields if not data.get(f)]
+            missing = [field for field in required_fields if not data.get(field)]
             if missing:
                 raise serializers.ValidationError(f"Missing required fields for single payment: {', '.join(missing)}")
         return data

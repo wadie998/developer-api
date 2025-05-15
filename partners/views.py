@@ -493,7 +493,7 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                             "payment_status": "PS",
                             "payment_method": "wallet",
                             "payment_details": {"wallet_id": "rDFL1234fa56789"},
-                            "amount_in_millimes": 145000,
+                            "amount_in_millimes": 135000,
                             "currency": "TND",
                         }
                     ],
@@ -507,8 +507,8 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                             "flouci_transaction_id": "4bd8-bb77c299-a485-8f14",
                             "payment_status": "PS",
                             "payment_method": "card",
-                            "payment_details": {"pan": 12345, "expiration": "202415"},
-                            "amount_in_millimes": 145000,
+                            "payment_details": {"pan": 12345, "expiration": "202415", "auth_code": "121204"},
+                            "amount_in_millimes": 125000,
                             "currency": "TND",
                         }
                     ],
@@ -524,6 +524,21 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                             "payment_method": "check",
                             "payment_details": {"cheque_number": 1002345, "bank_code": "24"},
                             "amount_in_millimes": 145000,
+                            "currency": "TND",
+                        }
+                    ],
+                    "status_code": 200,
+                },
+                "040b4cb8-92b8-4824-b59f-de1fbbb8c37e": {
+                    "success": True,
+                    "transactions": [
+                        {
+                            "developer_tracking_id": developer_tracking_id,
+                            "flouci_transaction_id": "4bd8-bb77c299-a485-8f14",
+                            "payment_status": "PS",
+                            "payment_method": "nfc",
+                            "payment_details": {"pan": 92315, "expiration": "202615", "auth_code": "121114"},
+                            "amount_in_millimes": 245000,
                             "currency": "TND",
                         }
                     ],

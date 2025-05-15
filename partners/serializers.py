@@ -131,14 +131,38 @@ class DevAPIDataApiCatcherSerializer(DefaultSerializer):
         return data
 
 
+class MultiPaymentItemSerializer(serializers.Serializer):
+    amount_in_millimes = serializers.IntegerField(min_value=1000)
+    payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices())
+    developer_tracking_id = serializers.CharField(max_length=60)
+
+
 class InitiatePosTransactionSerializer(DefaultSerializer):
-    webhook = serializers.URLField(required=False)
     id_terminal = serializers.CharField(max_length=16)
     serial_number = serializers.CharField(max_length=36)
     service_code = serializers.CharField(max_length=3, required=False, default="024")
-    amount_in_millimes = serializers.IntegerField(min_value=1000)
-    payment_method = serializers.ChoiceField(choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD)
-    developer_tracking_id = serializers.CharField(max_length=60)
+    is_multi_payment = serializers.BooleanField(default=False)
+    parent_payment_id = serializers.CharField(max_length=60, required=False)
+    payment_segments = MultiPaymentItemSerializer(many=True, required=False)
+
+    # Fallback for single payment
+    amount_in_millimes = serializers.IntegerField(min_value=1000, required=False)
+    payment_method = serializers.ChoiceField(
+        choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD, required=False
+    )
+    developer_tracking_id = serializers.CharField(max_length=60, required=False)
+    webhook = serializers.URLField(required=False)
+
+    def validate(self, data):
+        if data.get("is_multi_payment"):
+            if not data.get("payment_segments"):
+                raise serializers.ValidationError("payment_segments must be provided for multi-payment.")
+        else:
+            required_fields = ["amount_in_millimes", "payment_method", "developer_tracking_id"]
+            missing = [field for field in required_fields if not data.get(field)]
+            if missing:
+                raise serializers.ValidationError(f"Missing required fields for single payment: {', '.join(missing)}")
+        return data
 
 
 class FetchPOSTransactionStatusSerializer(DefaultSerializer):

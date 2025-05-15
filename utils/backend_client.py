@@ -174,6 +174,7 @@ class FlouciBackendClient:
         amount_in_millimes,
         payment_method,
         developer_tracking_id,
+        parent_payment_id=None,
     ):
         data = {
             "merchant_id": merchant_id,
@@ -184,6 +185,8 @@ class FlouciBackendClient:
             "payment_method": payment_method,
             "developer_tracking_id": developer_tracking_id,
         }
+        if parent_payment_id:
+            data["parent_payment_id"] = parent_payment_id
         if webhook:
             data["webhook"] = webhook
         response = requests.post(

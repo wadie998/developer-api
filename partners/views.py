@@ -564,7 +564,7 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                                 "credit_number_length": 16,
                                 "credit_number": "0345",
                                 "amount": "1.010",
-                                "bid": "44050586",
+                                "pan": "44050586",
                                 "mada_merchant_id": "800150400566",
                                 "scheme": "MC",
                                 "mada_terminal_id": "05000008",

@@ -167,7 +167,7 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
 
 class FetchPOSTransactionStatusSerializer(DefaultSerializer):
     developer_tracking_id = serializers.CharField(max_length=60, required=False)
-    flouci_transaction_id = serializers.UUIDField(required=False)
+    flouci_transaction_id = serializers.CharField(required=False)
 
     def validate(self, validate_data):
         transaction_id = validate_data.get("flouci_transaction_id")

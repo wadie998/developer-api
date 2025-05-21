@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from uuid import UUID
 
 import requests
 from django.urls import reverse
@@ -199,11 +198,11 @@ class FlouciBackendClient:
     @staticmethod
     @handle_exceptions
     def fetch_associated_partner_transaction(
-        merchant_id, *, developer_tracking_id: str = None, flouci_transaction_id: UUID = None
+        merchant_id, *, developer_tracking_id: str = None, flouci_transaction_id: str = None
     ):
         params = {"merchant_id": merchant_id}
         if flouci_transaction_id:
-            params["transaction_id"] = str(flouci_transaction_id)
+            params["transaction_id"] = flouci_transaction_id
         else:
             params["developer_tracking_id"] = developer_tracking_id
         response = requests.get(

@@ -489,10 +489,13 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                     "transactions": [
                         {
                             "developer_tracking_id": developer_tracking_id,
-                            "flouci_transaction_id": "lm71c259-0a19-4ch1-b192",
+                            "flouci_transaction_id": "479448021765032989835915737944",
                             "payment_status": "PS",
                             "payment_method": "wallet",
-                            "payment_details": {"wallet_id": "rDFL1234fa56789"},
+                            "payment_details": {
+                                "wallet_id": "1024010000000001146",
+                                "auth_code": "A222BA",
+                            },
                             "amount_in_millimes": 135000,
                             "currency": "TND",
                         }
@@ -504,7 +507,7 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                     "transactions": [
                         {
                             "developer_tracking_id": developer_tracking_id,
-                            "flouci_transaction_id": "4bd8-bb77c299-a485-8f14",
+                            "flouci_transaction_id": "479448021765032989835915737940",
                             "payment_status": "PS",
                             "payment_method": "card",
                             "payment_details": {"pan": 12345, "expiration": "202415", "auth_code": "121204"},
@@ -519,10 +522,10 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                     "transactions": [
                         {
                             "developer_tracking_id": developer_tracking_id,
-                            "flouci_transaction_id": "bb77c299-8f14-4bd8-a485",
+                            "flouci_transaction_id": "479448021765032989835915737942",
                             "payment_status": "PS",
                             "payment_method": "check",
-                            "payment_details": {"cheque_number": 1002345, "bank_code": "24"},
+                            "payment_details": {"check_number": 1002345, "bank_code": "24"},
                             "amount_in_millimes": 145000,
                             "currency": "TND",
                         }
@@ -534,10 +537,38 @@ class FetchPOSTransactionStatusView(GenericAPIView):
                     "transactions": [
                         {
                             "developer_tracking_id": developer_tracking_id,
-                            "flouci_transaction_id": "4bd8-bb77c299-a485-8f14",
+                            "flouci_transaction_id": "479448021765032989835915737947",
                             "payment_status": "PS",
                             "payment_method": "nfc",
-                            "payment_details": {"pan": 92315, "expiration": "202615", "auth_code": "121114"},
+                            "payment_details": {
+                                "transaction_number": "3f7272ad-fabd-4765-821c-7dc896710d18",
+                                "tvr": "0000008001",
+                                "acquirer_bank": "RAJB",
+                                "operation_type": "PAYMENT",
+                                "rrn": "000240241857",
+                                "kernel_id": "02",
+                                "decline_reason": "UnImplemented Error",
+                                "decline_code": "001",
+                                "finish_date": "2024-04-16 18:15:56.296286347",
+                                "cryptogram_information_data": "80",
+                                "created_date": "2024-04-16 21:17:08 GMT+03:00",
+                                "application_id": "A0000000041010",
+                                "stan": "000728",
+                                "cvm": "010002",
+                                "location": "0.0/0.0",
+                                "auth_code": "121204",
+                                "tsn": "704923",
+                                "application_cryptogram": "14D29EC3B9528093",
+                                "status": "Approved",
+                                "apk_version_no": "1.0.0",
+                                "credit_number_length": 16,
+                                "credit_number": "0345",
+                                "amount": "1.010",
+                                "bid": "44050586",
+                                "mada_merchant_id": "800150400566",
+                                "scheme": "MC",
+                                "mada_terminal_id": "05000008",
+                            },
                             "amount_in_millimes": 245000,
                             "currency": "TND",
                         }

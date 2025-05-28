@@ -111,9 +111,6 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "EXCEPTION_HANDLER": "utils.custom_exception_handlers.drf_custom_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_THROTTLE_CLASSES": [
-        "partners.throttles.TransactionStatusThrottle",
-    ],
     "DEFAULT_THROTTLE_RATES": {
         "transaction_status": "1/10s",
     },

@@ -5,6 +5,8 @@ import time
 from django.core.cache import cache
 from rest_framework.throttling import BaseThrottle
 
+from settings.settings import THROTTLE_CACHE_TIMEOUT
+
 
 class GenericRequestThrottle(BaseThrottle):
     """
@@ -146,6 +148,6 @@ class TransactionStatusThrottle(GenericRequestThrottle):
     """
 
     scope = "transaction_status"
-    timeout_seconds = 8
+    timeout_seconds = THROTTLE_CACHE_TIMEOUT
     throttle_fields = ["developer_tracking_id", "flouci_transaction_id"]
     require_all_fields = False  # At least one transaction ID required

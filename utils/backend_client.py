@@ -11,13 +11,11 @@ from settings.settings import (
     FLOUCI_BACKEND_API_ADDRESS,
     FLOUCI_BACKEND_API_KEY,
     FLOUCI_BACKEND_INTERNAL_API_KEY,
+    SHORT_EXTERNAL_REQUESTS_TIMEOUT,
 )
 from utils.dataapi_client import convert_millimes_to_dinars
 
 logger = logging.getLogger(__name__)
-
-# Default timeout for all external requests (in seconds)
-FLOUCI_REQUEST_TIMEOUT = 10
 
 
 def handle_exceptions(func):
@@ -119,7 +117,7 @@ class FlouciBackendClient:
             FlouciBackendClient.GENERATE_PAYMENT_PAGE_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -131,7 +129,7 @@ class FlouciBackendClient:
             FlouciBackendClient.CHECK_PAYMENT_URL,
             headers=FlouciBackendClient.HEADERS,
             params=params,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -150,7 +148,7 @@ class FlouciBackendClient:
             FlouciBackendClient.SEND_MONEY_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -165,7 +163,7 @@ class FlouciBackendClient:
             FlouciBackendClient.CHECK_SEND_MONEY_STATUS_URL,
             headers=FlouciBackendClient.HEADERS,
             params=params,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -199,7 +197,7 @@ class FlouciBackendClient:
             FlouciBackendClient.GENERATE_EXTERNAL_POS_TRANSACTION,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -217,7 +215,7 @@ class FlouciBackendClient:
             FlouciBackendClient.FETCH_PARTNER_TRANSACTION_STATUS,
             headers=FlouciBackendClient.HEADERS,
             params=params,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -232,7 +230,7 @@ class FlouciBackendClient:
             FlouciBackendClient.INITIATE_LINK_ACCOUNT,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -247,7 +245,7 @@ class FlouciBackendClient:
             FlouciBackendClient.IS_FLOUCI,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -264,7 +262,7 @@ class FlouciBackendClient:
             FlouciBackendClient.CONFIRM_LINK_ACCOUNT,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -281,7 +279,7 @@ class FlouciBackendClient:
             FlouciBackendClient.PARTNER_AUTHENTICATE,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -295,7 +293,7 @@ class FlouciBackendClient:
             FlouciBackendClient.GET_BALANCE,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -320,7 +318,7 @@ class FlouciBackendClient:
             FlouciBackendClient.SEND_MONEY,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -332,7 +330,7 @@ class FlouciBackendClient:
             FlouciBackendClient.CONFIRM_PAYMENT_AUTHORIZATION_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -344,7 +342,7 @@ class FlouciBackendClient:
             FlouciBackendClient.CANCEL_PAYMENT_AUTHORIZATION_URL,
             headers=FlouciBackendClient.HEADERS,
             json=data,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
 
@@ -357,6 +355,6 @@ class FlouciBackendClient:
             FlouciBackendClient.FETCH_TRACKING_ID_URL,
             headers=headers,
             params=params,
-            timeout=FLOUCI_REQUEST_TIMEOUT,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)

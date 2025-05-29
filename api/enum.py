@@ -39,6 +39,11 @@ class PartnerProducts(BaseEnum):
     BILL_PAYMENT = "003"
     ECOMMERCE = "004"
     VAS = "005"
+    PRODUCT_6 = "006"
+    PRODUCT_7 = "007"
+    PRODUCT_8 = "008"
+    PRODUCT_9 = "009"
+    PRODUCT_10 = "010"
 
 
 class TransactionsTypes(BaseEnum):

@@ -20,8 +20,6 @@ from settings.configs.sqlite_config import SQLITE3_CONFIG
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-timeout = 90
-
 DJANGO_SERVICE_VERSION = "1.0.0"
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -217,8 +215,8 @@ FLOUCI_BACKEND_API_ADDRESS = config("FLOUCI_BACKEND_API_ADDRESS", default="")
 FLOUCI_BACKEND_API_KEY = config("FLOUCI_BACKEND_API_KEY", default="")
 FLOUCI_BACKEND_INTERNAL_API_KEY = config("FLOUCI_BACKEND_INTERNAL_API_KEY", default="")
 
-EXTERNAL_REQUESTS_TIMEOUT = config("EXTERNAL_REQUESTS_TIMEOUT", default=int(2 * timeout) // 3, cast=int)
-SHORT_EXTERNAL_REQUESTS_TIMEOUT = config("SHORT_EXTERNAL_REQUESTS_TIMEOUT", default=15, cast=int)
+SHORT_EXTERNAL_REQUESTS_TIMEOUT = config("SHORT_EXTERNAL_REQUESTS_TIMEOUT", default=5, cast=int)
+THROTTLE_CACHE_TIMEOUT = config("THROTTLE_CACHE_TIMEOUT", default=8, cast=int)
 
 # Data API:
 DATA_API_ADDRESS = config("DATA_API_ADDRESS", default="")

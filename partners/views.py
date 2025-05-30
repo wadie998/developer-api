@@ -41,6 +41,7 @@ from partners.serializers import (
     RefreshAuthenticateSerializer,
     SendMoneyViewSerializer,
 )
+from partners.throttles import TransactionStatusThrottle
 from settings.settings import ENV
 from utils.backend_client import FlouciBackendClient
 from utils.decorators import IsValidGenericApi
@@ -476,6 +477,7 @@ class InitiatePosTransaction(GenericAPIView):
 class FetchPOSTransactionStatusView(GenericAPIView):
     permission_classes = (HasValidPartnerAppCredentials,)
     serializer_class = FetchPOSTransactionStatusSerializer
+    throttle_classes = [TransactionStatusThrottle]
 
     def get(self, request, serializer):
         app = request.application

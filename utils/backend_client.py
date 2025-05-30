@@ -24,6 +24,9 @@ def handle_exceptions(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
+        except requests.exceptions.Timeout:
+            logger.error(f"Timeout occurred in {func.__name__}")
+            return {"success": False, "error": "Request timed out", "code": -2, "status_code": 408}
         except Exception as e:
             logger.critical(f"Exception in {func.__name__}: {e}")
             return {"success": False, "error": "Problem processing request", "code": -1, "status_code": 500}

@@ -66,7 +66,7 @@ class GeneratePaymentSerializer(DefaultSerializer):
     developer_tracking_id = serializers.CharField(min_length=1, max_length=50)
     accept_edinar = serializers.BooleanField(required=False)
     currency = serializers.ChoiceField(choices=Currency.get_choices(), default=Currency.TND.value)
-    webhook = serializers.URLField(required=False)
+    webhook = serializers.URLField(required=False, allow_blank=True, allow_null=True)
     destination = DestinationSerializer(many=True, required=False)
     pre_authorization = serializers.BooleanField(default=False)
 

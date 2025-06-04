@@ -104,9 +104,10 @@ class FlouciBackendClient:
             "success_link": success_link,
             "fail_link": fail_link,
             "developer_tracking_id": developer_tracking_id,
-            "expires_at": (timezone.now() + timedelta(seconds=expires_at)).isoformat(),
             "pre_authorization": pre_authorization,
         }
+        if expires_at:
+            data["expires_at"] = (timezone.now() + timedelta(seconds=expires_at)).isoformat()
         if webhook_url:
             data["webhook_url"] = webhook_url
         if accept_edinar:

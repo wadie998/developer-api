@@ -45,6 +45,8 @@ class BaseGeneratePaymentView(GenericAPIView):
         application: FlouciApp = request.application
         app_token = application.public_token
         app_secret = application.private_token
+        test_account = application.test
+        merchant_id = application.merchant_id
         amount_in_millimes = serializer.validated_data.get("amount_in_millimes")
         accept_card = serializer.validated_data.get("accept_card")
         accept_edinar = serializer.validated_data.get("accept_edinar")
@@ -56,8 +58,6 @@ class BaseGeneratePaymentView(GenericAPIView):
         webhook = serializer.validated_data.get("webhook")
         developer_tracking_id = serializer.validated_data.get("developer_tracking_id")
         destination = serializer.validated_data.get("destination")
-        test_account = serializer.validated_data.get("test")
-        merchant_id = serializer.validated_data.get("merchant_id")
         pre_authorization = serializer.validated_data["pre_authorization"]
 
         response = FlouciBackendClient.generate_payment_page(
@@ -318,7 +318,6 @@ class VerifyPaymentView(BaseVerifyPaymentView):
 
 @IsValidGenericApi(post=True, get=False)
 class BaseSendMoneyView(GenericAPIView):
-    permission_classes = (HasValidAppCredentials | HasValidAppCredentialsV2,)
 
     def post(self, request, serializer):
         application: FlouciApp = request.application

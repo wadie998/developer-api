@@ -6,6 +6,13 @@ from utils.image_helper import extract_base64_image_data
 from utils.validators import validate_base64_image
 
 
+class HttpsURLField(serializers.URLField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and not data.startswith(("http://", "https://")):
+            data = f"https://{data}"
+        return super().to_internal_value(data)
+
+
 class DefaultSerializer(serializers.Serializer):
     def create(self, *args, **kwargs):
         pass
@@ -57,12 +64,12 @@ class DestinationSerializer(DefaultSerializer):
 
 
 class GeneratePaymentSerializer(DefaultSerializer):
-    amount = serializers.IntegerField(min_value=100, max_value=2000000)
+    amount = serializers.IntegerField(min_value=1000, max_value=2000000)
     accept_card = serializers.BooleanField()
-    session_timeout_secs = serializers.IntegerField(default=1200)
-    session_timeout = serializers.IntegerField(default=1200)
-    success_link = serializers.URLField()
-    fail_link = serializers.URLField()
+    session_timeout_secs = serializers.IntegerField(required=False, max_value=7200)
+    session_timeout = serializers.IntegerField(default=1200, max_value=7200)
+    success_link = HttpsURLField()
+    fail_link = HttpsURLField()
     developer_tracking_id = serializers.CharField(min_length=1, max_length=50)
     accept_edinar = serializers.BooleanField(required=False)
     currency = serializers.ChoiceField(choices=Currency.get_choices(), default=Currency.TND.value)
@@ -71,9 +78,6 @@ class GeneratePaymentSerializer(DefaultSerializer):
     pre_authorization = serializers.BooleanField(default=False)
 
     def validate(self, validate_data):
-        application = self.context.get("request").application
-        validate_data["merchant_id"] = application.merchant_id
-        validate_data["test"] = application.test
         validate_data["webhook"] = validate_data.get("webhook", None)
         validate_data["amount_in_millimes"] = validate_data.get("amount")
         return validate_data
@@ -167,8 +171,8 @@ class CheckSendMoneyStatusSerializer(BaseCheckSendMoneyStatusSerializer, AppCred
 
 
 class AcceptPaymentSerializer(DefaultSerializer):
-    flouci_otp = serializers.CharField()
-    payment_id = serializers.CharField()
+    flouci_otp = serializers.CharField(max_length=10)
+    payment_id = serializers.CharField(max_length=40)
     app_id = serializers.UUIDField(required=False, default=None)
     amount = serializers.IntegerField()
     destination = serializers.CharField(required=False, max_length=40, allow_null=True, allow_blank=True)

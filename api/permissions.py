@@ -43,7 +43,6 @@ class HasValidAppCredentials(BasePermission):
         # Try to get from headers first
         app_token = request.headers.get("apppublic")
         app_secret = request.headers.get("appsecret")
-        print(f"app_token: {app_token}, app_secret: {app_secret}")
         # If not found in headers, check request data
         if not app_token or not app_secret:
             app_token = request.data.get("app_token") or request.query_params.get("app_token")

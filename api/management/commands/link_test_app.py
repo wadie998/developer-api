@@ -43,4 +43,4 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Linked real app wallet {wallet_id} to test app ID {real_test_app.id} for id {real_app.tracking_id}"
             )
-        self.stdout.write(f"Finished linking all real apps to their test apps. len{count}")
+        self.stdout.write(f"Finished linking all real apps to their test apps. len {count}")

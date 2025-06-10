@@ -1,0 +1,1843 @@
+! function(t, e) {
+    "object" == typeof exports && "object" == typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define([], e) : "object" == typeof exports ? exports.Checkout = e() : t.Checkout = e()
+}(window, function() {
+    return function(t) {
+        var e = {};
+
+        function n(r) {
+            if (e[r]) return e[r].exports;
+            var o = e[r] = {
+                i: r,
+                l: !1,
+                exports: {}
+            };
+            return t[r].call(o.exports, o, o.exports, n), o.l = !0, o.exports
+        }
+        return n.m = t, n.c = e, n.d = function(t, e, r) {
+            n.o(t, e) || Object.defineProperty(t, e, {
+                enumerable: !0,
+                get: r
+            })
+        }, n.r = function(t) {
+            "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(t, Symbol.toStringTag, {
+                value: "Module"
+            }), Object.defineProperty(t, "__esModule", {
+                value: !0
+            })
+        }, n.t = function(t, e) {
+            if (1 & e && (t = n(t)), 8 & e) return t;
+            if (4 & e && "object" == typeof t && t && t.__esModule) return t;
+            var r = Object.create(null);
+            if (n.r(r), Object.defineProperty(r, "default", {
+                    enumerable: !0,
+                    value: t
+                }), 2 & e && "string" != typeof t)
+                for (var o in t) n.d(r, o, function(e) {
+                    return t[e]
+                }.bind(null, o));
+            return r
+        }, n.n = function(t) {
+            var e = t && t.__esModule ? function() {
+                return t.default
+            } : function() {
+                return t
+            };
+            return n.d(e, "a", e), e
+        }, n.o = function(t, e) {
+            return Object.prototype.hasOwnProperty.call(t, e)
+        }, n.p = "", n(n.s = 13)
+    }([function(t, e) {
+        var n, r = [0, 26, 44, 70, 100, 134, 172, 196, 242, 292, 346, 404, 466, 532, 581, 655, 733, 815, 901, 991, 1085, 1156, 1258, 1364, 1474, 1588, 1706, 1828, 1921, 2051, 2185, 2323, 2465, 2611, 2761, 2876, 3034, 3196, 3362, 3532, 3706];
+        e.getSymbolSize = function(t) {
+            if (!t) throw new Error('"version" cannot be null or undefined');
+            if (t < 1 || t > 40) throw new Error('"version" should be in range from 1 to 40');
+            return 4 * t + 17
+        }, e.getSymbolTotalCodewords = function(t) {
+            return r[t]
+        }, e.getBCHDigit = function(t) {
+            for (var e = 0; 0 !== t;) e++, t >>>= 1;
+            return e
+        }, e.setToSJISFunction = function(t) {
+            if ("function" != typeof t) throw new Error('"toSJISFunc" is not a valid function.');
+            n = t
+        }, e.isKanjiModeEnabled = function() {
+            return void 0 !== n
+        }, e.toSJIS = function(t) {
+            return n(t)
+        }
+    }, function(t, e, n) {
+        var r = n(9),
+            o = n(10);
+        e.NUMERIC = {
+            id: "Numeric",
+            bit: 1,
+            ccBits: [10, 12, 14]
+        }, e.ALPHANUMERIC = {
+            id: "Alphanumeric",
+            bit: 2,
+            ccBits: [9, 11, 13]
+        }, e.BYTE = {
+            id: "Byte",
+            bit: 4,
+            ccBits: [8, 16, 16]
+        }, e.KANJI = {
+            id: "Kanji",
+            bit: 8,
+            ccBits: [8, 10, 12]
+        }, e.MIXED = {
+            bit: -1
+        }, e.getCharCountIndicator = function(t, e) {
+            if (!t.ccBits) throw new Error("Invalid mode: " + t);
+            if (!r.isValid(e)) throw new Error("Invalid version: " + e);
+            return e >= 1 && e < 10 ? t.ccBits[0] : e < 27 ? t.ccBits[1] : t.ccBits[2]
+        }, e.getBestModeForData = function(t) {
+            return o.testNumeric(t) ? e.NUMERIC : o.testAlphanumeric(t) ? e.ALPHANUMERIC : o.testKanji(t) ? e.KANJI : e.BYTE
+        }, e.toString = function(t) {
+            if (t && t.id) return t.id;
+            throw new Error("Invalid mode")
+        }, e.isValid = function(t) {
+            return t && t.bit && t.ccBits
+        }, e.from = function(t, n) {
+            if (e.isValid(t)) return t;
+            try {
+                return function(t) {
+                    if ("string" != typeof t) throw new Error("Param is not a string");
+                    switch (t.toLowerCase()) {
+                        case "numeric":
+                            return e.NUMERIC;
+                        case "alphanumeric":
+                            return e.ALPHANUMERIC;
+                        case "kanji":
+                            return e.KANJI;
+                        case "byte":
+                            return e.BYTE;
+                        default:
+                            throw new Error("Unknown mode: " + t)
+                    }
+                }(t)
+            } catch (t) {
+                return n
+            }
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r = n(5);
+        i.TYPED_ARRAY_SUPPORT = function() {
+            try {
+                var t = new Uint8Array(1);
+                return t.__proto__ = {
+                    __proto__: Uint8Array.prototype,
+                    foo: function() {
+                        return 42
+                    }
+                }, 42 === t.foo()
+            } catch (t) {
+                return !1
+            }
+        }();
+        var o = i.TYPED_ARRAY_SUPPORT ? 2147483647 : 1073741823;
+
+        function i(t, e, n) {
+            return i.TYPED_ARRAY_SUPPORT || this instanceof i ? "number" == typeof t ? c(this, t) : function(t, e, n, r) {
+                if ("number" == typeof e) throw new TypeError('"value" argument must not be a number');
+                if ("undefined" != typeof ArrayBuffer && e instanceof ArrayBuffer) return function(t, e, n, r) {
+                    if (n < 0 || e.byteLength < n) throw new RangeError("'offset' is out of bounds");
+                    if (e.byteLength < n + (r || 0)) throw new RangeError("'length' is out of bounds");
+                    var o;
+                    o = void 0 === n && void 0 === r ? new Uint8Array(e) : void 0 === r ? new Uint8Array(e, n) : new Uint8Array(e, n, r);
+                    i.TYPED_ARRAY_SUPPORT ? o.__proto__ = i.prototype : o = u(t, o);
+                    return o
+                }(t, e, n, r);
+                if ("string" == typeof e) return function(t, e) {
+                    var n = 0 | f(e),
+                        r = s(t, n),
+                        o = r.write(e);
+                    o !== n && (r = r.slice(0, o));
+                    return r
+                }(t, e);
+                return function(t, e) {
+                    if (i.isBuffer(e)) {
+                        var n = 0 | a(e.length),
+                            r = s(t, n);
+                        return 0 === r.length ? r : (e.copy(r, 0, 0, n), r)
+                    }
+                    if (e) {
+                        if ("undefined" != typeof ArrayBuffer && e.buffer instanceof ArrayBuffer || "length" in e) return "number" != typeof e.length || (o = e.length) != o ? s(t, 0) : u(t, e);
+                        if ("Buffer" === e.type && Array.isArray(e.data)) return u(t, e.data)
+                    }
+                    var o;
+                    throw new TypeError("First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.")
+                }(t, e)
+            }(this, t, e, n) : new i(t, e, n)
+        }
+
+        function a(t) {
+            if (t >= o) throw new RangeError("Attempt to allocate Buffer larger than maximum size: 0x" + o.toString(16) + " bytes");
+            return 0 | t
+        }
+
+        function s(t, e) {
+            var n;
+            return i.TYPED_ARRAY_SUPPORT ? (n = new Uint8Array(e)).__proto__ = i.prototype : (null === (n = t) && (n = new i(e)), n.length = e), n
+        }
+
+        function c(t, e) {
+            var n = s(t, e < 0 ? 0 : 0 | a(e));
+            if (!i.TYPED_ARRAY_SUPPORT)
+                for (var r = 0; r < e; ++r) n[r] = 0;
+            return n
+        }
+
+        function u(t, e) {
+            for (var n = e.length < 0 ? 0 : 0 | a(e.length), r = s(t, n), o = 0; o < n; o += 1) r[o] = 255 & e[o];
+            return r
+        }
+
+        function l(t, e) {
+            var n;
+            e = e || 1 / 0;
+            for (var r = t.length, o = null, i = [], a = 0; a < r; ++a) {
+                if ((n = t.charCodeAt(a)) > 55295 && n < 57344) {
+                    if (!o) {
+                        if (n > 56319) {
+                            (e -= 3) > -1 && i.push(239, 191, 189);
+                            continue
+                        }
+                        if (a + 1 === r) {
+                            (e -= 3) > -1 && i.push(239, 191, 189);
+                            continue
+                        }
+                        o = n;
+                        continue
+                    }
+                    if (n < 56320) {
+                        (e -= 3) > -1 && i.push(239, 191, 189), o = n;
+                        continue
+                    }
+                    n = 65536 + (o - 55296 << 10 | n - 56320)
+                } else o && (e -= 3) > -1 && i.push(239, 191, 189);
+                if (o = null, n < 128) {
+                    if ((e -= 1) < 0) break;
+                    i.push(n)
+                } else if (n < 2048) {
+                    if ((e -= 2) < 0) break;
+                    i.push(n >> 6 | 192, 63 & n | 128)
+                } else if (n < 65536) {
+                    if ((e -= 3) < 0) break;
+                    i.push(n >> 12 | 224, n >> 6 & 63 | 128, 63 & n | 128)
+                } else {
+                    if (!(n < 1114112)) throw new Error("Invalid code point");
+                    if ((e -= 4) < 0) break;
+                    i.push(n >> 18 | 240, n >> 12 & 63 | 128, n >> 6 & 63 | 128, 63 & n | 128)
+                }
+            }
+            return i
+        }
+
+        function f(t) {
+            return i.isBuffer(t) ? t.length : "undefined" != typeof ArrayBuffer && "function" == typeof ArrayBuffer.isView && (ArrayBuffer.isView(t) || t instanceof ArrayBuffer) ? t.byteLength : ("string" != typeof t && (t = "" + t), 0 === t.length ? 0 : l(t).length)
+        }
+        i.TYPED_ARRAY_SUPPORT && (i.prototype.__proto__ = Uint8Array.prototype, i.__proto__ = Uint8Array, "undefined" != typeof Symbol && Symbol.species && i[Symbol.species] === i && Object.defineProperty(i, Symbol.species, {
+            value: null,
+            configurable: !0,
+            enumerable: !1,
+            writable: !1
+        })), i.prototype.write = function(t, e, n) {
+            void 0 === e ? (n = this.length, e = 0) : void 0 === n && "string" == typeof e ? (n = this.length, e = 0) : isFinite(e) && (e |= 0, isFinite(n) ? n |= 0 : n = void 0);
+            var r = this.length - e;
+            if ((void 0 === n || n > r) && (n = r), t.length > 0 && (n < 0 || e < 0) || e > this.length) throw new RangeError("Attempt to write outside buffer bounds");
+            return function(t, e, n, r) {
+                return function(t, e, n, r) {
+                    for (var o = 0; o < r && !(o + n >= e.length || o >= t.length); ++o) e[o + n] = t[o];
+                    return o
+                }(l(e, t.length - n), t, n, r)
+            }(this, t, e, n)
+        }, i.prototype.slice = function(t, e) {
+            var n, r = this.length;
+            if ((t = ~~t) < 0 ? (t += r) < 0 && (t = 0) : t > r && (t = r), (e = void 0 === e ? r : ~~e) < 0 ? (e += r) < 0 && (e = 0) : e > r && (e = r), e < t && (e = t), i.TYPED_ARRAY_SUPPORT)(n = this.subarray(t, e)).__proto__ = i.prototype;
+            else {
+                var o = e - t;
+                n = new i(o, void 0);
+                for (var a = 0; a < o; ++a) n[a] = this[a + t]
+            }
+            return n
+        }, i.prototype.copy = function(t, e, n, r) {
+            if (n || (n = 0), r || 0 === r || (r = this.length), e >= t.length && (e = t.length), e || (e = 0), r > 0 && r < n && (r = n), r === n) return 0;
+            if (0 === t.length || 0 === this.length) return 0;
+            if (e < 0) throw new RangeError("targetStart out of bounds");
+            if (n < 0 || n >= this.length) throw new RangeError("sourceStart out of bounds");
+            if (r < 0) throw new RangeError("sourceEnd out of bounds");
+            r > this.length && (r = this.length), t.length - e < r - n && (r = t.length - e + n);
+            var o, a = r - n;
+            if (this === t && n < e && e < r)
+                for (o = a - 1; o >= 0; --o) t[o + e] = this[o + n];
+            else if (a < 1e3 || !i.TYPED_ARRAY_SUPPORT)
+                for (o = 0; o < a; ++o) t[o + e] = this[o + n];
+            else Uint8Array.prototype.set.call(t, this.subarray(n, n + a), e);
+            return a
+        }, i.prototype.fill = function(t, e, n) {
+            if ("string" == typeof t) {
+                if ("string" == typeof e ? (e = 0, n = this.length) : "string" == typeof n && (n = this.length), 1 === t.length) {
+                    var r = t.charCodeAt(0);
+                    r < 256 && (t = r)
+                }
+            } else "number" == typeof t && (t &= 255);
+            if (e < 0 || this.length < e || this.length < n) throw new RangeError("Out of range index");
+            if (n <= e) return this;
+            var o;
+            if (e >>>= 0, n = void 0 === n ? this.length : n >>> 0, t || (t = 0), "number" == typeof t)
+                for (o = e; o < n; ++o) this[o] = t;
+            else {
+                var a = i.isBuffer(t) ? t : new i(t),
+                    s = a.length;
+                for (o = 0; o < n - e; ++o) this[o + e] = a[o % s]
+            }
+            return this
+        }, i.concat = function(t, e) {
+            if (!r(t)) throw new TypeError('"list" argument must be an Array of Buffers');
+            if (0 === t.length) return s(null, 0);
+            var n;
+            if (void 0 === e)
+                for (e = 0, n = 0; n < t.length; ++n) e += t[n].length;
+            var o = c(null, e),
+                a = 0;
+            for (n = 0; n < t.length; ++n) {
+                var u = t[n];
+                if (!i.isBuffer(u)) throw new TypeError('"list" argument must be an Array of Buffers');
+                u.copy(o, a), a += u.length
+            }
+            return o
+        }, i.byteLength = f, i.prototype._isBuffer = !0, i.isBuffer = function(t) {
+            return !(null == t || !t._isBuffer)
+        }, t.exports = i
+    }, function(t, e, n) {
+        "use strict";
+
+        function r(t) {
+            for (var e = (t = t.split("")).shift(), n = t.pop(), r = t.length - 1; r > 0; r--) {
+                var o = Math.floor(Math.random() * (r + 1)),
+                    i = [t[o], t[r]];
+                t[r] = i[0], t[o] = i[1]
+            }
+            return e + t.join("") + n
+        }
+        Object.defineProperty(e, "__esModule", {
+            value: !0
+        }), e.PAY_BUTTON_TEXT_CONTAINER = e.F_MAIN = e.F_ERROR = e.CONTAINER = e.F_OTP_INPUT = e.F_PAYMENT_FORM = e.B_CHECK_OUT = e.F_PAYMENT = e.F_PAYMENT_FORM_INPUT = e.F_TEST = e.F_BACKGROUND = e.millimeHTMLID = e.dinarHTMLID = e.QrCodeHTMLID = e.F_F = e.B_OPEN_APP = e.B_SUBMIT_PHONE = e.B_CLOSE = e.F_CODE_TEXT = e.F_SCAN = e.F_SCAN_TEXT = e.F_P_TEXT = e.F_P_PAY_TEXT = e.F_PAY_TEXT = e.F_TEXT = void 0;
+        var o = r("qMadfqdsfMWp");
+        e.F_TEXT = o;
+        var i = r("OixqsdfdqsfZeQ");
+        e.F_PAY_TEXT = i;
+        var a = r("Zssdfvxcl7YG");
+        e.F_P_PAY_TEXT = a;
+        var s = r("wdccxvseegfsdf");
+        e.F_P_TEXT = s;
+        var c = r("qsdqdwcvwc");
+        e.F_SCAN_TEXT = c;
+        var u = r("qsdqsdwxc");
+        e.F_SCAN = u;
+        var l = r("qsdgbxcv");
+        e.F_CODE_TEXT = l;
+        var f = r("bnrtbnnb");
+        e.B_CLOSE = f;
+        var d = r("ipiolnjkg");
+        e.B_SUBMIT_PHONE = d;
+        var p = r("ipiolnjzg");
+        e.B_OPEN_APP = p;
+        var h = r("sdfsdvqsf");
+        e.F_F = h;
+        var m = r("urjcvsddgb");
+        e.QrCodeHTMLID = m;
+        var g = r("dswvbezrvcnbb");
+        e.dinarHTMLID = g;
+        var v = r("opiioobhnjhby");
+        e.millimeHTMLID = v;
+        var y = r("kljhjhkvbqadsd");
+        e.F_BACKGROUND = y;
+        var b = r("mooqsjkdwxjcn");
+        e.F_TEST = b;
+        var w = r("lihcqhjsd");
+        e.F_PAYMENT_FORM_INPUT = w;
+        var x = r("oiqssjdfklsncj");
+        e.F_PAYMENT = x;
+        var _ = r("uiagdiuhqsbgdc");
+        e.B_CHECK_OUT = _;
+        var E = r("htripokdfgbvnfd");
+        e.F_PAYMENT_FORM = E;
+        var T = r("ehdfvcvvbr");
+        e.F_OTP_INPUT = T;
+        var C = r("azerqscxwc");
+        e.CONTAINER = C;
+        var B = r("qsfdgdsdf");
+        e.F_ERROR = B;
+        var A = r("cxvoiuqiosfdh");
+        e.F_MAIN = A;
+        var P = r("cxvoiuqissfdh");
+        e.PAY_BUTTON_TEXT_CONTAINER = P
+    }, function(t, e, n) {
+        var r = n(17);
+        "string" == typeof r && (r = [
+            [t.i, r, ""]
+        ]);
+        var o = {
+            hmr: !0,
+            transform: void 0,
+            insertInto: void 0
+        };
+        n(19)(r, o);
+        r.locals && (t.exports = r.locals)
+    }, function(t, e) {
+        var n = {}.toString;
+        t.exports = Array.isArray || function(t) {
+            return "[object Array]" == n.call(t)
+        }
+    }, function(t, e) {
+        e.L = {
+            bit: 1
+        }, e.M = {
+            bit: 0
+        }, e.Q = {
+            bit: 3
+        }, e.H = {
+            bit: 2
+        }, e.isValid = function(t) {
+            return t && void 0 !== t.bit && t.bit >= 0 && t.bit < 4
+        }, e.from = function(t, n) {
+            if (e.isValid(t)) return t;
+            try {
+                return function(t) {
+                    if ("string" != typeof t) throw new Error("Param is not a string");
+                    switch (t.toLowerCase()) {
+                        case "l":
+                        case "low":
+                            return e.L;
+                        case "m":
+                        case "medium":
+                            return e.M;
+                        case "q":
+                        case "quartile":
+                            return e.Q;
+                        case "h":
+                        case "high":
+                            return e.H;
+                        default:
+                            throw new Error("Unknown EC Level: " + t)
+                    }
+                }(t)
+            } catch (t) {
+                return n
+            }
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r = n(3),
+            o = n(4),
+            i = '\n<div>\n    <div id="'.concat(r.PAY_BUTTON_TEXT_CONTAINER, '" class="').concat(o.flouciBtn, " ").concat(o.flouciBtnOutlineWarning, " ").concat(o.flouciButton, '" style="display: flex;align-items: center;justify-content: center;gap: 5px;font-weight: bold;">\n        <span id="').concat(r.F_PAY_TEXT, '" style="color: #ffffff">Payer avec</span>\n            <img class="').concat(o.flouciButtonLogo, '" src="https://developersdev.flouci.com/static/flouci_icon.png" width="10%"/>\n        <span id=').concat(r.F_TEXT, ' style="color: #ffffff">Flouci</span>\n    </div>\n</div>\n'),
+            a = function(t, e, n) {
+                var r = document.createElement(n);
+                return r.id = t, r.innerHTML = e, r
+            };
+        t.exports.createInput = function(t, e, n) {
+            var r = document.createElement("input");
+            return r.type = e, r.id = t, r.value = n, r
+        }, t.exports.createImage = function(t, e) {
+            var n = document.createElement("img");
+            return n.id = t, n.src = e, n
+        }, t.exports.createDiv = function(t) {
+            var e = document.createElement("div");
+            return e.id = t, e
+        }, t.exports.createSpan = function(t, e) {
+            return a(t, e, "span")
+        }, t.exports.createGenericControl = a, t.exports.createInitialInput = function(t, e, n) {
+            var r = document.createElement("div");
+            return r.type = e, r.id = t, r.value = n, r.width = "200px", r.height = "100px", r.innerHTML = i, r
+        }
+    }, function(t, e, n) {
+        var r = n(6),
+            o = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 2, 4, 1, 2, 4, 4, 2, 4, 4, 4, 2, 4, 6, 5, 2, 4, 6, 6, 2, 5, 8, 8, 4, 5, 8, 8, 4, 5, 8, 11, 4, 8, 10, 11, 4, 9, 12, 16, 4, 9, 16, 16, 6, 10, 12, 18, 6, 10, 17, 16, 6, 11, 16, 19, 6, 13, 18, 21, 7, 14, 21, 25, 8, 16, 20, 25, 8, 17, 23, 25, 9, 17, 23, 34, 9, 18, 25, 30, 10, 20, 27, 32, 12, 21, 29, 35, 12, 23, 34, 37, 12, 25, 34, 40, 13, 26, 35, 42, 14, 28, 38, 45, 15, 29, 40, 48, 16, 31, 43, 51, 17, 33, 45, 54, 18, 35, 48, 57, 19, 37, 51, 60, 19, 38, 53, 63, 20, 40, 56, 66, 21, 43, 59, 70, 22, 45, 62, 74, 24, 47, 65, 77, 25, 49, 68, 81],
+            i = [7, 10, 13, 17, 10, 16, 22, 28, 15, 26, 36, 44, 20, 36, 52, 64, 26, 48, 72, 88, 36, 64, 96, 112, 40, 72, 108, 130, 48, 88, 132, 156, 60, 110, 160, 192, 72, 130, 192, 224, 80, 150, 224, 264, 96, 176, 260, 308, 104, 198, 288, 352, 120, 216, 320, 384, 132, 240, 360, 432, 144, 280, 408, 480, 168, 308, 448, 532, 180, 338, 504, 588, 196, 364, 546, 650, 224, 416, 600, 700, 224, 442, 644, 750, 252, 476, 690, 816, 270, 504, 750, 900, 300, 560, 810, 960, 312, 588, 870, 1050, 336, 644, 952, 1110, 360, 700, 1020, 1200, 390, 728, 1050, 1260, 420, 784, 1140, 1350, 450, 812, 1200, 1440, 480, 868, 1290, 1530, 510, 924, 1350, 1620, 540, 980, 1440, 1710, 570, 1036, 1530, 1800, 570, 1064, 1590, 1890, 600, 1120, 1680, 1980, 630, 1204, 1770, 2100, 660, 1260, 1860, 2220, 720, 1316, 1950, 2310, 750, 1372, 2040, 2430];
+        e.getBlocksCount = function(t, e) {
+            switch (e) {
+                case r.L:
+                    return o[4 * (t - 1) + 0];
+                case r.M:
+                    return o[4 * (t - 1) + 1];
+                case r.Q:
+                    return o[4 * (t - 1) + 2];
+                case r.H:
+                    return o[4 * (t - 1) + 3];
+                default:
+                    return
+            }
+        }, e.getTotalCodewordsCount = function(t, e) {
+            switch (e) {
+                case r.L:
+                    return i[4 * (t - 1) + 0];
+                case r.M:
+                    return i[4 * (t - 1) + 1];
+                case r.Q:
+                    return i[4 * (t - 1) + 2];
+                case r.H:
+                    return i[4 * (t - 1) + 3];
+                default:
+                    return
+            }
+        }
+    }, function(t, e) {
+        e.isValid = function(t) {
+            return !isNaN(t) && t >= 1 && t <= 40
+        }
+    }, function(t, e) {
+        var n = "(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+",
+            r = "(?:(?![A-Z0-9 $%*+\\-./:]|" + (n = n.replace(/u/g, "\\u")) + ")(?:.|[\r\n]))+";
+        e.KANJI = new RegExp(n, "g"), e.BYTE_KANJI = new RegExp("[^A-Z0-9 $%*+\\-./:]+", "g"), e.BYTE = new RegExp(r, "g"), e.NUMERIC = new RegExp("[0-9]+", "g"), e.ALPHANUMERIC = new RegExp("[A-Z $%*+\\-./:]+", "g");
+        var o = new RegExp("^" + n + "$"),
+            i = new RegExp("^[0-9]+$"),
+            a = new RegExp("^[A-Z0-9 $%*+\\-./:]+$");
+        e.testKanji = function(t) {
+            return o.test(t)
+        }, e.testNumeric = function(t) {
+            return i.test(t)
+        }, e.testAlphanumeric = function(t) {
+            return a.test(t)
+        }
+    }, function(t, e) {
+        function n(t) {
+            if ("string" != typeof t) throw new Error("Color should be defined as hex string");
+            var e = t.slice().replace("#", "").split("");
+            if (e.length < 3 || 5 === e.length || e.length > 8) throw new Error("Invalid hex color: " + t);
+            3 !== e.length && 4 !== e.length || (e = Array.prototype.concat.apply([], e.map(function(t) {
+                return [t, t]
+            }))), 6 === e.length && e.push("F", "F");
+            var n = parseInt(e.join(""), 16);
+            return {
+                r: n >> 24 & 255,
+                g: n >> 16 & 255,
+                b: n >> 8 & 255,
+                a: 255 & n,
+                hex: "#" + e.slice(0, 6).join("")
+            }
+        }
+        e.getOptions = function(t) {
+            t || (t = {}), t.color || (t.color = {});
+            var e = void 0 === t.margin || null === t.margin || t.margin < 0 ? 4 : t.margin,
+                r = t.width && t.width >= 21 ? t.width : void 0,
+                o = t.scale || 4;
+            return {
+                width: r,
+                scale: r ? 4 : o,
+                margin: e,
+                color: {
+                    dark: n(t.color.dark || "#000000ff"),
+                    light: n(t.color.light || "#ffffffff")
+                },
+                type: t.type,
+                rendererOpts: t.rendererOpts || {}
+            }
+        }, e.getScale = function(t, e) {
+            return e.width && e.width >= t + 2 * e.margin ? e.width / (t + 2 * e.margin) : e.scale
+        }, e.getImageWidth = function(t, n) {
+            var r = e.getScale(t, n);
+            return Math.floor((t + 2 * n.margin) * r)
+        }, e.qrToImageData = function(t, n, r) {
+            for (var o = n.modules.size, i = n.modules.data, a = e.getScale(o, r), s = Math.floor((o + 2 * r.margin) * a), c = r.margin * a, u = [r.color.light, r.color.dark], l = 0; l < s; l++)
+                for (var f = 0; f < s; f++) {
+                    var d = 4 * (l * s + f),
+                        p = r.color.light;
+                    if (l >= c && f >= c && l < s - c && f < s - c) p = u[i[Math.floor((l - c) / a) * o + Math.floor((f - c) / a)] ? 1 : 0];
+                    t[d++] = p.r, t[d++] = p.g, t[d++] = p.b, t[d] = p.a
+                }
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r = n(3);
+        n(4);
+        t.exports = function(t) {
+            this.langKey = t, this.InitialInput = function() {
+                var e = document.getElementById(r.F_PAY_TEXT),
+                    n = document.getElementById(r.F_TEXT);
+                switch (t) {
+                    case "en":
+                        e.innerText = "Pay with";
+                        break;
+                    case "ar":
+                        document.getElementById(r.PAY_BUTTON_TEXT_CONTAINER).style.flexDirection = "row-reverse", e.innerText = "ادفع بـ", n.innerText = "فلوسي";
+                        break;
+                    case "ar-tn":
+                        document.getElementById(r.PAY_BUTTON_TEXT_CONTAINER).style.flexDirection = "row-reverse", e.innerText = "خلّص بـ", n.innerText = "فلوسي";
+                        break;
+                    case "fr":
+                    default:
+                        e.innerText = "Payer avec"
+                }
+            }, this.paymentSecreen = function() {
+                var e = document.getElementById(r.F_P_PAY_TEXT),
+                    n = document.getElementById(r.B_OPEN_APP),
+                    o = document.getElementById(r.F_P_TEXT),
+                    i = document.getElementById(r.F_SCAN_TEXT),
+                    a = document.getElementById(r.F_SCAN),
+                    s = document.getElementById(r.F_CODE_TEXT),
+                    c = document.getElementById(r.B_CLOSE),
+                    u = document.getElementById(r.B_SUBMIT_PHONE),
+                    l = document.getElementById(r.F_F);
+                switch (a.style.fontSize = "x-large", l.style.fontFamily = "Ubuntu", t) {
+                    case "en":
+                        e.style.fontFamily = "Ubuntu", o.style.fontFamily = "Ubuntu", i.style.fontFamily = "Ubuntu", a.style.fontFamily = "Ubuntu", s.style.fontFamily = "Ubuntu", c.style.fontFamily = "Ubuntu", u.style.fontFamily = "Ubuntu", n && (n.style.fontFamily = "Ubuntu", n.innerText = "Open The App"), e.innerText = "Pay with", i.innerText = "Scan with your application", s.innerText = "Enter the code here", a.innerText = "Flouci", u.value = "Confirm", c.value = "x";
+                        break;
+                    case "ar-tn":
+                        e.style.fontFamily = "Cairo", o.style.fontFamily = "Cairo", i.style.fontFamily = "Cairo", a.style.fontFamily = "Cairo", s.style.fontFamily = "Cairo", c.style.fontFamily = "Cairo", u.style.fontFamily = "Cairo", n && (n.style.fontFamily = "Cairo", n.innerText = "حل لأبلكسيون"), e.before(o), i.after(a), e.innerText = "خلّص بـ ", o.innerText = " فلوسي ", i.innerText = "سكاني الكود بالأبلكاسيون", a.innerText = " فلوسي ", s.innerText = "وإكتب النمرو هوني", u.value = "       مريغل        ", c.value = "x";
+                        break;
+                    case "ar":
+                        e.style.fontFamily = "Cairo", o.style.fontFamily = "Cairo", i.style.fontFamily = "Cairo", a.style.fontFamily = "Cairo", s.style.fontFamily = "Cairo", c.style.fontFamily = "Cairo", u.style.fontFamily = "Cairo", n && (n.style.fontFamily = "Cairo", n.innerText = "إفتح التطبيقة"), e.before(o), i.after(a), e.innerText = "ادفع بـ ", o.innerText = " فلوسي ", i.innerText = "إمسح باستخدام التطبيق الخاص بك", a.innerText = " فلوسي ", s.innerText = "أدخل الرمز هنا", u.value = "       أكد       ", c.value = "x";
+                        break;
+                    case "fr":
+                    default:
+                        e.style.fontFamily = "Ubuntu", o.style.fontFamily = "Ubuntu", i.style.fontFamily = "Ubuntu", a.style.fontFamily = "Ubuntu", s.style.fontFamily = "Ubuntu", c.style.fontFamily = "Ubuntu", u.style.fontFamily = "Ubuntu", n && (n.style.fontFamily = "Cairo", n.innerText = "Ouvrir l'application"), e.innerText = "Payer avec", i.innerText = "Scannez avec votre application", s.innerText = "Entrez le code ici", a.innerText = "Flouci", u.value = "Confirmer", c.value = "x"
+                }
+            }
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r = n(3),
+            o = n(14),
+            i = n(7);
+        n(4);
+        for (var a = n(12), s = new o, c = new RegExp("main.js$"), u = {}, l = document.getElementsByTagName("script"), f = 0; f < l.length; f++) {
+            var d = l[f],
+                p = d.getAttribute("src");
+            if (c.test(p)) {
+                if (u.serverUrl = "https://developersdev.flouci.com/static/main.js" === p ? "https://datadev.flouci.com" : "https://developersstaging.flouci.com/static/main.js" === p ? "https://datastaging.flouci.com" : "https://developers.flouci.com/static/main.js" === p ? "https://data.flouci.com" : "https://datadev.flouci.com", u.env = "https://developers.flouci.com/static/main.js" === p ? "prod" : "https://developersstaging.flouci.com/static/main.js" === p ? "sta" : "dev", "dev" === u.env ? u.serverUrl = "https://datadev.flouci.com" : "sta" === u.env ? u.serverUrl = "https://datastaging.flouci.com" : "prod" === u.env ? u.serverUrl = "https://data.flouci.com" : u.serverUrl = "https://datadev.flouci.com", u.form = d.parentElement, u.app = d.getAttribute("app"), u.amount = parseInt(d.getAttribute("data-amount"), 10), null == u.app || null == u.amount) throw new Error("Checkout not configured with app and amount");
+                u.id = d.getAttribute("data-id"), u.name = d.getAttribute("data-name"), u.description = d.getAttribute("data-description"), u.imageUrl = d.getAttribute("data-image"), u.skipButton = d.getAttribute("skip-button"), u.langKey = d.getAttribute("lang-key"), u.test = d.getAttribute("test"), u.littleFormID = r.F_PAYMENT_FORM, d.parentElement.removeChild(d);
+                break
+            }
+        }
+        var h = new a(u.langKey),
+            m = i.createInitialInput(r.B_CHECK_OUT, "button", "Checkout");
+        u.form.appendChild(m), m.style.width = "max-content", h.InitialInput(), s.configure(u), u.skipButton && s.open(), m.onclick = function() {
+            s.open()
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r, o = n(3),
+            i = (r = n(15)) && r.__esModule ? r : {
+                default: r
+            };
+        var a, s, c, u, l, f = n(16),
+            d = n(7),
+            p = n(21),
+            h = n(43),
+            m = n(12),
+            g = n(4),
+            v = function() {
+                this.isConfigured = !1
+            };
+        v.prototype.configure = function(t) {
+            if (this.app = t.app, isNaN(t.amount)) throw Error("not a valid amount");
+            this.amount = t.amount, this.name = t.name, this.id = t.id, this.description = t.description, this.imageUrl = t.imageUrl, this.serverUrl = t.serverUrl, this.form = t.form, this.skipButton = t.skipButton, this.isConfigured = !0, this.test = t.test, this.littleFormID = t.littleFormID, this.env = t.env, self = this, u = new m(t.langKey), a = new f(this.serverUrl), s = new p(o.QrCodeHTMLID, this.app, this.amount, t), c = new h(this.amount, o.dinarHTMLID, o.millimeHTMLID), l = new i.default(this.amount, t.littleFormID, t.form)
+        }, v.prototype.drawPaymentScreen = function() {
+            document.getElementById(o.F_PAYMENT).style.display = "block", s.injectQR(), c.injectAmount(), u.paymentSecreen(), self.configureCloseBehaviour(o.B_CLOSE), self.configureCloseBehaviourBackDrop(o.F_BACKGROUND), "true" == self.test && (document.getElementById(o.F_TEST).style.display = "block"), self.skipButton ? (self.configureskipButton(), this.configureOTPVerificationOnSubmit()) : this.configureOTPVerificationOnSubmit()
+        }, v.prototype.configureCloseBehaviour = function(t) {
+            document.getElementById(t).onclick = function() {
+                a.abortLastRequest();
+                var t = document.getElementById(o.CONTAINER);
+                t.parentElement.removeChild(t)
+            }
+        }, v.prototype.configureCloseBehaviourBackDrop = function(t) {
+            document.getElementById(t).onclick = function() {
+                a.abortLastRequest(), this.parentElement.parentElement.removeChild(this.parentElement)
+            }
+        }, v.prototype.configureskipButton = function() {
+            document.getElementById(o.F_MAIN).style.border = "none", document.getElementById(o.F_BACKGROUND).remove(), document.getElementById(o.B_CHECK_OUT).remove(), document.getElementById(o.B_CLOSE).remove(), document.getElementsByClassName(g.flouciModalDialog)[0].style.position = "inherit"
+        }, v.prototype.configureOTPVerificationOnSubmit = function() {
+            var t = document.getElementById(l.littleForm),
+                e = l.bigForm,
+                n = this.errorContainer;
+            t.onsubmit = function() {
+                self.clearScreen(n), a.abortLastRequest();
+                var t = document.getElementById(o.F_OTP_INPUT);
+                if (!self.isOTPValid(t.value, n)) return !1;
+                var r = self.getCommonData();
+                return r.phone = t.value, r.form = e, r.phone, r.errContainer = n, "111111" === r.phone || "000000" === r.phone ? (self.onPrePaymentVerification(null, {
+                    form: e,
+                    otp: r.phone,
+                    res: {
+                        code: 0,
+                        result: {
+                            id: "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(t) {
+                                var e = 16 * Math.random() | 0,
+                                    n = "x" == t ? e : 3 & e | 8;
+                                return n.toString(16)
+                            })
+                        }
+                    }
+                }), !1) : (a.verifyPaymentOTP(r, self, "onPrePaymentVerification"), !1)
+            }
+        }, v.prototype.showModal = function() {
+            var t = '\n  <div id="'.concat(o.CONTAINER, '" class="').concat(g.flouciContainer, '">\n\n    <div id="').concat(o.F_BACKGROUND, '" class="').concat(g.modalBackdrop, " ").concat(g.fade, " ").concat(g.show, ' "></div>\n    <div class="').concat(g.flouciModalDialog, " ").concat(g.flouciModalDialogCentered, '" role="document">\n        <div id="').concat(o.F_MAIN, '" class="').concat(g.modalContent, " ").concat(g.modal, '">\n\n            <div class="').concat(g.modalHeader, " ").concat(g.flouciModalHeader, '">\n                <div id="').concat(o.F_TEST, '" class="').concat(g.flouciTest, '">Test</div>\n                <h4 class="').concat(g.modalTitle, " ").concat(g.textCenter, '" id="').concat(o.F_P_PAY_TEXT, '">Payer avec <h4 class="').concat(g.flouci, '" id="').concat(o.F_P_TEXT, '" >Flouci</h4></h4>\n                <input type="button" class="').concat(g.flouciBtn, " ").concat(g.flouciClose, '" id="').concat(o.B_CLOSE, '" value="< Retourner">\n            </div>\n            <div class="').concat(g.fSep, '"></div>\n            <div class="').concat(g.modalBody, " ").concat(g.container, " ").concat(g.p3, '">\n                <div id="').concat(o.F_ERROR, '" class="').concat(g.textCenter, ' alert-danger"></div>\n                <div id="').concat(o.F_PAYMENT, '" class="').concat(g.alignItemsCenter, " ").concat(g.dFlex, " ").concat(g.flexColumn, '">\n                    \x3c!-- Not sure what is going here, but the first form is always removed when parsing the html and inserting it into the DOM, so I\'ve added this empty form as a workaround.--\x3e\n                    <form></form>\n                    <div id="').concat(o.QrCodeHTMLID, '"></div>\n                    <h2 class="').concat(g.textCenter, '"><span>\n                        <img class="').concat(g.dinar, '" src="https://developersdev.flouci.com/static/dinar.png" width="10%"/>\n                        </span><span class="').concat(g.acharat, '" id="').concat(o.dinarHTMLID, '">36,</span>\n                        <span class="').concat(g.ahaad, '" id="').concat(o.millimeHTMLID, '">000</span>\n                    </h2>\n                    <span>\n                        <h5 class="').concat(g.textCenter, " ").concat(g.flouciScanText, '" id="').concat(o.F_SCAN_TEXT, '">Scannez avec votre application</h5> <strong id="').concat(o.F_SCAN, '" class="').concat(g.textCenter, '">flouci</strong>\n                    </span>\n                    <h5 class="').concat(g.textCenter, '" id="').concat(o.F_CODE_TEXT, '">Entrez le code ici</h5>\n                    <form id="').concat(o.F_PAYMENT_FORM, '" class="').concat(g.dFlex, " ").concat(g.flexColumn, " ").concat(g.alignItemsCenter, ' " >\n                        <div id="').concat(o.F_PAYMENT_FORM_INPUT, '" class="').concat(g.dFlex, " ").concat(g.alignItemsCenter, '">\n                            <span class="').concat(g.flouciF, '" id="').concat(o.F_F, '">F -</span>\n                            <input type="text" name="flouci-otp"\n                                   class="').concat(g.formControl, " ").concat(g.flouciOtpInput, '" id="').concat(o.F_OTP_INPUT, '"\n                                   placeholder="------" maxlength="6"\n                                    onkeyup="this.value = this.value.toUpperCase();"\n                                   style="text-transform: uppercase;">\n                        </div>\n<br>\n                        <div class="').concat(g.dFlex, " ").concat(g.justifyContentAround, " ").concat(g.flouciFooter, '">\n           \n                            <input type="submit" id="').concat(o.B_SUBMIT_PHONE, '" class="').concat(g.flouciBtn, " ").concat(g.flouciBtnOutlineWarning, " ").concat(g.confirmButton, " ").concat(g.m1, '" value="Confirmer">\n                        </div>\n                    </form>\n                </div>\n            </div>\n        </div>\n    </div>\n</div>\n  ');
+            t = t.replace(new RegExp("@DESCRIPTION", "g"), this.description).replace(new RegExp("@NAME", "g"), this.name), this.form.insertAdjacentHTML("beforeend", t), this.container = document.getElementById(o.CONTAINER), this.errorContainer = document.getElementById(o.F_ERROR), this.paymentContainer = document.getElementById(o.F_PAYMENT), this.drawPaymentScreen()
+        }, v.prototype.onPrePaymentVerification = function(t, e) {
+            t || (e.res && 0 === e.res.code ? this.submitPaymentDataAfterSuccessfulVerification(e) : e.errContainer.appendChild(d.createSpan("", "wrong try")))
+        }, v.prototype.submitPaymentDataAfterSuccessfulVerification = function(t) {
+            this.clearScreen(t.form);
+            var e = d.createInput("token", "hidden", "F-" + t.otp);
+            e.name = "flouci_otp";
+            var n = d.createInput("code", "hidden", t.res.result.id);
+            n.name = "payment_id", t.form.appendChild(e), t.form.appendChild(n), t.form.submit()
+        }, v.prototype.clearScreen = function(t) {
+            for (t || (t = self.form); t.firstChild;) t.removeChild(t.firstChild)
+        }, v.prototype.open = function() {
+            if (!this.isConfigured) throw new Error("Checkout not configured properly");
+            this.showModal()
+        }, v.prototype.isOTPValid = function(t, e) {
+            return t && "" !== t ? 6 == t.length || (e.appendChild(d.createSpan("", "code should be six characters")), this.onPrePaymentVerification(new Error("code should be six characters")), !1) : (e.appendChild(d.createSpan("", "Please enter code")), this.onPrePaymentVerification(new Error("Please enter code")), !1)
+        }, v.prototype.getCommonData = function() {
+            return {
+                token: this.app,
+                amount: this.amount
+            }
+        }, t.exports = v
+    }, function(t, e, n) {
+        "use strict";
+        t.exports = function(t, e, n) {
+            this.littleForm = e, this.amount = t, this.bigForm = n
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r = function(t) {
+            this.serverUrl = t
+        };
+        r.prototype.checkStatus = function(t) {
+            switch (t) {
+                case 200:
+                case 201:
+                case 202:
+                case 203:
+                case 204:
+                case 205:
+                case 206:
+                case 207:
+                    return !0;
+                default:
+                    return !1
+            }
+        }, r.prototype.makeRequest = function(t, e, n, r, o, i, a, s) {
+            var c = this,
+                u = new XMLHttpRequest;
+            this.currentXhr = u, u.withCredentials = !1, u.responseType = "json", u.timeout = 6e5, u.onload = function(t) {
+                if (c.currentXhr = null, c.checkStatus(u.status)) r[o](null, {
+                    res: u.response,
+                    otp: i,
+                    form: a,
+                    errContainer: s
+                });
+                else {
+                    var e = "Status: " + u.status + ". Response: " + u.response;
+                    r[o](new Error(e))
+                }
+            }, u.ontimeout = function() {
+                c.currentXhr = null, r[o](new Error("Timeout"))
+            }, u.onerror = function(t) {
+                c.currentXhr = null;
+                var e = new Error("An error occurred trying to make the request.");
+                r[o](e)
+            }, u.onabort = function(t) {
+                console.log("aborted")
+            }, u.open(t, e, !0), u.setRequestHeader("Content-type", "application/json"), u.send(JSON.stringify(n))
+        }, r.prototype.abortLastRequest = function(t) {
+            this.currentXhr && (this.currentXhr.abort(), this.currentXhr = null)
+        }, r.prototype.verifyPaymentOTP = function(t, e, n) {
+            var r = this.serverUrl + "/api/developer/verify";
+            this.makeRequest("POST", r, {
+                app: t.token,
+                code: "F-" + t.phone
+            }, e, n, t.phone, t.form, t.errContainer)
+        }, t.exports = r
+    }, function(t, e, n) {
+        (e = t.exports = n(18)(!1)).push([t.i, "@import url(https://fonts.googleapis.com/css?family=Cairo|Ubuntu&display=swap);", ""]), e.push([t.i, '/*!\\n * Bootstrap v4.3.1 (https://getbootstrap.com/)\\n * Copyright 2011-2019 The Bootstrap Authors\\n * Copyright 2011-2019 Twitter, Inc.\\n * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)\\n */*,:after,:before{box-sizing:border-box}h2,h4,h5{margin-top:0}strong{font-weight:bolder}img{vertical-align:middle;border-style:none}input{margin:0;font-family:Ubuntu,Cairo;font-size:inherit;line-height:inherit;overflow:visible}[type=button]:not(:disabled),[type=reset]:not(:disabled),[type=submit]:not(:disabled),button:not(:disabled){cursor:pointer}::-webkit-file-upload-button{font:inherit;-webkit-appearance:button}h2{font-size:2rem}h4{font-size:1.5rem}h5{font-size:1.25rem}._10cBy{width:100%;padding-right:15px;padding-left:15px;margin-right:auto;margin-left:auto}@media (min-width:576px){._10cBy{max-width:540px}}@media (min-width:768px){._10cBy{max-width:720px}}@media (min-width:992px){._10cBy{max-width:960px}}@media (min-width:1200px){._10cBy{max-width:1140px}}.JlhHg{display:block;width:100%;height:calc(1.5em + .75rem + 2px);padding:.375rem .75rem;font-size:1rem;font-weight:400;line-height:1.5;color:#495057;background-color:#fff;background-clip:padding-box;border:1px solid #ced4da;border-radius:.25rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out}@media (prefers-reduced-motion:reduce){.JlhHg{transition:none}}.JlhHg::-ms-expand{background-color:transparent;border:0}.JlhHg:focus{color:#495057;background-color:#fff;border-color:#80bdff;outline:0;box-shadow:0 0 0 .2rem rgba(0,123,255,.25)}.JlhHg::-webkit-input-placeholder{color:#6c757d;opacity:1}.JlhHg::-moz-placeholder{color:#6c757d;opacity:1}.JlhHg:-ms-input-placeholder{color:#6c757d;opacity:1}.JlhHg::-ms-input-placeholder{color:#6c757d;opacity:1}.JlhHg:disabled{background-color:#e9ecef;opacity:1}._33LdR{color:#212529!important;background-color:transparent!important;border:1px solid!important;border-radius:.5rem!important;margin-top:5px;margin-bottom:5px}._33LdR,._2RuEJ{display:inline-block;font-weight:400;text-align:center;vertical-align:middle;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;padding:.375rem .75rem;font-size:1rem;line-height:1.5;transition:color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out}._2RuEJ{background-color:#fff!important;color:#1e1e1e!important;border:2px solid rgba(60,66,87,.12)!important;border-radius:.5rem!important;font-family:Ubuntu,Cairo;width:250px;margin:5px}@media (prefers-reduced-motion:reduce){._33LdR,._2RuEJ{transition:none}}._2RuEJ:hover,._33LdR:hover{cursor:pointer;text-decoration:none}._2RuEJ:disabled,._33LdR:disabled{opacity:.65}._2p0GP{color:#f68e1e!important;border-color:#f68e1e!important}._2p0GP:hover{background-color:#ed8048!important;border-color:#ed8048!important;color:#fff!important}._2p0GP:disabled{color:#ffc107;background-color:transparent}._2yLXJ{transition:opacity .15s linear}@media (prefers-reduced-motion:reduce){._2yLXJ{transition:none}}.u8P1t{color:#721c24;background-color:#f8d7da;border-color:#f5c6cb}.rtotE{position:fixed;z-index:1050;display:none;width:100%;overflow:hidden;outline:0}.U2-3U{position:fixed;z-index:1072;left:0;right:0;bottom:0;width:auto;margin:.5rem;pointer-events:none}.ifx56{display:-ms-flexbox;display:flex;-ms-flex-align:center;align-items:center;min-height:calc(100% - 1rem)}.ifx56:before{display:block;height:calc(100vh - 1rem);content:\\"\\"}._1yRQ4{position:relative;display:-ms-flexbox;display:flex;-ms-flex-direction:column;flex-direction:column;width:100%;pointer-events:auto;background-color:#fff;background-clip:padding-box;border:1px solid rgba(0,0,0,.2);border-radius:.3rem;outline:0}._2EQ-O{position:fixed;top:0;left:0;z-index:1040;width:100vw;height:100vh;background-color:#000}._2EQ-O._2yLXJ{opacity:0}._2EQ-O.BDR4q{opacity:.5}.IgzHz{display:-ms-flexbox;display:flex;-ms-flex-align:start;align-items:flex-start;-ms-flex-pack:justify;justify-content:space-between;padding:1rem;border-bottom:1px solid #dee2e6;border-top-left-radius:.3rem;border-top-right-radius:.3rem}.XWg8v{margin-bottom:0;line-height:1.5}._8DASD{position:relative;-ms-flex:1 1 auto;flex:1 1 auto;padding:1rem}@media (min-width:576px){.U2-3U{max-width:500px;margin:1.75rem auto}.ifx56{min-height:calc(100% - 3.5rem)}.ifx56:before{height:calc(100vh - 3.5rem)}}.dUrnD{display:-ms-flexbox!important;display:flex!important}._2ged4{-ms-flex-direction:column!important;flex-direction:column!important}._6MwqY{-ms-flex-pack:distribute!important;justify-content:space-around!important}._1VHiG{-ms-flex-align:center!important;align-items:center!important}._2dAYB{margin:.25rem!important}._3hqyN{padding:1rem!important}.PXK9s{text-align:center!important}@media print{*,:after,:before{text-shadow:none!important;box-shadow:none!important}img{page-break-inside:avoid}h2{orphans:3;widows:3;page-break-after:avoid}@page{size:a3}._10cBy{min-width:992px!important}}.qEX0v{background-color:#f16b46!important;border-color:#f16b46!important;color:#fff!important;height:40px;cursor:pointer;font-family:Ubuntu,Cairo;width:250px;margin-left:5px;margin-right:5px}._1_RiU{border-bottom:0!important;justify-content:center}._1BHsR{border-top:1px solid #aaa;width:85%;align-self:center}.fO8M9{color:#f68e1e;margin:0;padding:5px 5px 0}.rNuJN{font-family:Ubuntu,Cairo}h2,h4,h5{margin-bottom:.5rem;font-weight:200;line-height:1.2}._2WnM9{border-radius:30px!important;max-width:200px!important;padding:5px 20px!important}._1HcOb{font-size:-webkit-xxx-large}._1HcOb,._3RDTt{color:#444;font-weight:300}._3RDTt{font-size:xx-large}._3HEgQ{vertical-align:super;width:20px;margin-bottom:10px}._1qUZ9{width:50vh}.nFUab{font-size:xx-large;margin-right:10px}._1ZxeK{text-align:center;font-weight:900;letter-spacing:8px;width:30vh!important;padding:0!important}._3kbs5{display:inline}._1W-5l{display:none}._1Ljed{border-color:transparent!important;position:absolute;right:0;font-size:20px;top:-5px;padding:0!important;width:40px!important}._2zeTb{margin-bottom:1px!important}', ""]), e.locals = {
+            container: "_10cBy",
+            "form-control": "JlhHg",
+            formControl: "JlhHg",
+            "flouci-btn": "_33LdR",
+            flouciBtn: "_33LdR",
+            "flouci-btn-card": "_2RuEJ",
+            flouciBtnCard: "_2RuEJ",
+            "flouci-btn-outline-warning": "_2p0GP",
+            flouciBtnOutlineWarning: "_2p0GP",
+            fade: "_2yLXJ",
+            "alert-danger": "u8P1t",
+            alertDanger: "u8P1t",
+            modal: "rtotE",
+            "flouci-modal-dialog": "U2-3U",
+            flouciModalDialog: "U2-3U",
+            "flouci-modal-dialog-centered": "ifx56",
+            flouciModalDialogCentered: "ifx56",
+            "modal-content": "_1yRQ4",
+            modalContent: "_1yRQ4",
+            "modal-backdrop": "_2EQ-O",
+            modalBackdrop: "_2EQ-O",
+            show: "BDR4q",
+            "modal-header": "IgzHz",
+            modalHeader: "IgzHz",
+            "modal-title": "XWg8v",
+            modalTitle: "XWg8v",
+            "modal-body": "_8DASD",
+            modalBody: "_8DASD",
+            "d-flex": "dUrnD",
+            dFlex: "dUrnD",
+            "flex-column": "_2ged4",
+            flexColumn: "_2ged4",
+            "justify-content-around": "_6MwqY",
+            justifyContentAround: "_6MwqY",
+            "align-items-center": "_1VHiG",
+            alignItemsCenter: "_1VHiG",
+            "m-1": "_2dAYB",
+            m1: "_2dAYB",
+            "p-3": "_3hqyN",
+            p3: "_3hqyN",
+            "text-center": "PXK9s",
+            textCenter: "PXK9s",
+            "flouci-button": "qEX0v",
+            flouciButton: "qEX0v",
+            "flouci-modal-header": "_1_RiU",
+            flouciModalHeader: "_1_RiU",
+            "f-sep": "_1BHsR",
+            fSep: "_1BHsR",
+            flouci: "fO8M9",
+            "flouci-container": "rNuJN",
+            flouciContainer: "rNuJN",
+            "confirm-button": "_2WnM9",
+            confirmButton: "_2WnM9",
+            acharat: "_1HcOb",
+            ahaad: "_3RDTt",
+            dinar: "_3HEgQ",
+            "flouci-footer": "_1qUZ9",
+            flouciFooter: "_1qUZ9",
+            "flouci-f": "nFUab",
+            flouciF: "nFUab",
+            "flouci-otp-input": "_1ZxeK",
+            flouciOtpInput: "_1ZxeK",
+            "flouci-scan-text": "_3kbs5",
+            flouciScanText: "_3kbs5",
+            "flouci-test": "_1W-5l",
+            flouciTest: "_1W-5l",
+            "flouci-close": "_1Ljed",
+            flouciClose: "_1Ljed",
+            "flouci-button-logo": "_2zeTb",
+            flouciButtonLogo: "_2zeTb"
+        }
+    }, function(t, e, n) {
+        "use strict";
+        t.exports = function(t) {
+            var e = [];
+            return e.toString = function() {
+                return this.map(function(e) {
+                    var n = function(t, e) {
+                        var n = t[1] || "",
+                            r = t[3];
+                        if (!r) return n;
+                        if (e && "function" == typeof btoa) {
+                            var o = (a = r, "/*# sourceMappingURL=data:application/json;charset=utf-8;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(a)))) + " */"),
+                                i = r.sources.map(function(t) {
+                                    return "/*# sourceURL=" + r.sourceRoot + t + " */"
+                                });
+                            return [n].concat(i).concat([o]).join("\n")
+                        }
+                        var a;
+                        return [n].join("\n")
+                    }(e, t);
+                    return e[2] ? "@media " + e[2] + "{" + n + "}" : n
+                }).join("")
+            }, e.i = function(t, n) {
+                "string" == typeof t && (t = [
+                    [null, t, ""]
+                ]);
+                for (var r = {}, o = 0; o < this.length; o++) {
+                    var i = this[o][0];
+                    null != i && (r[i] = !0)
+                }
+                for (o = 0; o < t.length; o++) {
+                    var a = t[o];
+                    null != a[0] && r[a[0]] || (n && !a[2] ? a[2] = n : n && (a[2] = "(" + a[2] + ") and (" + n + ")"), e.push(a))
+                }
+            }, e
+        }
+    }, function(t, e, n) {
+        var r, o, i = {},
+            a = (r = function() {
+                return window && document && document.all && !window.atob
+            }, function() {
+                return void 0 === o && (o = r.apply(this, arguments)), o
+            }),
+            s = function(t) {
+                var e = {};
+                return function(t, n) {
+                    if ("function" == typeof t) return t();
+                    if (void 0 === e[t]) {
+                        var r = function(t, e) {
+                            return e ? e.querySelector(t) : document.querySelector(t)
+                        }.call(this, t, n);
+                        if (window.HTMLIFrameElement && r instanceof window.HTMLIFrameElement) try {
+                            r = r.contentDocument.head
+                        } catch (t) {
+                            r = null
+                        }
+                        e[t] = r
+                    }
+                    return e[t]
+                }
+            }(),
+            c = null,
+            u = 0,
+            l = [],
+            f = n(20);
+
+        function d(t, e) {
+            for (var n = 0; n < t.length; n++) {
+                var r = t[n],
+                    o = i[r.id];
+                if (o) {
+                    o.refs++;
+                    for (var a = 0; a < o.parts.length; a++) o.parts[a](r.parts[a]);
+                    for (; a < r.parts.length; a++) o.parts.push(y(r.parts[a], e))
+                } else {
+                    var s = [];
+                    for (a = 0; a < r.parts.length; a++) s.push(y(r.parts[a], e));
+                    i[r.id] = {
+                        id: r.id,
+                        refs: 1,
+                        parts: s
+                    }
+                }
+            }
+        }
+
+        function p(t, e) {
+            for (var n = [], r = {}, o = 0; o < t.length; o++) {
+                var i = t[o],
+                    a = e.base ? i[0] + e.base : i[0],
+                    s = {
+                        css: i[1],
+                        media: i[2],
+                        sourceMap: i[3]
+                    };
+                r[a] ? r[a].parts.push(s) : n.push(r[a] = {
+                    id: a,
+                    parts: [s]
+                })
+            }
+            return n
+        }
+
+        function h(t, e) {
+            var n = s(t.insertInto);
+            if (!n) throw new Error("Couldn't find a style target. This probably means that the value for the 'insertInto' parameter is invalid.");
+            var r = l[l.length - 1];
+            if ("top" === t.insertAt) r ? r.nextSibling ? n.insertBefore(e, r.nextSibling) : n.appendChild(e) : n.insertBefore(e, n.firstChild), l.push(e);
+            else if ("bottom" === t.insertAt) n.appendChild(e);
+            else {
+                if ("object" != typeof t.insertAt || !t.insertAt.before) throw new Error("[Style Loader]\n\n Invalid value for parameter 'insertAt' ('options.insertAt') found.\n Must be 'top', 'bottom', or Object.\n (https://github.com/webpack-contrib/style-loader#insertat)\n");
+                var o = s(t.insertAt.before, n);
+                n.insertBefore(e, o)
+            }
+        }
+
+        function m(t) {
+            if (null === t.parentNode) return !1;
+            t.parentNode.removeChild(t);
+            var e = l.indexOf(t);
+            e >= 0 && l.splice(e, 1)
+        }
+
+        function g(t) {
+            var e = document.createElement("style");
+            if (void 0 === t.attrs.type && (t.attrs.type = "text/css"), void 0 === t.attrs.nonce) {
+                var r = function() {
+                    0;
+                    return n.nc
+                }();
+                r && (t.attrs.nonce = r)
+            }
+            return v(e, t.attrs), h(t, e), e
+        }
+
+        function v(t, e) {
+            Object.keys(e).forEach(function(n) {
+                t.setAttribute(n, e[n])
+            })
+        }
+
+        function y(t, e) {
+            var n, r, o, i;
+            if (e.transform && t.css) {
+                if (!(i = "function" == typeof e.transform ? e.transform(t.css) : e.transform.default(t.css))) return function() {};
+                t.css = i
+            }
+            if (e.singleton) {
+                var a = u++;
+                n = c || (c = g(e)), r = x.bind(null, n, a, !1), o = x.bind(null, n, a, !0)
+            } else t.sourceMap && "function" == typeof URL && "function" == typeof URL.createObjectURL && "function" == typeof URL.revokeObjectURL && "function" == typeof Blob && "function" == typeof btoa ? (n = function(t) {
+                var e = document.createElement("link");
+                return void 0 === t.attrs.type && (t.attrs.type = "text/css"), t.attrs.rel = "stylesheet", v(e, t.attrs), h(t, e), e
+            }(e), r = function(t, e, n) {
+                var r = n.css,
+                    o = n.sourceMap,
+                    i = void 0 === e.convertToAbsoluteUrls && o;
+                (e.convertToAbsoluteUrls || i) && (r = f(r));
+                o && (r += "\n/*# sourceMappingURL=data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(o)))) + " */");
+                var a = new Blob([r], {
+                        type: "text/css"
+                    }),
+                    s = t.href;
+                t.href = URL.createObjectURL(a), s && URL.revokeObjectURL(s)
+            }.bind(null, n, e), o = function() {
+                m(n), n.href && URL.revokeObjectURL(n.href)
+            }) : (n = g(e), r = function(t, e) {
+                var n = e.css,
+                    r = e.media;
+                r && t.setAttribute("media", r);
+                if (t.styleSheet) t.styleSheet.cssText = n;
+                else {
+                    for (; t.firstChild;) t.removeChild(t.firstChild);
+                    t.appendChild(document.createTextNode(n))
+                }
+            }.bind(null, n), o = function() {
+                m(n)
+            });
+            return r(t),
+                function(e) {
+                    if (e) {
+                        if (e.css === t.css && e.media === t.media && e.sourceMap === t.sourceMap) return;
+                        r(t = e)
+                    } else o()
+                }
+        }
+        t.exports = function(t, e) {
+            if ("undefined" != typeof DEBUG && DEBUG && "object" != typeof document) throw new Error("The style-loader cannot be used in a non-browser environment");
+            (e = e || {}).attrs = "object" == typeof e.attrs ? e.attrs : {}, e.singleton || "boolean" == typeof e.singleton || (e.singleton = a()), e.insertInto || (e.insertInto = "head"), e.insertAt || (e.insertAt = "bottom");
+            var n = p(t, e);
+            return d(n, e),
+                function(t) {
+                    for (var r = [], o = 0; o < n.length; o++) {
+                        var a = n[o];
+                        (s = i[a.id]).refs--, r.push(s)
+                    }
+                    t && d(p(t, e), e);
+                    for (o = 0; o < r.length; o++) {
+                        var s;
+                        if (0 === (s = r[o]).refs) {
+                            for (var c = 0; c < s.parts.length; c++) s.parts[c]();
+                            delete i[s.id]
+                        }
+                    }
+                }
+        };
+        var b, w = (b = [], function(t, e) {
+            return b[t] = e, b.filter(Boolean).join("\n")
+        });
+
+        function x(t, e, n, r) {
+            var o = n ? "" : r.css;
+            if (t.styleSheet) t.styleSheet.cssText = w(e, o);
+            else {
+                var i = document.createTextNode(o),
+                    a = t.childNodes;
+                a[e] && t.removeChild(a[e]), a.length ? t.insertBefore(i, a[e]) : t.appendChild(i)
+            }
+        }
+    }, function(t, e) {
+        t.exports = function(t) {
+            var e = "undefined" != typeof window && window.location;
+            if (!e) throw new Error("fixUrls requires window.location");
+            if (!t || "string" != typeof t) return t;
+            var n = e.protocol + "//" + e.host,
+                r = n + e.pathname.replace(/\/[^\/]*$/, "/");
+            return t.replace(/url\s*\(((?:[^)(]|\((?:[^)(]+|\([^)(]*\))*\))*)\)/gi, function(t, e) {
+                var o, i = e.trim().replace(/^"(.*)"$/, function(t, e) {
+                    return e
+                }).replace(/^'(.*)'$/, function(t, e) {
+                    return e
+                });
+                return /^(#|data:|http:\/\/|https:\/\/|file:\/\/\/|\s*$)/i.test(i) ? t : (o = 0 === i.indexOf("//") ? i : 0 === i.indexOf("/") ? n + i : r + i.replace(/^\.\//, ""), "url(" + JSON.stringify(o) + ")")
+            })
+        }
+    }, function(t, e, n) {
+        "use strict";
+        var r = n(3),
+            o = n(22),
+            i = n(4),
+            a = function() {
+                var t, e = !1;
+                return t = navigator.userAgent || navigator.vendor || window.opera, (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(t) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(t.substr(0, 4))) && (e = !0), e
+            };
+        t.exports = function(t, e, n, s) {
+            this.htmlID = t, this.appId = e, this.amount = n;
+            var c = "w:" + this.appId + ":" + this.amount;
+            s.id ? c = c + ":" + s.id : c += ":", s.name ? c = c + ":" + s.name : c += ":", s.description ? c = c + ":" + s.description : c += ":", s.imageUrl ? c = c + ":" + s.imageUrl : c += ":";
+            var u = this;
+            this.drawQR = function(t, e) {
+                if (t) throw t;
+                var n = document.getElementById(u.htmlID);
+                for (n.style = "display: flex;flex-direction: column;align-items: center;"; n.firstChild;) n.removeChild(l.firstChild);
+                if (n.appendChild(e), a()) {
+                    var o = "prod" === s.env ? "flouci://account/developers/" : "sta" === s.env ? "floucista://account/developers/" : "floucidev://account/developers/",
+                        l = document.createElement("div"),
+                        f = '\n            <div>\n                <a style="text-decoration: none" href="'.concat(encodeURI(o + encodeURIComponent(c)), '" class="').concat(i.flouciBtn, " ").concat(i.flouciBtnOutlineWarning, " ").concat(i.flouciButton, '">\n                    <span id="').concat(r.B_OPEN_APP, '" style="color: #ffffff">Payer avec</span>\n                </a>\n            </div>\n');
+                    l.id = r.B_CHECK_OUT, l.type = "button", l.value = "Checkout", l.height = "100px", l.innerHTML = f, n.appendChild(l)
+                }
+            }, this.injectQR = function() {
+                o.toCanvas(c, {
+                    errorCorrectionLevel: "H"
+                }, this.drawQR)
+            }
+        }
+    }, function(t, e, n) {
+        var r = n(23),
+            o = n(24),
+            i = n(41),
+            a = n(42);
+
+        function s(t, e, n, i, a) {
+            var s = [].slice.call(arguments, 1),
+                c = s.length,
+                u = "function" == typeof s[c - 1];
+            if (!u && !r()) throw new Error("Callback required as last argument");
+            if (!u) {
+                if (c < 1) throw new Error("Too few arguments provided");
+                return 1 === c ? (n = e, e = i = void 0) : 2 !== c || e.getContext || (i = n, n = e, e = void 0), new Promise(function(r, a) {
+                    try {
+                        var s = o.create(n, i);
+                        r(t(s, e, i))
+                    } catch (t) {
+                        a(t)
+                    }
+                })
+            }
+            if (c < 2) throw new Error("Too few arguments provided");
+            2 === c ? (a = n, n = e, e = i = void 0) : 3 === c && (e.getContext && void 0 === a ? (a = i, i = void 0) : (a = i, i = n, n = e, e = void 0));
+            try {
+                var l = o.create(n, i);
+                a(null, t(l, e, i))
+            } catch (t) {
+                a(t)
+            }
+        }
+        e.create = o.create, e.toCanvas = s.bind(null, i.render), e.toDataURL = s.bind(null, i.renderToDataURL), e.toString = s.bind(null, function(t, e, n) {
+            return a.render(t, n)
+        })
+    }, function(t, e) {
+        t.exports = function() {
+            return "function" == typeof Promise && Promise.prototype && Promise.prototype.then
+        }
+    }, function(t, e, n) {
+        var r = n(2),
+            o = n(0),
+            i = n(6),
+            a = n(25),
+            s = n(26),
+            c = n(27),
+            u = n(28),
+            l = n(29),
+            f = n(8),
+            d = n(30),
+            p = n(33),
+            h = n(34),
+            m = n(1),
+            g = n(35),
+            v = n(5);
+
+        function y(t, e, n) {
+            var r, o, i = t.size,
+                a = h.getEncodedBits(e, n);
+            for (r = 0; r < 15; r++) o = 1 == (a >> r & 1), r < 6 ? t.set(r, 8, o, !0) : r < 8 ? t.set(r + 1, 8, o, !0) : t.set(i - 15 + r, 8, o, !0), r < 8 ? t.set(8, i - r - 1, o, !0) : r < 9 ? t.set(8, 15 - r - 1 + 1, o, !0) : t.set(8, 15 - r - 1, o, !0);
+            t.set(i - 8, 8, 1, !0)
+        }
+
+        function b(t, e, n) {
+            var i = new a;
+            n.forEach(function(e) {
+                i.put(e.mode.bit, 4), i.put(e.getLength(), m.getCharCountIndicator(e.mode, t)), e.write(i)
+            });
+            var s = 8 * (o.getSymbolTotalCodewords(t) - f.getTotalCodewordsCount(t, e));
+            for (i.getLengthInBits() + 4 <= s && i.put(0, 4); i.getLengthInBits() % 8 != 0;) i.putBit(0);
+            for (var c = (s - i.getLengthInBits()) / 8, u = 0; u < c; u++) i.put(u % 2 ? 17 : 236, 8);
+            return function(t, e, n) {
+                for (var i = o.getSymbolTotalCodewords(e), a = f.getTotalCodewordsCount(e, n), s = i - a, c = f.getBlocksCount(e, n), u = c - i % c, l = Math.floor(i / c), p = Math.floor(s / c), h = p + 1, m = l - p, g = new d(m), v = 0, y = new Array(c), b = new Array(c), w = 0, x = new r(t.buffer), _ = 0; _ < c; _++) {
+                    var E = _ < u ? p : h;
+                    y[_] = x.slice(v, v + E), b[_] = g.encode(y[_]), v += E, w = Math.max(w, E)
+                }
+                var T, C, B = new r(i),
+                    A = 0;
+                for (T = 0; T < w; T++)
+                    for (C = 0; C < c; C++) T < y[C].length && (B[A++] = y[C][T]);
+                for (T = 0; T < m; T++)
+                    for (C = 0; C < c; C++) B[A++] = b[C][T];
+                return B
+            }(i, t, e)
+        }
+
+        function w(t, e, n, r) {
+            var i;
+            if (v(t)) i = g.fromArray(t);
+            else {
+                if ("string" != typeof t) throw new Error("Invalid data");
+                var a = e;
+                if (!a) {
+                    var f = g.rawSplit(t);
+                    a = p.getBestVersionForData(f, n)
+                }
+                i = g.fromString(t, a || 40)
+            }
+            var d = p.getBestVersionForData(i, n);
+            if (!d) throw new Error("The amount of data is too big to be stored in a QR Code");
+            if (e) {
+                if (e < d) throw new Error("\nThe chosen QR Code version cannot contain this amount of data.\nMinimum version required to store current data is: " + d + ".\n")
+            } else e = d;
+            var h = b(e, n, i),
+                m = o.getSymbolSize(e),
+                w = new s(m);
+            return function(t, e) {
+                    for (var n = t.size, r = u.getPositions(e), o = 0; o < r.length; o++)
+                        for (var i = r[o][0], a = r[o][1], s = -1; s <= 7; s++)
+                            if (!(i + s <= -1 || n <= i + s))
+                                for (var c = -1; c <= 7; c++) a + c <= -1 || n <= a + c || (s >= 0 && s <= 6 && (0 === c || 6 === c) || c >= 0 && c <= 6 && (0 === s || 6 === s) || s >= 2 && s <= 4 && c >= 2 && c <= 4 ? t.set(i + s, a + c, !0, !0) : t.set(i + s, a + c, !1, !0))
+                }(w, e),
+                function(t) {
+                    for (var e = t.size, n = 8; n < e - 8; n++) {
+                        var r = n % 2 == 0;
+                        t.set(n, 6, r, !0), t.set(6, n, r, !0)
+                    }
+                }(w),
+                function(t, e) {
+                    for (var n = c.getPositions(e), r = 0; r < n.length; r++)
+                        for (var o = n[r][0], i = n[r][1], a = -2; a <= 2; a++)
+                            for (var s = -2; s <= 2; s++) - 2 === a || 2 === a || -2 === s || 2 === s || 0 === a && 0 === s ? t.set(o + a, i + s, !0, !0) : t.set(o + a, i + s, !1, !0)
+                }(w, e), y(w, n, 0), e >= 7 && function(t, e) {
+                    for (var n, r, o, i = t.size, a = p.getEncodedBits(e), s = 0; s < 18; s++) n = Math.floor(s / 3), r = s % 3 + i - 8 - 3, o = 1 == (a >> s & 1), t.set(n, r, o, !0), t.set(r, n, o, !0)
+                }(w, e),
+                function(t, e) {
+                    for (var n = t.size, r = -1, o = n - 1, i = 7, a = 0, s = n - 1; s > 0; s -= 2)
+                        for (6 === s && s--;;) {
+                            for (var c = 0; c < 2; c++)
+                                if (!t.isReserved(o, s - c)) {
+                                    var u = !1;
+                                    a < e.length && (u = 1 == (e[a] >>> i & 1)), t.set(o, s - c, u), -1 == --i && (a++, i = 7)
+                                } if ((o += r) < 0 || n <= o) {
+                                o -= r, r = -r;
+                                break
+                            }
+                        }
+                }(w, h), isNaN(r) && (r = l.getBestMask(w, y.bind(null, w, n))), l.applyMask(r, w), y(w, n, r), {
+                    modules: w,
+                    version: e,
+                    errorCorrectionLevel: n,
+                    maskPattern: r,
+                    segments: i
+                }
+        }
+        e.create = function(t, e) {
+            if (void 0 === t || "" === t) throw new Error("No input text");
+            var n, r, a = i.M;
+            return void 0 !== e && (a = i.from(e.errorCorrectionLevel, i.M), n = p.from(e.version), r = l.from(e.maskPattern), e.toSJISFunc && o.setToSJISFunction(e.toSJISFunc)), w(t, n, a, r)
+        }
+    }, function(t, e) {
+        function n() {
+            this.buffer = [], this.length = 0
+        }
+        n.prototype = {
+            get: function(t) {
+                var e = Math.floor(t / 8);
+                return 1 == (this.buffer[e] >>> 7 - t % 8 & 1)
+            },
+            put: function(t, e) {
+                for (var n = 0; n < e; n++) this.putBit(1 == (t >>> e - n - 1 & 1))
+            },
+            getLengthInBits: function() {
+                return this.length
+            },
+            putBit: function(t) {
+                var e = Math.floor(this.length / 8);
+                this.buffer.length <= e && this.buffer.push(0), t && (this.buffer[e] |= 128 >>> this.length % 8), this.length++
+            }
+        }, t.exports = n
+    }, function(t, e, n) {
+        var r = n(2);
+
+        function o(t) {
+            if (!t || t < 1) throw new Error("BitMatrix size must be defined and greater than 0");
+            this.size = t, this.data = new r(t * t), this.data.fill(0), this.reservedBit = new r(t * t), this.reservedBit.fill(0)
+        }
+        o.prototype.set = function(t, e, n, r) {
+            var o = t * this.size + e;
+            this.data[o] = n, r && (this.reservedBit[o] = !0)
+        }, o.prototype.get = function(t, e) {
+            return this.data[t * this.size + e]
+        }, o.prototype.xor = function(t, e, n) {
+            this.data[t * this.size + e] ^= n
+        }, o.prototype.isReserved = function(t, e) {
+            return this.reservedBit[t * this.size + e]
+        }, t.exports = o
+    }, function(t, e, n) {
+        var r = n(0).getSymbolSize;
+        e.getRowColCoords = function(t) {
+            if (1 === t) return [];
+            for (var e = Math.floor(t / 7) + 2, n = r(t), o = 145 === n ? 26 : 2 * Math.ceil((n - 13) / (2 * e - 2)), i = [n - 7], a = 1; a < e - 1; a++) i[a] = i[a - 1] - o;
+            return i.push(6), i.reverse()
+        }, e.getPositions = function(t) {
+            for (var n = [], r = e.getRowColCoords(t), o = r.length, i = 0; i < o; i++)
+                for (var a = 0; a < o; a++) 0 === i && 0 === a || 0 === i && a === o - 1 || i === o - 1 && 0 === a || n.push([r[i], r[a]]);
+            return n
+        }
+    }, function(t, e, n) {
+        var r = n(0).getSymbolSize;
+        e.getPositions = function(t) {
+            var e = r(t);
+            return [
+                [0, 0],
+                [e - 7, 0],
+                [0, e - 7]
+            ]
+        }
+    }, function(t, e) {
+        e.Patterns = {
+            PATTERN000: 0,
+            PATTERN001: 1,
+            PATTERN010: 2,
+            PATTERN011: 3,
+            PATTERN100: 4,
+            PATTERN101: 5,
+            PATTERN110: 6,
+            PATTERN111: 7
+        };
+        var n = 3,
+            r = 3,
+            o = 40,
+            i = 10;
+
+        function a(t, n, r) {
+            switch (t) {
+                case e.Patterns.PATTERN000:
+                    return (n + r) % 2 == 0;
+                case e.Patterns.PATTERN001:
+                    return n % 2 == 0;
+                case e.Patterns.PATTERN010:
+                    return r % 3 == 0;
+                case e.Patterns.PATTERN011:
+                    return (n + r) % 3 == 0;
+                case e.Patterns.PATTERN100:
+                    return (Math.floor(n / 2) + Math.floor(r / 3)) % 2 == 0;
+                case e.Patterns.PATTERN101:
+                    return n * r % 2 + n * r % 3 == 0;
+                case e.Patterns.PATTERN110:
+                    return (n * r % 2 + n * r % 3) % 2 == 0;
+                case e.Patterns.PATTERN111:
+                    return (n * r % 3 + (n + r) % 2) % 2 == 0;
+                default:
+                    throw new Error("bad maskPattern:" + t)
+            }
+        }
+        e.isValid = function(t) {
+            return null != t && "" !== t && !isNaN(t) && t >= 0 && t <= 7
+        }, e.from = function(t) {
+            return e.isValid(t) ? parseInt(t, 10) : void 0
+        }, e.getPenaltyN1 = function(t) {
+            for (var e = t.size, r = 0, o = 0, i = 0, a = null, s = null, c = 0; c < e; c++) {
+                o = i = 0, a = s = null;
+                for (var u = 0; u < e; u++) {
+                    var l = t.get(c, u);
+                    l === a ? o++ : (o >= 5 && (r += n + (o - 5)), a = l, o = 1), (l = t.get(u, c)) === s ? i++ : (i >= 5 && (r += n + (i - 5)), s = l, i = 1)
+                }
+                o >= 5 && (r += n + (o - 5)), i >= 5 && (r += n + (i - 5))
+            }
+            return r
+        }, e.getPenaltyN2 = function(t) {
+            for (var e = t.size, n = 0, o = 0; o < e - 1; o++)
+                for (var i = 0; i < e - 1; i++) {
+                    var a = t.get(o, i) + t.get(o, i + 1) + t.get(o + 1, i) + t.get(o + 1, i + 1);
+                    4 !== a && 0 !== a || n++
+                }
+            return n * r
+        }, e.getPenaltyN3 = function(t) {
+            for (var e = t.size, n = 0, r = 0, i = 0, a = 0; a < e; a++) {
+                r = i = 0;
+                for (var s = 0; s < e; s++) r = r << 1 & 2047 | t.get(a, s), s >= 10 && (1488 === r || 93 === r) && n++, i = i << 1 & 2047 | t.get(s, a), s >= 10 && (1488 === i || 93 === i) && n++
+            }
+            return n * o
+        }, e.getPenaltyN4 = function(t) {
+            for (var e = 0, n = t.data.length, r = 0; r < n; r++) e += t.data[r];
+            return Math.abs(Math.ceil(100 * e / n / 5) - 10) * i
+        }, e.applyMask = function(t, e) {
+            for (var n = e.size, r = 0; r < n; r++)
+                for (var o = 0; o < n; o++) e.isReserved(o, r) || e.xor(o, r, a(t, o, r))
+        }, e.getBestMask = function(t, n) {
+            for (var r = Object.keys(e.Patterns).length, o = 0, i = 1 / 0, a = 0; a < r; a++) {
+                n(a), e.applyMask(a, t);
+                var s = e.getPenaltyN1(t) + e.getPenaltyN2(t) + e.getPenaltyN3(t) + e.getPenaltyN4(t);
+                e.applyMask(a, t), s < i && (i = s, o = a)
+            }
+            return o
+        }
+    }, function(t, e, n) {
+        var r = n(2),
+            o = n(31);
+
+        function i(t) {
+            this.genPoly = void 0, this.degree = t, this.degree && this.initialize(this.degree)
+        }
+        i.prototype.initialize = function(t) {
+            this.degree = t, this.genPoly = o.generateECPolynomial(this.degree)
+        }, i.prototype.encode = function(t) {
+            if (!this.genPoly) throw new Error("Encoder not initialized");
+            var e = new r(this.degree);
+            e.fill(0);
+            var n = r.concat([t, e], t.length + this.degree),
+                i = o.mod(n, this.genPoly),
+                a = this.degree - i.length;
+            if (a > 0) {
+                var s = new r(this.degree);
+                return s.fill(0), i.copy(s, a), s
+            }
+            return i
+        }, t.exports = i
+    }, function(t, e, n) {
+        var r = n(2),
+            o = n(32);
+        e.mul = function(t, e) {
+            var n = new r(t.length + e.length - 1);
+            n.fill(0);
+            for (var i = 0; i < t.length; i++)
+                for (var a = 0; a < e.length; a++) n[i + a] ^= o.mul(t[i], e[a]);
+            return n
+        }, e.mod = function(t, e) {
+            for (var n = new r(t); n.length - e.length >= 0;) {
+                for (var i = n[0], a = 0; a < e.length; a++) n[a] ^= o.mul(e[a], i);
+                for (var s = 0; s < n.length && 0 === n[s];) s++;
+                n = n.slice(s)
+            }
+            return n
+        }, e.generateECPolynomial = function(t) {
+            for (var n = new r([1]), i = 0; i < t; i++) n = e.mul(n, [1, o.exp(i)]);
+            return n
+        }
+    }, function(t, e, n) {
+        var r = n(2);
+        if (r.alloc) var o = r.alloc(512),
+            i = r.alloc(256);
+        else o = new r(512), i = new r(256);
+        ! function() {
+            for (var t = 1, e = 0; e < 255; e++) o[e] = t, i[t] = e, 256 & (t <<= 1) && (t ^= 285);
+            for (e = 255; e < 512; e++) o[e] = o[e - 255]
+        }(), e.log = function(t) {
+            if (t < 1) throw new Error("log(" + t + ")");
+            return i[t]
+        }, e.exp = function(t) {
+            return o[t]
+        }, e.mul = function(t, e) {
+            return 0 === t || 0 === e ? 0 : o[i[t] + i[e]]
+        }
+    }, function(t, e, n) {
+        var r = n(0),
+            o = n(8),
+            i = n(6),
+            a = n(1),
+            s = n(9),
+            c = n(5),
+            u = r.getBCHDigit(7973);
+
+        function l(t, e) {
+            return a.getCharCountIndicator(t, e) + 4
+        }
+
+        function f(t, e) {
+            var n = 0;
+            return t.forEach(function(t) {
+                var r = l(t.mode, e);
+                n += r + t.getBitsLength()
+            }), n
+        }
+        e.from = function(t, e) {
+            return s.isValid(t) ? parseInt(t, 10) : e
+        }, e.getCapacity = function(t, e, n) {
+            if (!s.isValid(t)) throw new Error("Invalid QR Code version");
+            void 0 === n && (n = a.BYTE);
+            var i = 8 * (r.getSymbolTotalCodewords(t) - o.getTotalCodewordsCount(t, e));
+            if (n === a.MIXED) return i;
+            var c = i - l(n, t);
+            switch (n) {
+                case a.NUMERIC:
+                    return Math.floor(c / 10 * 3);
+                case a.ALPHANUMERIC:
+                    return Math.floor(c / 11 * 2);
+                case a.KANJI:
+                    return Math.floor(c / 13);
+                case a.BYTE:
+                default:
+                    return Math.floor(c / 8)
+            }
+        }, e.getBestVersionForData = function(t, n) {
+            var r, o = i.from(n, i.M);
+            if (c(t)) {
+                if (t.length > 1) return function(t, n) {
+                    for (var r = 1; r <= 40; r++)
+                        if (f(t, r) <= e.getCapacity(r, n, a.MIXED)) return r
+                }(t, o);
+                if (0 === t.length) return 1;
+                r = t[0]
+            } else r = t;
+            return function(t, n, r) {
+                for (var o = 1; o <= 40; o++)
+                    if (n <= e.getCapacity(o, r, t)) return o
+            }(r.mode, r.getLength(), o)
+        }, e.getEncodedBits = function(t) {
+            if (!s.isValid(t) || t < 7) throw new Error("Invalid QR Code version");
+            for (var e = t << 12; r.getBCHDigit(e) - u >= 0;) e ^= 7973 << r.getBCHDigit(e) - u;
+            return t << 12 | e
+        }
+    }, function(t, e, n) {
+        var r = n(0),
+            o = r.getBCHDigit(1335);
+        e.getEncodedBits = function(t, e) {
+            for (var n = t.bit << 3 | e, i = n << 10; r.getBCHDigit(i) - o >= 0;) i ^= 1335 << r.getBCHDigit(i) - o;
+            return 21522 ^ (n << 10 | i)
+        }
+    }, function(t, e, n) {
+        var r = n(1),
+            o = n(36),
+            i = n(37),
+            a = n(38),
+            s = n(39),
+            c = n(10),
+            u = n(0),
+            l = n(40);
+
+        function f(t) {
+            return unescape(encodeURIComponent(t)).length
+        }
+
+        function d(t, e, n) {
+            for (var r, o = []; null !== (r = t.exec(n));) o.push({
+                data: r[0],
+                index: r.index,
+                mode: e,
+                length: r[0].length
+            });
+            return o
+        }
+
+        function p(t) {
+            var e, n, o = d(c.NUMERIC, r.NUMERIC, t),
+                i = d(c.ALPHANUMERIC, r.ALPHANUMERIC, t);
+            return u.isKanjiModeEnabled() ? (e = d(c.BYTE, r.BYTE, t), n = d(c.KANJI, r.KANJI, t)) : (e = d(c.BYTE_KANJI, r.BYTE, t), n = []), o.concat(i, e, n).sort(function(t, e) {
+                return t.index - e.index
+            }).map(function(t) {
+                return {
+                    data: t.data,
+                    mode: t.mode,
+                    length: t.length
+                }
+            })
+        }
+
+        function h(t, e) {
+            switch (e) {
+                case r.NUMERIC:
+                    return o.getBitsLength(t);
+                case r.ALPHANUMERIC:
+                    return i.getBitsLength(t);
+                case r.KANJI:
+                    return s.getBitsLength(t);
+                case r.BYTE:
+                    return a.getBitsLength(t)
+            }
+        }
+
+        function m(t, e) {
+            var n, c = r.getBestModeForData(t);
+            if ((n = r.from(e, c)) !== r.BYTE && n.bit < c.bit) throw new Error('"' + t + '" cannot be encoded with mode ' + r.toString(n) + ".\n Suggested mode is: " + r.toString(c));
+            switch (n !== r.KANJI || u.isKanjiModeEnabled() || (n = r.BYTE), n) {
+                case r.NUMERIC:
+                    return new o(t);
+                case r.ALPHANUMERIC:
+                    return new i(t);
+                case r.KANJI:
+                    return new s(t);
+                case r.BYTE:
+                    return new a(t)
+            }
+        }
+        e.fromArray = function(t) {
+            return t.reduce(function(t, e) {
+                return "string" == typeof e ? t.push(m(e, null)) : e.data && t.push(m(e.data, e.mode)), t
+            }, [])
+        }, e.fromString = function(t, n) {
+            for (var o = function(t, e) {
+                    for (var n = {}, o = {
+                            start: {}
+                        }, i = ["start"], a = 0; a < t.length; a++) {
+                        for (var s = t[a], c = [], u = 0; u < s.length; u++) {
+                            var l = s[u],
+                                f = "" + a + u;
+                            c.push(f), n[f] = {
+                                node: l,
+                                lastCount: 0
+                            }, o[f] = {};
+                            for (var d = 0; d < i.length; d++) {
+                                var p = i[d];
+                                n[p] && n[p].node.mode === l.mode ? (o[p][f] = h(n[p].lastCount + l.length, l.mode) - h(n[p].lastCount, l.mode), n[p].lastCount += l.length) : (n[p] && (n[p].lastCount = l.length), o[p][f] = h(l.length, l.mode) + 4 + r.getCharCountIndicator(l.mode, e))
+                            }
+                        }
+                        i = c
+                    }
+                    for (d = 0; d < i.length; d++) o[i[d]].end = 0;
+                    return {
+                        map: o,
+                        table: n
+                    }
+                }(function(t) {
+                    for (var e = [], n = 0; n < t.length; n++) {
+                        var o = t[n];
+                        switch (o.mode) {
+                            case r.NUMERIC:
+                                e.push([o, {
+                                    data: o.data,
+                                    mode: r.ALPHANUMERIC,
+                                    length: o.length
+                                }, {
+                                    data: o.data,
+                                    mode: r.BYTE,
+                                    length: o.length
+                                }]);
+                                break;
+                            case r.ALPHANUMERIC:
+                                e.push([o, {
+                                    data: o.data,
+                                    mode: r.BYTE,
+                                    length: o.length
+                                }]);
+                                break;
+                            case r.KANJI:
+                                e.push([o, {
+                                    data: o.data,
+                                    mode: r.BYTE,
+                                    length: f(o.data)
+                                }]);
+                                break;
+                            case r.BYTE:
+                                e.push([{
+                                    data: o.data,
+                                    mode: r.BYTE,
+                                    length: f(o.data)
+                                }])
+                        }
+                    }
+                    return e
+                }(p(t, u.isKanjiModeEnabled())), n), i = l.find_path(o.map, "start", "end"), a = [], s = 1; s < i.length - 1; s++) a.push(o.table[i[s]].node);
+            return e.fromArray(function(t) {
+                return t.reduce(function(t, e) {
+                    var n = t.length - 1 >= 0 ? t[t.length - 1] : null;
+                    return n && n.mode === e.mode ? (t[t.length - 1].data += e.data, t) : (t.push(e), t)
+                }, [])
+            }(a))
+        }, e.rawSplit = function(t) {
+            return e.fromArray(p(t, u.isKanjiModeEnabled()))
+        }
+    }, function(t, e, n) {
+        var r = n(1);
+
+        function o(t) {
+            this.mode = r.NUMERIC, this.data = t.toString()
+        }
+        o.getBitsLength = function(t) {
+            return 10 * Math.floor(t / 3) + (t % 3 ? t % 3 * 3 + 1 : 0)
+        }, o.prototype.getLength = function() {
+            return this.data.length
+        }, o.prototype.getBitsLength = function() {
+            return o.getBitsLength(this.data.length)
+        }, o.prototype.write = function(t) {
+            var e, n, r;
+            for (e = 0; e + 3 <= this.data.length; e += 3) n = this.data.substr(e, 3), r = parseInt(n, 10), t.put(r, 10);
+            var o = this.data.length - e;
+            o > 0 && (n = this.data.substr(e), r = parseInt(n, 10), t.put(r, 3 * o + 1))
+        }, t.exports = o
+    }, function(t, e, n) {
+        var r = n(1),
+            o = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", " ", "$", "%", "*", "+", "-", ".", "/", ":"];
+
+        function i(t) {
+            this.mode = r.ALPHANUMERIC, this.data = t
+        }
+        i.getBitsLength = function(t) {
+            return 11 * Math.floor(t / 2) + t % 2 * 6
+        }, i.prototype.getLength = function() {
+            return this.data.length
+        }, i.prototype.getBitsLength = function() {
+            return i.getBitsLength(this.data.length)
+        }, i.prototype.write = function(t) {
+            var e;
+            for (e = 0; e + 2 <= this.data.length; e += 2) {
+                var n = 45 * o.indexOf(this.data[e]);
+                n += o.indexOf(this.data[e + 1]), t.put(n, 11)
+            }
+            this.data.length % 2 && t.put(o.indexOf(this.data[e]), 6)
+        }, t.exports = i
+    }, function(t, e, n) {
+        var r = n(2),
+            o = n(1);
+
+        function i(t) {
+            this.mode = o.BYTE, this.data = new r(t)
+        }
+        i.getBitsLength = function(t) {
+            return 8 * t
+        }, i.prototype.getLength = function() {
+            return this.data.length
+        }, i.prototype.getBitsLength = function() {
+            return i.getBitsLength(this.data.length)
+        }, i.prototype.write = function(t) {
+            for (var e = 0, n = this.data.length; e < n; e++) t.put(this.data[e], 8)
+        }, t.exports = i
+    }, function(t, e, n) {
+        var r = n(1),
+            o = n(0);
+
+        function i(t) {
+            this.mode = r.KANJI, this.data = t
+        }
+        i.getBitsLength = function(t) {
+            return 13 * t
+        }, i.prototype.getLength = function() {
+            return this.data.length
+        }, i.prototype.getBitsLength = function() {
+            return i.getBitsLength(this.data.length)
+        }, i.prototype.write = function(t) {
+            var e;
+            for (e = 0; e < this.data.length; e++) {
+                var n = o.toSJIS(this.data[e]);
+                if (n >= 33088 && n <= 40956) n -= 33088;
+                else {
+                    if (!(n >= 57408 && n <= 60351)) throw new Error("Invalid SJIS character: " + this.data[e] + "\nMake sure your charset is UTF-8");
+                    n -= 49472
+                }
+                n = 192 * (n >>> 8 & 255) + (255 & n), t.put(n, 13)
+            }
+        }, t.exports = i
+    }, function(t, e, n) {
+        "use strict";
+        var r = {
+            single_source_shortest_paths: function(t, e, n) {
+                var o = {},
+                    i = {};
+                i[e] = 0;
+                var a, s, c, u, l, f, d, p = r.PriorityQueue.make();
+                for (p.push(e, 0); !p.empty();)
+                    for (c in s = (a = p.pop()).value, u = a.cost, l = t[s] || {}) l.hasOwnProperty(c) && (f = u + l[c], d = i[c], (void 0 === i[c] || d > f) && (i[c] = f, p.push(c, f), o[c] = s));
+                if (void 0 !== n && void 0 === i[n]) {
+                    var h = ["Could not find a path from ", e, " to ", n, "."].join("");
+                    throw new Error(h)
+                }
+                return o
+            },
+            extract_shortest_path_from_predecessor_list: function(t, e) {
+                for (var n = [], r = e; r;) n.push(r), t[r], r = t[r];
+                return n.reverse(), n
+            },
+            find_path: function(t, e, n) {
+                var o = r.single_source_shortest_paths(t, e, n);
+                return r.extract_shortest_path_from_predecessor_list(o, n)
+            },
+            PriorityQueue: {
+                make: function(t) {
+                    var e, n = r.PriorityQueue,
+                        o = {};
+                    for (e in t = t || {}, n) n.hasOwnProperty(e) && (o[e] = n[e]);
+                    return o.queue = [], o.sorter = t.sorter || n.default_sorter, o
+                },
+                default_sorter: function(t, e) {
+                    return t.cost - e.cost
+                },
+                push: function(t, e) {
+                    var n = {
+                        value: t,
+                        cost: e
+                    };
+                    this.queue.push(n), this.queue.sort(this.sorter)
+                },
+                pop: function() {
+                    return this.queue.shift()
+                },
+                empty: function() {
+                    return 0 === this.queue.length
+                }
+            }
+        };
+        t.exports = r
+    }, function(t, e, n) {
+        var r = n(11);
+        e.render = function(t, e, n) {
+            var o = n,
+                i = e;
+            void 0 !== o || e && e.getContext || (o = e, e = void 0), e || (i = function() {
+                try {
+                    return document.createElement("canvas")
+                } catch (t) {
+                    throw new Error("You need to specify a canvas element")
+                }
+            }()), o = r.getOptions(o);
+            var a = r.getImageWidth(t.modules.size, o),
+                s = i.getContext("2d"),
+                c = s.createImageData(a, a);
+            return r.qrToImageData(c.data, t, o),
+                function(t, e, n) {
+                    t.clearRect(0, 0, e.width, e.height), e.style || (e.style = {}), e.height = n, e.width = n, e.style.height = n + "px", e.style.width = n + "px"
+                }(s, i, a), s.putImageData(c, 0, 0), i
+        }, e.renderToDataURL = function(t, n, r) {
+            var o = r;
+            void 0 !== o || n && n.getContext || (o = n, n = void 0), o || (o = {});
+            var i = e.render(t, n, o),
+                a = o.type || "image/png",
+                s = o.rendererOpts || {};
+            return i.toDataURL(a, s.quality)
+        }
+    }, function(t, e, n) {
+        var r = n(11);
+
+        function o(t, e) {
+            var n = t.a / 255,
+                r = e + '="' + t.hex + '"';
+            return n < 1 ? r + " " + e + '-opacity="' + n.toFixed(2).slice(1) + '"' : r
+        }
+
+        function i(t, e, n) {
+            var r = t + e;
+            return void 0 !== n && (r += " " + n), r
+        }
+        e.render = function(t, e, n) {
+            var a = r.getOptions(e),
+                s = t.modules.size,
+                c = t.modules.data,
+                u = s + 2 * a.margin,
+                l = a.color.light.a ? "<path " + o(a.color.light, "fill") + ' d="M0 0h' + u + "v" + u + 'H0z"/>' : "",
+                f = "<path " + o(a.color.dark, "stroke") + ' d="' + function(t, e, n) {
+                    for (var r = "", o = 0, a = !1, s = 0, c = 0; c < t.length; c++) {
+                        var u = Math.floor(c % e),
+                            l = Math.floor(c / e);
+                        u || a || (a = !0), t[c] ? (s++, c > 0 && u > 0 && t[c - 1] || (r += a ? i("M", u + n, .5 + l + n) : i("m", o, 0), o = 0, a = !1), u + 1 < e && t[c + 1] || (r += i("h", s), s = 0)) : o++
+                    }
+                    return r
+                }(c, s, a.margin) + '"/>',
+                d = 'viewBox="0 0 ' + u + " " + u + '"',
+                p = '<svg xmlns="http://www.w3.org/2000/svg" ' + (a.width ? 'width="' + a.width + '" height="' + a.width + '" ' : "") + d + ' shape-rendering="crispEdges">' + l + f + "</svg>\n";
+            return "function" == typeof n && n(null, p), p
+        }
+    }, function(t, e, n) {
+        "use strict";
+        t.exports = function(t, e, n) {
+            this.dinarHTMLID = e, this.millimeHTMLID = n, this.amount = t;
+            var r = this;
+            this.injectAmount = function() {
+                var t = document.getElementById(r.dinarHTMLID),
+                    e = document.getElementById(r.millimeHTMLID);
+                t.innerText = Math.floor(r.amount / 1e3) + ",", e.innerText = ("000" + r.amount % 1e3).substr(-3)
+            }
+        }
+    }])
+});

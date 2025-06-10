@@ -7,15 +7,25 @@ from .models import FlouciApp
 
 
 class FlouciAppAdmin(admin.ModelAdmin):
-    list_display = ("name", "tracking_id", "public_token", "wallet", "status", "active", "date_created")
+    list_display = (
+        "name",
+        "tracking_id",
+        "public_token",
+        "wallet",
+        "status",
+        "active",
+        "has_partner_access",
+        "has_advanced_payments_access",
+        "date_created",
+    )
     search_fields = (
         "app_id",
         "name",
         "tracking_id",
         "public_token",
-        "wallet",
+        "merchant_id",
     )
-    list_filter = ("status", "active", "date_created")
+    list_filter = ("test", "status", "active", "deleted", "date_created")
 
 
 class LogEntryAdmin(admin.ModelAdmin):

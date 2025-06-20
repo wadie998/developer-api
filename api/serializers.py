@@ -26,12 +26,8 @@ class Base64ImageField(serializers.CharField):
     Custom field for validating and processing base64 encoded images.
     """
 
-    def __init__(self, **kwargs):
-        # Add the base64 image validator
-        kwargs["validators"] = kwargs.get("validators", []) + [validate_base64_image]
-        super().__init__(**kwargs)
-
-    def validate(self, value):
+    def to_internal_value(self, value):
+        validate_base64_image(value)
         image_data, extension, content_type = extract_base64_image_data(value)
         return {
             "image_data": image_data,

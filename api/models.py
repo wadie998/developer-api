@@ -143,7 +143,8 @@ class FlouciApp(models.Model):
         self.save(update_fields=["private_token", "revoke_number", "last_revoke_date"])
 
     def update_image(self, image_info):
-        if not image_info:
+        if not isinstance(image_info, dict):
+            logger.warning(f"Invalid image_info format: expected dict, got {type(image_info)}")
             return
         image_url = GCSClient().save_image(
             image_b64=image_info["image_data"],

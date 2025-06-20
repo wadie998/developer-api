@@ -144,6 +144,7 @@ class UpdateDeveloperAppSerializer(DefaultSerializer):
     id = serializers.IntegerField()
     name = serializers.CharField(min_length=3, max_length=100, required=False)
     description = serializers.CharField(min_length=3, max_length=255, required=False)
+    image_url = Base64ImageField(required=False)
 
 
 class BaseSendMoneySerializer(DefaultSerializer):

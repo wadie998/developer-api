@@ -22,7 +22,7 @@ class GCSClient:
     gcp_client = storage.Client.from_service_account_json(GCS_ACCOUNT_CREDENTIALS_FILE_PATH)
 
     @classmethod
-    def save_image(cls, image_b64: str, image_name: str, extension: str, content_type: str) -> str | None:
+    def save_image(cls, image_b64: str, image_name: str, extension: str, content_type: str) -> None | str:
         try:
             image_bytes = base64.b64decode(image_b64)
             path = f"{cls.GCS_FOLDER}/{cls.GCS_DIR}/{cls.IMAGES_PREFIX}{image_name}.{extension}"

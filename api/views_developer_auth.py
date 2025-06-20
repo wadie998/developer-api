@@ -117,7 +117,7 @@ class CreateDeveloperAppView(GenericAPIView):
         except FlouciApp.DoesNotExist:
             return Response({"detail": "App not found."}, status=status.HTTP_404_NOT_FOUND)
         updated_fields = []
-        for field in ["name", "description"]:
+        for field in ["name", "description", "image_url"]:
             new_value = serializer.validated_data.get(field)
             if new_value is not None and getattr(app, field) != new_value:
                 setattr(app, field, new_value)

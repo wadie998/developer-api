@@ -146,9 +146,9 @@ class InitiatePosTransactionSerializer(DefaultSerializer):
     payment_segments = MultiPaymentItemSerializer(many=True, required=False)
 
     # Fallback for single payment
-    amount_in_millimes = serializers.IntegerField(min_value=1000, required=False)
+    amount_in_millimes = serializers.IntegerField(min_value=1000, max_value=2000000, required=False)
     payment_method = serializers.ChoiceField(
-        choices=PaymentMethod.get_choices(), default=PaymentMethod.CARD, required=False
+        choices=PaymentMethod.get_choices(), default=PaymentMethod.WALLET, required=False
     )
     developer_tracking_id = serializers.CharField(max_length=60, required=False)
     webhook = serializers.URLField(required=False)

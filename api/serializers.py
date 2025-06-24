@@ -60,8 +60,8 @@ class DestinationSerializer(DefaultSerializer):
 
 
 class GeneratePaymentSerializer(DefaultSerializer):
-    amount = serializers.IntegerField(min_value=1000, max_value=2000000)
-    accept_card = serializers.BooleanField()
+    amount = serializers.IntegerField(min_value=100, max_value=2000000)
+    accept_card = serializers.BooleanField(default=False)
     session_timeout_secs = serializers.IntegerField(required=False, max_value=7200)
     session_timeout = serializers.IntegerField(default=1200, max_value=7200)
     success_link = HttpsURLField()

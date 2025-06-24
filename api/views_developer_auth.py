@@ -60,7 +60,7 @@ class CreateDeveloperAppView(GenericAPIView):
 
         response = Response(
             {
-                # TODO: fix response in the new webapp
+                # TODO: Use default pagination class
                 "result": app_list,
                 "code": 200,
                 "name": "developers",
@@ -374,6 +374,7 @@ class PartnerConnectedApps(GenericAPIView):
     {result: [], code: 0, name: "data", version: "4.4.91"}
     """
 
+    # TODO: Add pagination
     permission_classes = (IsFlouciAuthenticated,)
 
     def get_serializer_class(self):
@@ -413,8 +414,8 @@ class PartnerConnectedApps(GenericAPIView):
             linked_account = LinkedAccount.objects.get(
                 app__public_token=public_token, account_tracking_id=request.tracking_id
             )
-            linked_account.is_active = not linked_account.is_active
-            linked_account.save(update_fields=["is_active"])
-            return Response({"success": True, "is_active": linked_account.is_active}, status=status.HTTP_200_OK)
         except LinkedAccount.DoesNotExist:
             return Response({"success": False, "message": "Invalid reference."}, status=status.HTTP_400_BAD_REQUEST)
+        linked_account.is_active = not linked_account.is_active
+        linked_account.save(update_fields=["is_active"])
+        return Response({"success": True, "is_active": linked_account.is_active}, status=status.HTTP_200_OK)

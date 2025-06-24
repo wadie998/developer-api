@@ -368,7 +368,7 @@ class BaseSendMoneyView(GenericAPIView):
                 "code": 1,
                 "version": DJANGO_SERVICE_VERSION,
             }
-        return Response(data=data, status=response.get("status_code"))
+        return Response(data=data, status=status_code)
 
 
 @extend_schema(
@@ -462,7 +462,7 @@ class BaseCheckSendMoneyStatusView(GenericAPIView):
         sender_id = request.application.merchant_id
         operation_id = serializer.validated_data["operation_id"]
         response = FlouciBackendClient.developer_check_send_money_status(operation_id=operation_id, sender_id=sender_id)
-        status_code = response.get("status_code")
+        status_code = response["status_code"]
 
         if response["success"]:
             data = {

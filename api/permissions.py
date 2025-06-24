@@ -89,9 +89,8 @@ class BaseAppCredentialPermission(BasePermission):
                 private_token=private_token,
                 active=True,
             )
-            if self.requires_partner_access:
-                if not application.has_partner_access:
-                    return False
+            if self.requires_partner_access and not application.has_partner_access:
+                return False
         except ObjectDoesNotExist:
             return False
         request.application = application
@@ -131,10 +130,10 @@ class IsValidPartnerUser(BasePermission):
                 merchant_id=merchant_id,
                 is_active=True,
             )
-            request.account = account
-            return True
-        except ObjectDoesNotExist:
+        except LinkedAccount.DoesNotExist:
             raise PermissionDenied({"success": False, "message": "Invalid credentials"})
+        request.account = account
+        return True
 
 
 class IsPartnerAuthenticated(BasePermission):
@@ -157,12 +156,12 @@ class IsPartnerAuthenticated(BasePermission):
             linked_account = LinkedAccount.objects.get(
                 partner_tracking_id=data.get("partner_tracking_id"), merchant_id=data.get("mid")
             )
-            request.account = linked_account
-            request.partner_tracking_id = data.get("partner_tracking_id")
-            request.merchant_id = data.get("mid")
-            return True
-        except ObjectDoesNotExist:
+        except LinkedAccount.DoesNotExist:
             return False
+        request.account = linked_account
+        request.partner_tracking_id = data.get("partner_tracking_id")
+        request.merchant_id = data.get("mid")
+        return True
 
 
 def signed_request_is_valid(request, secret):

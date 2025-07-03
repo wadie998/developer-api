@@ -38,7 +38,7 @@ class Command(BaseCommand):
             # Step 4: Link real_app with test_old_app
             real_test_app = FlouciApp.objects.get(id=test_old_app.id)
             real_test_app.tracking_id = real_app.tracking_id
-            real_app.save(using="default")
+            real_test_app.save(using="default")
             count += 1
             self.stdout.write(
                 f"Linked real app wallet {wallet_id} to test app ID {real_test_app.id} for id {real_app.tracking_id}"

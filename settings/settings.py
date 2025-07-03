@@ -210,7 +210,7 @@ if config("ELASTIC_APM_ENABLED", default=True, cast=bool):
 
 
 ADMIN_ENABLED = config("ADMIN_ENABLED", default=True, cast=bool)
-ADMIN_TWO_FA_ENABLED = config("ADMIN_TWO_FA_ENABLED", default=False, cast=bool)
+ADMIN_TWO_FA_ENABLED = config("ADMIN_TWO_FA_ENABLED", default=True, cast=bool)
 
 
 # FLOUCI BACKEND

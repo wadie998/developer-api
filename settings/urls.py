@@ -24,7 +24,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 from settings.settings import ADMIN_ENABLED, ADMIN_TWO_FA_ENABLED
 
 urlpatterns = [
-    path('', RedirectView.as_view(url='https://app.flouci.com'), name='home'),
+    path("", RedirectView.as_view(url="https://app.flouci.com"), name="home"),
     path("api/ht", include("health_check.urls")),
     path("api/", include("api.urls"), name="api"),
     path("internal/", include("api.urls_internals"), name="internal_api"),

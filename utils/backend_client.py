@@ -53,6 +53,7 @@ class FlouciBackendClient:
     SEND_MONEY = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/partners/send_money"
     CONFIRM_PAYMENT_AUTHORIZATION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/confirm_pre_authorized_payment"
     CANCEL_PAYMENT_AUTHORIZATION_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/cancel_pre_authorized_payment"
+    REFUND_POS_PAYMENT_URL = f"{FLOUCI_BACKEND_API_ADDRESS}/api/developers/refund_pos_transaction"
 
     @staticmethod
     def _process_response(response, success_code=[200, 201, 204]):
@@ -222,6 +223,26 @@ class FlouciBackendClient:
             timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
+
+    @staticmethod
+    @handle_exceptions
+    def refund_pos_transaction(id_terminal, serial_number, reason, merchant_id, developer_tracking_id: str = None, flouci_transaction_id: str = None):
+        data = {
+            "id_terminal": id_terminal,
+            "serial_number": serial_number,
+            "reason": reason,
+            "merchant_id": merchant_id,
+            "developer_tracking_id": developer_tracking_id,
+            "flouci_transaction_id": flouci_transaction_id,
+        }
+        response = requests.post(
+            FlouciBackendClient.REFUND_POS_PAYMENT_URL,
+            headers=FlouciBackendClient.HEADERS,
+            json=data,
+            timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
+        )
+        return FlouciBackendClient._process_response(response)
+
 
     @staticmethod
     @handle_exceptions

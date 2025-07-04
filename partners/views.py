@@ -27,6 +27,7 @@ from partners.responses_serializers import (
 from partners.serializers import (
     AuthenticateSerializer,
     BalanceSerializer,
+    CancelPOSransactionViewSerializer,
     ConfirmLinkAccountSerializer,
     FetchPOSTransactionStatusSerializer,
     FilterHistorySerializer,
@@ -587,6 +588,38 @@ class FetchPOSTransactionStatusView(GenericAPIView):
         )
         return Response(response, status=response["status_code"])
 
+
+@IsValidGenericApi(get=False, post=True)
+class CancelPOSransactionView(GenericAPIView):
+    permission_classes = (HasValidPartnerAppCredentials,)
+    serializer_class = CancelPOSransactionViewSerializer
+
+    def post(self, request, serializer):
+        app = request.application
+        merchant_id = app.merchant_id
+        developer_tracking_id = serializer.validated_data.get("developer_tracking_id")
+        flouci_transaction_id = serializer.validated_data.get("flouci_transaction_id")
+        id_terminal = serializer.validated_data.get("id_terminal")
+        serial_number = serializer.validated_data.get("serial_number")
+        reason = serializer.validated_data.get("reason")
+        if ENV != "PROD":
+            response_map = {
+                "040b4cb8-92b8-4824-b59f-de1fbbb8c37w": {
+                    "success": True,
+                    "message": "Remboursement initié avec succès",
+                    "status_code": 200,
+                },
+                "040b4cb8-92b8-4824-b59f-de1fbbb8c37c": {
+                    "success": False,
+                    "message": "Le remboursement n'est pas possible pour cette transaction",
+                    "status_code": 409,
+                },
+            }
+            if developer_tracking_id and developer_tracking_id in response_map:
+                resp = response_map[developer_tracking_id]
+                return Response(resp, status=resp["status_code"])
+        response = FlouciBackendClient.refund_pos_transaction(id_terminal=id_terminal, serial_number=serial_number, reason=reason, merchant_id=merchant_id, developer_tracking_id=developer_tracking_id, flouci_transaction_id=flouci_transaction_id)
+        return Response(response, status=response["status_code"])
 
 @IsValidGenericApi()
 class PartnerSendMoneyView(GenericAPIView):

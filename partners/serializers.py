@@ -175,3 +175,22 @@ class FetchPOSTransactionStatusSerializer(DefaultSerializer):
         if not transaction_id and not developer_tracking_id:
             raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'developer_tracking_id'.")
         return validate_data
+
+
+
+class CancelPOSransactionViewSerializer(DefaultSerializer):
+    id_terminal = serializers.CharField(max_length=16)
+    serial_number = serializers.CharField(max_length=36)
+    service_code = serializers.CharField(max_length=3, required=False, default="024")
+    developer_tracking_id = serializers.CharField(max_length=60, required=False)
+    flouci_transaction_id = serializers.CharField(required=False)
+    password = serializers.CharField()
+    reason = serializers.CharField(max_length=40, required=False)
+
+    # TODO support multiple payments
+    def validate(self, validate_data):
+        transaction_id = validate_data.get("flouci_transaction_id")
+        developer_tracking_id = validate_data.get("developer_tracking_id")
+        if not transaction_id and not developer_tracking_id:
+            raise serializers.ValidationError("Provide either 'flouci_transaction_id' or 'developer_tracking_id'.")
+        return validate_data

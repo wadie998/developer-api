@@ -177,7 +177,6 @@ class FetchPOSTransactionStatusSerializer(DefaultSerializer):
         return validate_data
 
 
-
 class CancelPOSransactionViewSerializer(DefaultSerializer):
     id_terminal = serializers.CharField(max_length=16)
     serial_number = serializers.CharField(max_length=36)

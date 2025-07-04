@@ -226,7 +226,14 @@ class FlouciBackendClient:
 
     @staticmethod
     @handle_exceptions
-    def refund_pos_transaction(id_terminal, serial_number, reason, merchant_id, developer_tracking_id: str = None, flouci_transaction_id: str = None):
+    def refund_pos_transaction(
+        id_terminal,
+        serial_number,
+        reason,
+        merchant_id,
+        developer_tracking_id: str = None,
+        flouci_transaction_id: str = None,
+    ):
         data = {
             "id_terminal": id_terminal,
             "serial_number": serial_number,
@@ -242,7 +249,6 @@ class FlouciBackendClient:
             timeout=SHORT_EXTERNAL_REQUESTS_TIMEOUT,
         )
         return FlouciBackendClient._process_response(response)
-
 
     @staticmethod
     @handle_exceptions

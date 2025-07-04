@@ -618,8 +618,16 @@ class CancelPOSransactionView(GenericAPIView):
             if developer_tracking_id and developer_tracking_id in response_map:
                 resp = response_map[developer_tracking_id]
                 return Response(resp, status=resp["status_code"])
-        response = FlouciBackendClient.refund_pos_transaction(id_terminal=id_terminal, serial_number=serial_number, reason=reason, merchant_id=merchant_id, developer_tracking_id=developer_tracking_id, flouci_transaction_id=flouci_transaction_id)
+        response = FlouciBackendClient.refund_pos_transaction(
+            id_terminal=id_terminal,
+            serial_number=serial_number,
+            reason=reason,
+            merchant_id=merchant_id,
+            developer_tracking_id=developer_tracking_id,
+            flouci_transaction_id=flouci_transaction_id,
+        )
         return Response(response, status=response["status_code"])
+
 
 @IsValidGenericApi()
 class PartnerSendMoneyView(GenericAPIView):

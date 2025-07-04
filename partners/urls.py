@@ -3,6 +3,7 @@ from django.urls import path
 from partners.views import (
     AuthenticateView,
     BalanceView,
+    CancelPOSransactionView,
     ConfirmLinkAccountView,
     FetchPOSTransactionStatusView,
     HistoryView,
@@ -46,5 +47,11 @@ urlpatterns = [
         "transactions/get_pos_transaction_status",
         FetchPOSTransactionStatusView.as_view(),
         name="get_pos_transaction_status",
+    ),
+    # Cancel POS transaction once approved
+    path(
+        "transactions/cancel_pos_transaction",
+        CancelPOSransactionView.as_view(),
+        name="refund_pos_transaction",
     ),
 ]

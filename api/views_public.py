@@ -602,6 +602,7 @@ class ConfirmSMTPreAuthorization(GenericAPIView):
                 "result": {
                     "status": True,
                     "message": response.get("message"),
+                    "auth_code": response.get("auth_code", ""),
                     "payment_id": payment_id,
                 },
                 "name": "confirm_transaction",

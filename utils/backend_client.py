@@ -228,6 +228,7 @@ class FlouciBackendClient:
     @handle_exceptions
     def refund_pos_transaction(
         id_terminal,
+        password,
         serial_number,
         reason,
         merchant_id,
@@ -238,6 +239,7 @@ class FlouciBackendClient:
             "id_terminal": id_terminal,
             "serial_number": serial_number,
             "reason": reason,
+            "password": password,
             "merchant_id": merchant_id,
             "developer_tracking_id": developer_tracking_id,
             "flouci_transaction_id": flouci_transaction_id,

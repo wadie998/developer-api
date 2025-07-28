@@ -597,9 +597,11 @@ class CancelPOSransactionView(GenericAPIView):
     def post(self, request, serializer):
         app = request.application
         merchant_id = app.merchant_id
+        password = serializer.validated_data["password"]
+        id_terminal = serializer.validated_data["id_terminal"]
         developer_tracking_id = serializer.validated_data.get("developer_tracking_id")
         flouci_transaction_id = serializer.validated_data.get("flouci_transaction_id")
-        id_terminal = serializer.validated_data.get("id_terminal")
+        id_terminal = serializer.validated_data["id_terminal"]
         serial_number = serializer.validated_data.get("serial_number")
         reason = serializer.validated_data.get("reason")
         if ENV != "PROD":
@@ -620,6 +622,7 @@ class CancelPOSransactionView(GenericAPIView):
                 return Response(resp, status=resp["status_code"])
         response = FlouciBackendClient.refund_pos_transaction(
             id_terminal=id_terminal,
+            password=password,
             serial_number=serial_number,
             reason=reason,
             merchant_id=merchant_id,

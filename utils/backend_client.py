@@ -242,7 +242,7 @@ class FlouciBackendClient:
             "password": password,
             "merchant_id": merchant_id,
             "developer_tracking_id": developer_tracking_id,
-            "flouci_transaction_id": flouci_transaction_id,
+            "transaction_id": flouci_transaction_id,
         }
         response = requests.post(
             FlouciBackendClient.REFUND_POS_PAYMENT_URL,

@@ -1,0 +1,13 @@
+name: Simple CI Test
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Say Hello
+      run: echo "Hello from GitHub Actions"
+
